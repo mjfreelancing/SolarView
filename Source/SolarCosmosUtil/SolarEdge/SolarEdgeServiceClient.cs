@@ -28,7 +28,7 @@ namespace SolarCosmosUtil.SolarEdge
       // todo: add Polly
       // todo: add Application Insight logging on error
 
-      var apiKey = await _keyVaultCache.GetSecretAsync(_configuration.KeyVaultSecretName).ConfigureAwait(false);
+      var apiKey = _keyVaultCache.GetSecret(_configuration.KeyVaultSecretName);
 
       // the API allows a maximum of 1 month per request, so split the dates into monthly requests if required
       var dateRanges = GetDateRanges(startDateTime, endDateTime);

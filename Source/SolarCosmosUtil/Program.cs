@@ -45,8 +45,8 @@ namespace SolarCosmosUtil
 
           logger.Debug<Program>("Getting data from SolarEdge");
 
-          var startDate = new DateTime(2020, 5, 19, 0, 0, 0);
           var endDate = DateTime.Now;
+          var startDate = endDate.AddDays(-1);
 
           var solarDays = solarApi.GetSolarDataAsync(startDate, endDate);
 
@@ -79,13 +79,13 @@ namespace SolarCosmosUtil
 
     private static void ConfigureServices(IServiceCollection services)
     {
-      services.AddScoped<IKeyVaultCache,KeyVaultCache>();
+      services.AddScoped<IKeyVaultCache, KeyVaultCache>();
       services.AddScoped<IKeyVaultConfiguration, KeyVaultConfiguration>();
       services.AddScoped<ISolarEdgeConfiguration, SolarEdgeConfiguration>();
       services.AddScoped<ICosmosConfiguration, CosmosConfiguration>();
+      services.AddScoped<IApplicationInsightsConfiguration, ApplicationInsightsConfiguration>();
       services.AddScoped<ISolarEdgeServiceClient, SolarEdgeServiceClient>();
       services.AddScoped<ISolarViewCosmosDb, SolarViewCosmosDb>();
-      services.AddScoped<IApplicationInsightsConfiguration, ApplicationInsightsConfiguration>();
 
       var trackerConfiguration = new TelemetryTrackerConfiguration();
       trackerConfiguration.Configuration.TelemetryInitializers.Add(new HttpDependenciesParsingTelemetryInitializer());
@@ -96,6 +96,7 @@ namespace SolarCosmosUtil
 
       services.AddSingleton<ITelemetryTracker, TelemetryTracker>();
       services.AddSingleton<ILoggingFactory, LoggingFactory>();
+      services.AddSingleton<IKeyVaultCachePolicyFactory, KeyVaultCachePolicyFactory>();
 
       services
         .AddSingleton<IApplicationLogger, ApplicationLogger>()

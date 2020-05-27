@@ -39,11 +39,10 @@ namespace SolarCosmosUtil.Cosmos
       {
         var cosmosSecretName = _configuration.KeyVaultSecretName;
 
-        var cosmosKey = await _keyVaultCache.GetSecretAsync(cosmosSecretName).ConfigureAwait(false);
+        var cosmosKey = _keyVaultCache.GetSecret(cosmosSecretName);
         var cosmosClient = new CosmosClient(_endpoint, cosmosKey);
 
         var databaseResponse = await cosmosClient.CreateDatabaseIfNotExistsAsync(_databaseId).ConfigureAwait(false);
-
         var containerResponse = await databaseResponse.Database.CreateContainerIfNotExistsAsync(_collectionId, _partitionKey).ConfigureAwait(false);
 
         return containerResponse.Container;
