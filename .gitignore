@@ -348,4 +348,6 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
-*.xlsx
+Source/SolarViewFunctions/local.settings.json
+Notes
+Site Data
