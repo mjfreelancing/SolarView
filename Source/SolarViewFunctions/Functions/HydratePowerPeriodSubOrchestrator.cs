@@ -38,7 +38,7 @@ namespace SolarViewFunctions.Functions
       var siteInfo = await context.CallActivityWithRetryAsync<SiteInfo>(nameof(GetSiteInfo), GetDefaultRetryOptions(), powerQuery.SiteId);
 
       // executed via context.CallHttpAsync() - this method tracks the request
-      var solarDataResponse = await SolarEdgeApi.GetSolarDataAsync(context, Constants.AppSettings.SolarEdgeUri, siteInfo.ApiKey, powerQuery, Tracker);
+      var solarDataResponse = await SolarEdgeApi.GetSolarDataAsync(context, Constants.SolarEdge.MonitoringUri, siteInfo.ApiKey, powerQuery, Tracker);
 
       if (solarDataResponse.IsError)
       {

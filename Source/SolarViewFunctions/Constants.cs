@@ -2,9 +2,9 @@
 {
   internal static class Constants
   {
-    public static class AppSettings
+    public static class SolarEdge
     {
-      public const string SolarEdgeUri = "https://monitoringapi.solaredge.com/site/";
+      public const string MonitoringUri = "https://monitoringapi.solaredge.com/site/";
     }
 
     public static class Queues
