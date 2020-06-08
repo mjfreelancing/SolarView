@@ -1,0 +1,18 @@
+
+* Send a message for all exceptions
+
+* Create a new function to process exception messages -> send as email
+
+* Create deadletter functions for all queues
+
+* Create a proper email template
+
+* Implement daily aggregations
+
+* Implement weekly aggregations
+
+* Implement monthly aggregations
+
+* Implement yearly aggregations
+
+* handle unknown site via manual request - assume internal will never fail
