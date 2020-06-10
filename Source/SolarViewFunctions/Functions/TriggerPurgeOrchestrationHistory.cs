@@ -22,7 +22,7 @@ namespace SolarViewFunctions.Functions
     {
       var currentTimeUtc = DateTime.UtcNow;
 
-      Tracker.TrackEvent(nameof(TriggerPurgeOrchestrationHistory), new { RefreshTimeUtc = currentTimeUtc });
+      Tracker.TrackEvent(nameof(TriggerPurgeOrchestrationHistory), new { TriggerTimeUtc = $"{currentTimeUtc.GetSolarDateTimeString()} (UTC)" });
 
       try
       {

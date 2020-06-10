@@ -42,7 +42,7 @@ namespace SolarViewFunctions.Functions
 
       try
       {
-        Tracker.TrackEvent(nameof(TriggerManualHydratePower));
+        Tracker.TrackEvent(nameof(TriggerManualHydratePower), new { TriggerTimeUtc = $"{triggerDateTime.GetSolarDateTimeString()} (UTC)" });
 
         ValidateRequest(hydrateRequest);
         var siteInfo = await GetValidatedRequestedSiteAsync(hydrateRequest, sitesTable);

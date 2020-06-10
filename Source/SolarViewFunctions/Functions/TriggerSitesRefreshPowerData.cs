@@ -30,7 +30,7 @@ namespace SolarViewFunctions.Functions
       {
         var currentTimeUtc = DateTime.UtcNow;
 
-        Tracker.TrackEvent(nameof(TriggerSitesRefreshPowerData), new {RefreshTimeUtc = currentTimeUtc});
+        Tracker.TrackEvent(nameof(TriggerSitesRefreshPowerData), new { TriggerTimeUtc = $"{currentTimeUtc.GetSolarDateTimeString()} (UTC)"});
 
         var requests = SitesHelpers
           .GetSites(sitesTable, site => currentTimeUtc >= site.GetNextRefreshDueUtc())

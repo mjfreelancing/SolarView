@@ -1,6 +1,7 @@
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Collections.Generic;
@@ -25,7 +26,12 @@ namespace SolarViewFunctions.Functions
     {
       try
       {
-        Tracker.TrackEvent(nameof(TriggerPowerDocumentDecomposition), new {DocumentCount = documents.Count});
+        Tracker.TrackEvent(nameof(TriggerPowerDocumentDecomposition),
+          new
+          {
+            TriggerTimeUtc = $"{DateTime.UtcNow.GetSolarDateTimeString()} (UTC)",
+            DocumentCount = documents.Count
+          });
 
         Tracker.TrackInfo($"Received {documents.Count} documents for decomposition");
 

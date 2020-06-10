@@ -51,10 +51,12 @@
 
     public static class Trigger
     {
-      // Cheat sheet: https://arminreiter.com/2017/02/azure-functions-time-trigger-cron-cheat-sheet/
-      public const string CronScheduleEveryHour = "0 0 */1 * * *";
-      public const string CronScheduleEveryMinute = "0 */1 * * * *";        // (for local testing)
-      public const string CronScheduleEveryFiveMinutes = "0 */5 * * * *";   // (for local testing)
+      // NCronTab: https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-timer?tabs=csharp#ncrontab-expressions
+      public const string CronScheduleEveryHour = "0 0 * * * *";
+
+      // only used for local testing
+      public const string CronScheduleEveryMinute = "0 * * * * *";
+      public const string CronScheduleEveryFiveMinutes = "0 */5 * * * *";
     }
 
     public static class AggregationOptions

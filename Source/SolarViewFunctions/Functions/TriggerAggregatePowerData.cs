@@ -21,7 +21,7 @@ namespace SolarViewFunctions.Functions
     {
       try
       {
-        Tracker.TrackEvent(nameof(TriggerAggregatePowerData));
+        Tracker.TrackEvent(nameof(TriggerAggregatePowerData), new { TriggerTimeUtc = $"{DateTime.UtcNow.GetSolarDateTimeString()} (UTC)" });
 
         // sequentially performs weekly, monthly, yearly aggregation
         var instanceId = await orchestrationClient.StartNewAsync(nameof(AggregatePowerData));

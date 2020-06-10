@@ -29,7 +29,7 @@ namespace SolarViewFunctions.Functions
       {
         var currentTimeUtc = DateTime.UtcNow;
 
-        Tracker.TrackEvent(nameof(TriggerSendPowerSummaryEmail), new { RefreshTimeUtc = currentTimeUtc });
+        Tracker.TrackEvent(nameof(TriggerSendPowerSummaryEmail), new { TriggerTimeUtc = $"{currentTimeUtc.GetSolarDateTimeString()} (UTC)" });
 
         // determine what sites are due for a power summary email
         var sites = SitesHelpers.GetSites(sitesTable, site =>
