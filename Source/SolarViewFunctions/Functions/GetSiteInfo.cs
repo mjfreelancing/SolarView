@@ -22,6 +22,8 @@ namespace SolarViewFunctions.Functions
     {
       // allowing exceptions to bubble back to the caller
 
+      Tracker.AppendDefaultProperties(context.GetTrackingProperties());
+
       var siteId = context.GetInput<string>();
 
       Tracker.TrackInfo($"Getting info for SiteId {siteId}");

@@ -37,10 +37,10 @@ namespace SolarViewFunctions.Extensions
       return table.ExecuteAsync(operation);
     }
 
-    public static Task BatchInsertOrMergeAsync<TEntity>(this CloudTable table, IEnumerable<TEntity> entities)
+    public static Task BatchInsertOrReplaceAsync<TEntity>(this CloudTable table, IEnumerable<TEntity> entities)
       where TEntity : ITableEntity
     {
-      return DoBatchOperationAsync(table, entities, (batch, entity) => batch.InsertOrMerge(entity));
+      return DoBatchOperationAsync(table, entities, (batch, entity) => batch.InsertOrReplace(entity));
     }
 
     private static Task DoBatchOperationAsync<TEntity>(this CloudTable table, IEnumerable<TEntity> entities, Action<TableBatchOperation, TEntity> operation)

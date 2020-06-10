@@ -24,6 +24,8 @@ namespace SolarViewFunctions.Functions
     {
       // allowing exceptions to bubble back to the caller
 
+      Tracker.AppendDefaultProperties(context.GetTrackingProperties());
+
       var powerDocument = context.GetInput<PowerDocument>();
 
       var entities = powerDocument.Meters
@@ -34,7 +36,7 @@ namespace SolarViewFunctions.Functions
 
       Tracker.TrackInfo($"Persisting {entities.Count} meter points from document {powerDocument.id}");
 
-      await powerTable.BatchInsertOrMergeAsync(entities).ConfigureAwait(false);
+      await powerTable.BatchInsertOrReplaceAsync(entities).ConfigureAwait(false);
     }
   }
 }

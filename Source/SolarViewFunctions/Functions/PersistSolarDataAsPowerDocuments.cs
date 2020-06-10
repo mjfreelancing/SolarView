@@ -27,12 +27,11 @@ namespace SolarViewFunctions.Functions
     {
       // allowing exceptions to bubble back to the caller
 
+      Tracker.AppendDefaultProperties(context.GetTrackingProperties());
+
       var siteData = context.GetInput<SiteSolarData>();
 
-      Tracker.TrackInfo(
-        $"Received power documents for SiteId {siteData.SiteId} between {siteData.StartDateTime} and {siteData.EndDateTime}",
-        new { context.InstanceId }
-      );
+      Tracker.TrackInfo($"Received power data for SiteId {siteData.SiteId} between {siteData.StartDateTime} and {siteData.EndDateTime}");
 
       IEnumerable<Task> GetDailyDocuments()
       {
@@ -42,10 +41,7 @@ namespace SolarViewFunctions.Functions
         {
           var powerDocument = new PowerDocument(siteData.SiteId, solarDay);
 
-          Tracker.TrackInfo(
-            $"Saving document {powerDocument.id} for SiteId {siteData.SiteId}, {powerDocument.Date.GetSolarDateString()}",
-            new {context.InstanceId}
-          );
+          Tracker.TrackInfo($"Saving document {powerDocument.id} for SiteId {siteData.SiteId}, {powerDocument.Date}");
 
           yield return powerDocuments.AddAsync(powerDocument);
         }
@@ -79,7 +75,7 @@ namespace SolarViewFunctions.Functions
         from dailyMeterPoints in meterPoints.GroupBy(item => item.Date)
         select new SolarViewDay
         {
-          Date = dailyMeterPoints.Key,
+          Date = dailyMeterPoints.Key.GetSolarDateString(),
           Meters =
             from dailyMeterPoint in dailyMeterPoints.GroupBy(item => item.MeterType)
             select new SolarViewMeter

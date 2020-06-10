@@ -16,9 +16,10 @@ namespace SolarViewFunctions.Tracking
       _tracker = tracker.WhenNotNull(nameof(tracker));
     }
 
-    public void SetDefaultProperties(object properties)
+    public void AppendDefaultProperties(object properties)
     {
-      throw new InvalidOperationException($"Call {nameof(SetDefaultProperties)}() on the tracker being decorated");
+      // always call this
+      _tracker.AppendDefaultProperties(properties);
     }
 
     public void TrackDebug(string message, object properties = null)

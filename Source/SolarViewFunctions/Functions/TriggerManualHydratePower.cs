@@ -6,6 +6,7 @@ using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Newtonsoft.Json;
 using SolarViewFunctions.Dto;
+using SolarViewFunctions.Entities;
 using SolarViewFunctions.Exceptions;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
@@ -34,24 +35,26 @@ namespace SolarViewFunctions.Functions
       [Table(Constants.Table.Sites)] CloudTable sitesTable,
       [DurableClient] IDurableOrchestrationClient orchestrationClient)
     {
+      var triggerDateTime = DateTime.UtcNow;
       var hydrateRequest = await request.Content.ReadAsAsync<HydratePowerRequest>();
+
+      Tracker.AppendDefaultProperties(hydrateRequest);
 
       try
       {
-        Tracker.TrackEvent(nameof(TriggerManualHydratePower), hydrateRequest);
+        Tracker.TrackEvent(nameof(TriggerManualHydratePower));
 
         ValidateRequest(hydrateRequest);
-        await ValidateRequestedSiteAsync(hydrateRequest, sitesTable);
+        var siteInfo = await GetValidatedRequestedSiteAsync(hydrateRequest, sitesTable);
 
-        var powerQuery = _mapper.Map<TriggeredPowerQuery>(hydrateRequest);
-        powerQuery.Trigger = RefreshTriggerType.Manual;
+        var triggeredPowerQuery = _mapper.Map<TriggeredPowerQuery>(hydrateRequest);
+        triggeredPowerQuery.TriggerDateTime = siteInfo.UtcToLocalTime(triggerDateTime).GetSolarDateTimeString();
+        triggeredPowerQuery.Trigger = RefreshTriggerType.Manual;
 
-        var instanceId = await orchestrationClient.StartNewAsync(nameof(HydratePowerOrchestrator), powerQuery);
+        var instanceId = await orchestrationClient.StartNewAsync(nameof(HydratePowerOrchestrator), triggeredPowerQuery);
 
-        Tracker.TrackInfo(
-          $"Started {nameof(HydratePowerOrchestrator)} for a manual power hydration",
-          new {InstanceId = instanceId, Request = hydrateRequest}
-        );
+        Tracker.TrackInfo($"Started {nameof(HydratePowerOrchestrator)} for a manual power hydration of SiteId {siteInfo.SiteId} at " +
+                          $"{siteInfo.UtcToLocalTime(triggerDateTime).GetSolarDateTimeString()} (local)");
 
         // sub task progress / output can be monitored by adding the following to the end of the
         // 'statusQueryGetUri' : &showHistoryOutput=true&showHistory=true
@@ -60,11 +63,7 @@ namespace SolarViewFunctions.Functions
       catch(PreConditionException exception)
       {
         Tracker.TrackWarn($"Request rejected due to {exception.ErrorCount} precondition failure(s), first = {exception.Errors.First().Message}",
-          new
-          {
-            Request = hydrateRequest,
-            Reason = JsonConvert.SerializeObject(exception.Errors, Formatting.None)
-          });
+          new {Reason = JsonConvert.SerializeObject(exception.Errors, Formatting.None)});
 
         return exception.GetPreConditionErrorResponse();
       }
@@ -87,15 +86,21 @@ namespace SolarViewFunctions.Functions
       }
     }
 
-    private static async Task ValidateRequestedSiteAsync(HydratePowerRequest request, CloudTable sitesTable)
+    private static async Task<SiteInfo> GetValidatedRequestedSiteAsync(HydratePowerRequest hydrateRequest, CloudTable sitesTable)
     {
-      var validator = new HydratePowerSiteValidator(sitesTable);
-      var validationResult = await validator.ValidateAsync(request);
+      var siteInfo = await sitesTable.GetItemAsync<SiteInfo>("SiteId", hydrateRequest.SiteId);
+
+      var validator = new HydratePowerSiteValidator(siteInfo);
+
+      // ReSharper disable once MethodHasAsyncOverload
+      var validationResult = validator.Validate(hydrateRequest);
 
       if (!validationResult.IsValid)
       {
         throw new PreConditionException(validationResult.Errors);
       }
+
+      return siteInfo;
     }
   }
 }

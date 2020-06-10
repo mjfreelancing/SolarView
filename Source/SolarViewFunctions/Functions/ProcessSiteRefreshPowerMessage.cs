@@ -24,6 +24,8 @@ namespace SolarViewFunctions.Functions
     {
       try
       {
+        Tracker.AppendDefaultProperties(new { queueMessage.MessageId });
+
         Tracker.TrackEvent(nameof(ProcessSiteRefreshPowerMessage));
 
         var refreshRequest = queueMessage.DeserializeFromMessage<SiteRefreshPowerRequest>();
@@ -32,11 +34,14 @@ namespace SolarViewFunctions.Functions
 
         var instanceId = await orchestrationClient.StartNewAsync(nameof(RefreshSitePowerDataOrchestrator), refreshRequest);
 
-        Tracker.TrackInfo($"Initiated processing of the {nameof(SiteRefreshPowerRequest)} message for SiteId {refreshRequest.SiteId}, InstanceId = {instanceId}");
+        Tracker.TrackInfo(
+          $"Initiated processing of the {nameof(SiteRefreshPowerRequest)} message for SiteId {refreshRequest.SiteId}",
+          new {InstanceId = instanceId}
+        );
       }
       catch (Exception exception)
       {
-        Tracker.TrackException(exception, new { queueMessage.MessageId });
+        Tracker.TrackException(exception);
 
         // allow the message to be re-tried (or deadletter)
         throw;

@@ -10,8 +10,20 @@
     "http": {
       "routePrefix": ""
     },
+    // https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-bindings#host-json
     "durableTask": {
-      "hubName": "SolarViewHub"
+      "hubName": "SolarViewHub",
+      "storageProvider": {
+        //"connectionStringName": "AzureWebJobsStorage",
+        //"controlQueueBatchSize": 32,
+        //"controlQueueBufferThreshold": 256,
+        //"controlQueueVisibilityTimeout": "00:05:00",
+        "maxQueuePollingInterval": "00:00:02"   // default is 00:00:30
+        //"partitionCount": 4,
+        //"trackingStoreConnectionStringName": "TrackingStorage",
+        //"trackingStoreNamePrefix": "DurableTask",
+        //"workItemQueueVisibilityTimeout": "00:05:00"
+      }
     }
   },
   "logging": {

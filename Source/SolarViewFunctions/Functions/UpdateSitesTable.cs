@@ -22,9 +22,11 @@ namespace SolarViewFunctions.Functions
     {
       // allowing exceptions to bubble back to the caller
 
+      Tracker.AppendDefaultProperties(context.GetTrackingProperties());
+      
       var siteInfo = context.GetInput<SiteInfo>();
 
-      Tracker.TrackInfo($"Updating info for SiteId {siteInfo.SiteId}", new { context.InstanceId });
+      Tracker.TrackInfo($"Updating info for SiteId {siteInfo.SiteId}");
 
       await sitesTable.InsertOrReplaceAsync(siteInfo).ConfigureAwait(false);
     }

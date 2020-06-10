@@ -15,7 +15,7 @@ namespace SolarViewFunctions.Functions
     {
       Tracker = tracker.WhenNotNull(nameof(tracker));
 
-      Tracker.SetDefaultProperties(new {FunctionTag = "SolarView"});
+      Tracker.AppendDefaultProperties(new {FunctionTag = "SolarView"});
     }
 
     protected FunctionBase(IRetryOptionsFactory retryOptionsFactory, ITracker tracker)

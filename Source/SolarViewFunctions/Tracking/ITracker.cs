@@ -7,7 +7,7 @@ namespace SolarViewFunctions.Tracking
 
   public interface ITracker
   {
-    void SetDefaultProperties(object properties);
+    void AppendDefaultProperties(object properties);
 
     void TrackDebug(string message, object properties = null);
     void TrackInfo(string message, object properties = null);

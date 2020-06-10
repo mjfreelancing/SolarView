@@ -302,7 +302,8 @@ namespace SolarViewFunctions.Validation
         .WithErrorCode($"{ValidationReason.OutOfBounds}");
     }
 
-    protected IRuleBuilderOptions<TType, TProperty> RegisterIsAllowedValue<TProperty>(Expression<Func<TType, TProperty>> expression, IEnumerable<TProperty> allowedValues)
+    protected IRuleBuilderOptions<TType, TProperty> RegisterIsAllowedValue<TProperty>(Expression<Func<TType, TProperty>> expression,
+      IEnumerable<TProperty> allowedValues)
     {
       return RuleFor(expression)
       .Must(allowedValues.Contains)
@@ -311,21 +312,23 @@ namespace SolarViewFunctions.Validation
       .WithErrorCode($"{ValidationReason.InvalidValue}");
     }
 
-    protected IRuleBuilderOptions<TType, string> RegisterSatisfiesCriteria(Expression<Func<TType, string>> expression, Func<TType, bool> predicate)
+    protected IRuleBuilderOptions<TType, string> RegisterSatisfiesCriteria(Expression<Func<TType, string>> expression, Func<TType, bool> predicate,
+      string criteriaMessage)
     {
       return RuleFor(expression)
         .SatisfiesCriteria(predicate)
         .WithName(ValidationHelpers.GetPropertyName(expression))
-        .WithMessage("The field '{PropertyName}' has a value '{PropertyValue}' that does not meet a required criteria")
+        .WithMessage($"The field '{{PropertyName}}' has an invalid value '{{PropertyValue}}': {criteriaMessage}")
         .WithErrorCode($"{ValidationReason.CriteriaFailure}");
     }
 
-    protected IRuleBuilderOptions<TType, string> RegisterSatisfiesCriteriaAsync(Expression<Func<TType, string>> expression, Func<TType, Task<bool>> predicate)
+    protected IRuleBuilderOptions<TType, string> RegisterSatisfiesCriteriaAsync(Expression<Func<TType, string>> expression, Func<TType, Task<bool>> predicate,
+      string criteriaMessage)
     {
       return RuleFor(expression)
         .SatisfiesCriteriaAsync(predicate)
         .WithName(ValidationHelpers.GetPropertyName(expression))
-        .WithMessage("The field '{PropertyName}' has a value '{PropertyValue}' that does not meet a required criteria")
+        .WithMessage($"The field '{{PropertyName}}' has an invalid value '{{PropertyValue}}': {criteriaMessage}")
         .WithErrorCode($"{ValidationReason.CriteriaFailure}");
     }
 
@@ -340,7 +343,8 @@ namespace SolarViewFunctions.Validation
         .WithErrorCode($"{ValidationReason.OutOfBounds}");
     }
 
-    protected IRuleBuilderOptions<TType, TProperty> RegisterIsWithinBounds<TProperty, TAsType>(Expression<Func<TType, TProperty>> expression, Func<TProperty, TAsType> converter,
+    protected IRuleBuilderOptions<TType, TProperty> RegisterIsWithinBounds<TProperty, TAsType>(Expression<Func<TType, TProperty>> expression,
+      Func<TProperty, TAsType> converter,
       TAsType lowerBound, bool lowerInclusive, TAsType upperBound, bool upperInclusive)
       where TAsType : struct, IComparable<TAsType>, IComparable
     {

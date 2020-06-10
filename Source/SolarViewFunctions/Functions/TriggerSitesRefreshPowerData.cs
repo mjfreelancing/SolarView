@@ -33,7 +33,7 @@ namespace SolarViewFunctions.Functions
         Tracker.TrackEvent(nameof(TriggerSitesRefreshPowerData), new {RefreshTimeUtc = currentTimeUtc});
 
         var requests = SitesHelpers
-          .GetSites(sitesTable, site => currentTimeUtc >= site.NextRefreshDueUtc())
+          .GetSites(sitesTable, site => currentTimeUtc >= site.GetNextRefreshDueUtc())
           .Select(site =>
           {
             var requestTimeUtc = currentTimeUtc.AddSeconds(-currentTimeUtc.Second);

@@ -29,27 +29,25 @@ namespace SolarViewFunctions.Functions
       try
       {
         MakeTrackerReplaySafe(context);
+        Tracker.AppendDefaultProperties(context.GetTrackingProperties());
 
         var currentTimeUtc = context.CurrentUtcDateTime;
 
-        Tracker.TrackEvent(nameof(AggregatePowerData), new {context.InstanceId, RefreshTimeUtc = currentTimeUtc});
+        Tracker.TrackEvent(nameof(AggregatePowerData));
 
-        var requests = GetDueSiteAggregationRequests(sitesTable, currentTimeUtc);
+        var requests = GetSitesDueForAggregationRequests(sitesTable, currentTimeUtc);
 
         if (requests.Count == 0)
         {
-          Tracker.TrackInfo("No data aggregation to perform", new { context.InstanceId, RefreshTimeUtc = currentTimeUtc });
+          Tracker.TrackInfo("No data aggregation to perform");
           return;
         }
 
         var tasks = requests.Select(request =>
         {
-          Tracker.TrackInfo(
-            $"Performing data aggregation for SiteId {request.SiteId}, DateTime {request.DateTime}",
-            new { context.InstanceId, RefreshTimeUtc = currentTimeUtc }
-          );
+          Tracker.TrackInfo($"Initiating data aggregation for SiteId {request.SiteId} between {request.StartDate} and {request.EndDate}");
 
-          return DoAggregations(context, request);
+          return context.CallSubOrchestratorWithRetryAsync(nameof(AggregateSitePowerData), GetDefaultRetryOptions(), request);
         });
 
         await Task.WhenAll(tasks);
@@ -58,40 +56,31 @@ namespace SolarViewFunctions.Functions
       }
       catch (Exception exception)
       {
-        Tracker.TrackException(exception.UnwrapFunctionException(), new {context.InstanceId});
+        Tracker.TrackException(exception.UnwrapFunctionException());
 
         // todo: send a message to send an email
       }
     }
 
-    private static IReadOnlyList<SiteRefreshAggregationRequest> GetDueSiteAggregationRequests(CloudTable sitesTable, DateTime currentTimeUtc)
+    private static IReadOnlyList<SiteRefreshAggregationRequest> GetSitesDueForAggregationRequests(CloudTable sitesTable, DateTime currentTimeUtc)
     {
       var sitesDue = SitesHelpers.GetSites(
         sitesTable,
         site => site.UtcToLocalTime(currentTimeUtc).Hour == Constants.RefreshHour.Aggregation
       );
 
+      // the request date will be the day prior to the current time (to ensure only full days are processed)
       return (
         from site in sitesDue
-          let requestTimeUtc = currentTimeUtc.AddSeconds(-currentTimeUtc.Second)
-          select new SiteRefreshAggregationRequest
-          {
-            SiteId = site.SiteId,
-            DateTime = site.UtcToLocalTime(requestTimeUtc).GetSolarDateTimeString()
-          }
-        ).AsReadOnlyList();
-    }
-
-    private async Task DoAggregations(IDurableOrchestrationContext context, SiteRefreshAggregationRequest request)
-    {
-      Tracker.TrackInfo($"Requesting to aggregate weekly data for SiteId {request.SiteId}");
-      await context.CallActivityWithRetryAsync(nameof(AggregatePowerWeekly), GetDefaultRetryOptions(), request);
-
-      Tracker.TrackInfo($"Requesting to aggregate monthly data for SiteId {request.SiteId}");
-      await context.CallActivityWithRetryAsync(nameof(AggregatePowerMonthly), GetDefaultRetryOptions(), request);
-
-      Tracker.TrackInfo($"Requesting to aggregate yearly data for SiteId {request.SiteId}");
-      await context.CallActivityWithRetryAsync(nameof(AggregatePowerYearly), GetDefaultRetryOptions(), request);
+        let nextAggregation = site.GetNextAggregationPeriod(site.UtcToLocalTime(currentTimeUtc).Date)
+        where nextAggregation.EndDate > nextAggregation.StartDate
+        select new SiteRefreshAggregationRequest
+        {
+          SiteId = site.SiteId,
+          StartDate = nextAggregation.StartDate.GetSolarDateString(),
+          EndDate = nextAggregation.EndDate.GetSolarDateString()
+        }
+      ).AsReadOnlyList();
     }
   }
 }

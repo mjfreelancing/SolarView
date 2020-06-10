@@ -6,11 +6,11 @@ namespace SolarViewFunctions.Extensions
 {
   public static class SiteInfoExtensions
   {
-    public static (DateTime startTime, DateTime endTime) GetNextRefreshPeriod(this SiteInfo siteInfo, DateTime siteLocalTime)
+    public static (DateTime StartTime, DateTime EndTime) GetNextRefreshPeriod(this SiteInfo siteInfo, DateTime siteLocalTime)
     {
-      var startDateTime = siteInfo.LastRefreshEnd.IsNullOrEmpty()
-        ? siteInfo.InstallDate.ParseSolarDateTime()
-        : siteInfo.LastRefreshEnd.ParseSolarDateTime();
+      var startDateTime = siteInfo.LastRefreshDateTime.IsNullOrEmpty()
+        ? siteInfo.StartDate.ParseSolarDate()
+        : siteInfo.LastRefreshDateTime.ParseSolarDateTime();
 
       // floor the current time to the minute 
       var endDateTime = siteLocalTime.AddSeconds(-siteLocalTime.Second);
@@ -18,33 +18,30 @@ namespace SolarViewFunctions.Extensions
       return (startDateTime, endDateTime);
     }
 
-    public static DateTime NextRefreshDueUtc(this SiteInfo siteInfo)
+    public static DateTime GetNextRefreshDueUtc(this SiteInfo siteInfo)
     {
-      if (siteInfo.NextRefreshDue.IsNullOrEmpty())
+      if (siteInfo.LastRefreshDateTime.IsNullOrEmpty())
       {
         return DateTime.MinValue;
       }
 
-      var nextRefreshTime = siteInfo.NextRefreshDue.ParseSolarDateTime();
+      var nextRefreshTime = siteInfo.LastRefreshDateTime.ParseSolarDateTime().AddHours(1);
       var tzi = TimeZoneInfo.FindSystemTimeZoneById(siteInfo.TimeZoneId);
 
       return TimeZoneInfo.ConvertTimeToUtc(nextRefreshTime, tzi);
     }
 
-    public static void UpdateRefreshTimes(this SiteInfo siteInfo, string lastRefreshLocalTime)
+    // only sends back the date portion - time is irrelevant because the full day is processed
+    public static (DateTime StartDate, DateTime EndDate) GetNextAggregationPeriod(this SiteInfo siteInfo, DateTime siteLocalTime)
     {
-      //siteInfo.LastRefreshEnd = FormatTimeString(lastRefreshLocalTime);
-      siteInfo.LastRefreshEnd = lastRefreshLocalTime;
+      var startDate = siteInfo.LastAggregationDate.IsNullOrEmpty()
+        ? siteInfo.StartDate.ParseSolarDate().Date
+        : siteInfo.LastAggregationDate.ParseSolarDate();
 
-      var dateTime = lastRefreshLocalTime.ParseSolarDateTime();
+      // aggregating until the end of the previous day
+      var endDate = siteLocalTime.Date.AddDays(-1);
 
-      // restrict to hourly boundaries
-      var nextDateTime = new DateTime(
-          dateTime.Year, dateTime.Month, dateTime.Day,
-          dateTime.Hour, 0, 0)
-        .AddHours(1);
-
-      siteInfo.NextRefreshDue = nextDateTime.GetSolarDateTimeString();
+      return (startDate.Date, endDate);
     }
 
     public static DateTime UtcToLocalTime(this SiteInfo siteInfo, DateTime utcTime)

@@ -18,47 +18,43 @@ namespace SolarViewFunctions.Tracking
       _telemetryClient = telemetryClient.WhenNotNull(nameof(telemetryClient));
     }
 
-    public void SetDefaultProperties(object properties)
+    public void AppendDefaultProperties(object properties)
     {
-      if(_defaultProperties != null)
-      {
-        throw new InvalidOperationException($"Cannot call {nameof(SetDefaultProperties)}() more than once");
-      }
-
-      _defaultProperties = GetProperties(properties);
+      // merges 'properties' into '_defaultProperties' and re-assigns
+      _defaultProperties = GetCombinedProperties(properties);
     }
 
     public void TrackDebug(string message, object properties = null)
     {
-      _telemetryClient.TrackTrace(message, SeverityLevel.Verbose, GetProperties(properties));
+      _telemetryClient.TrackTrace(message, SeverityLevel.Verbose, GetCombinedProperties(properties));
     }
 
     public void TrackInfo(string message, object properties = null)
     {
-      _telemetryClient.TrackTrace(message, SeverityLevel.Information, GetProperties(properties));
+      _telemetryClient.TrackTrace(message, SeverityLevel.Information, GetCombinedProperties(properties));
     }
 
     public void TrackWarn(string message, object properties = null)
     {
-      _telemetryClient.TrackTrace(message, SeverityLevel.Warning, GetProperties(properties));
+      _telemetryClient.TrackTrace(message, SeverityLevel.Warning, GetCombinedProperties(properties));
     }
 
     public void TrackError(string message, object properties = null)
     {
-      _telemetryClient.TrackTrace(message, SeverityLevel.Error, GetProperties(properties));
+      _telemetryClient.TrackTrace(message, SeverityLevel.Error, GetCombinedProperties(properties));
     }
 
     public void TrackEvent(string message, object properties = null, object metrics = null)
     {
-      _telemetryClient.TrackEvent(message, GetProperties(properties), GetMetrics(metrics));
+      _telemetryClient.TrackEvent(message, GetCombinedProperties(properties), GetMetrics(metrics));
     }
 
     public void TrackException(Exception exception, object properties = null, object metrics = null)
     {
-      _telemetryClient.TrackException(exception, GetProperties(properties), GetMetrics(metrics));
+      _telemetryClient.TrackException(exception, GetCombinedProperties(properties), GetMetrics(metrics));
     }
 
-    private IDictionary<string, string> GetProperties(object properties)
+    private IDictionary<string, string> GetCombinedProperties(object properties)
     {
       if (properties == null)
       {
@@ -74,16 +70,21 @@ namespace SolarViewFunctions.Tracking
 
       if (_defaultProperties != null)
       {
-        foreach (var (key, value) in _defaultProperties)
-        {
-          if (!objectProperties.ContainsKey(key))
-          {
-            objectProperties.Add(key, value);
-          }
-        }
+        MergeProperties(_defaultProperties, objectProperties);
       }
 
       return objectProperties;
+    }
+
+    private static void MergeProperties(IDictionary<string, string> source, IDictionary<string, string> destination)
+    {
+      foreach (var (key, value) in source)
+      {
+        if (!destination.ContainsKey(key))
+        {
+          destination.Add(key, value);
+        }
+      }
     }
 
     private static IDictionary<string, double> GetMetrics(object metrics)

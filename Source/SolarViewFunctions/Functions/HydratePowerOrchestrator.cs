@@ -31,21 +31,20 @@ namespace SolarViewFunctions.Functions
     public async Task<PowerUpdatedStatus> Run([OrchestrationTrigger] IDurableOrchestrationContext context)
     {
       MakeTrackerReplaySafe(context);
+      Tracker.AppendDefaultProperties(context.GetTrackingProperties());
 
-      var powerQuery = context.GetInput<TriggeredPowerQuery>();
+      var triggeredPowerQuery = context.GetInput<TriggeredPowerQuery>();
 
       try
       {
-        Tracker.TrackInfo(
-          $"Preparing to orchestrate power refresh for SiteId {powerQuery.SiteId} between {powerQuery.StartDateTime} and {powerQuery.EndDateTime}",
-          new { context.InstanceId }
-        );
+        Tracker.TrackInfo($"Preparing to orchestrate power refresh for SiteId {triggeredPowerQuery.SiteId} between " +
+                          $"{triggeredPowerQuery.StartDateTime} and {triggeredPowerQuery.EndDateTime}");
 
-        await NotifyPowerUpdated(context, PowerUpdatedStatus.Started, powerQuery);
+        await NotifyPowerUpdated(context, PowerUpdatedStatus.Started, triggeredPowerQuery);
 
         // The solarEdge API can only process, at most, 1 month of data at a time
         var dateRanges = SolarViewHelpers
-          .GetMonthlyDateRanges(powerQuery.StartDateTime.ParseSolarDateTime(), powerQuery.EndDateTime.ParseSolarDateTime())
+          .GetMonthlyDateRanges(triggeredPowerQuery.StartDateTime.ParseSolarDateTime(), triggeredPowerQuery.EndDateTime.ParseSolarDateTime())
           .AsReadOnlyList();
 
         IEnumerable<Task> GetPowerCollectionTasks()
@@ -53,14 +52,12 @@ namespace SolarViewFunctions.Functions
           foreach (var dateRange in dateRanges)
           {
             // (potentially) prepare a new request for a smaller date range than the original request
-            var dateRangeRequest = _mapper.Map<PowerQuery, PowerQuery>(powerQuery);
+            var dateRangeRequest = _mapper.Map<PowerQuery, PowerQuery>(triggeredPowerQuery);
             dateRangeRequest.StartDateTime = dateRange.StartDateTime.GetSolarDateTimeString();
             dateRangeRequest.EndDateTime = dateRange.EndDateTime.GetSolarDateTimeString();
 
-            Tracker.TrackInfo(
-              $"Sub-orchestrating power refresh for SiteId {powerQuery.SiteId} between {dateRangeRequest.StartDateTime} and {dateRangeRequest.EndDateTime}",
-              new { context.InstanceId }
-            );
+            Tracker.TrackInfo($"Sub-orchestrating power refresh for SiteId {triggeredPowerQuery.SiteId} between {dateRangeRequest.StartDateTime} " +
+                              $"and {dateRangeRequest.EndDateTime}");
 
             // sub-orchestrate to limit the date ranges processed
             yield return context.CallSubOrchestratorWithRetryAsync(
@@ -84,33 +81,33 @@ namespace SolarViewFunctions.Functions
 
         await Task.WhenAll(tasks);
 
-        Tracker.TrackInfo($"All power data refreshed for SiteId {powerQuery.SiteId}", new { context.InstanceId });
+        Tracker.TrackInfo($"All power data refreshed for SiteId {triggeredPowerQuery.SiteId}");
 
-        return await NotifyPowerUpdated(context, PowerUpdatedStatus.Completed, powerQuery);
+        return await NotifyPowerUpdated(context, PowerUpdatedStatus.Completed, triggeredPowerQuery);
       }
       catch (Exception exception)
       {
-        return await HandleException(exception.UnwrapFunctionException(), context, powerQuery);
+        return await HandleException(exception.UnwrapFunctionException(), context, triggeredPowerQuery);
       }
     }
 
-    private Task<PowerUpdatedStatus> NotifyPowerUpdated(IDurableOrchestrationContext context, PowerUpdatedStatus status, TriggeredPowerQuery powerQuery)
+    private Task<PowerUpdatedStatus> NotifyPowerUpdated(IDurableOrchestrationContext context, PowerUpdatedStatus status, TriggeredPowerQuery triggeredPowerQuery)
     {
-      var message = _mapper.Map<PowerUpdatedMessage>(powerQuery);
+      var message = _mapper.Map<PowerUpdatedMessage>(triggeredPowerQuery);
       message.Status = status;
 
       Tracker.TrackInfo($"Sending '{status}' status notification for SiteId {message.SiteId}, Trigger {message.Trigger}");
 
-      return context.CallActivityWithRetryAsync<PowerUpdatedStatus>(nameof(NotifyPowerUpdateStatusMessage), GetDefaultRetryOptions(), message);
+      return context.CallActivityWithRetryAsync<PowerUpdatedStatus>(nameof(NotifyPowerUpdatedStatusMessage), GetDefaultRetryOptions(), message);
     }
 
-    private async Task<PowerUpdatedStatus> HandleException(Exception exception, IDurableOrchestrationContext context, TriggeredPowerQuery powerQuery)
+    private async Task<PowerUpdatedStatus> HandleException(Exception exception, IDurableOrchestrationContext context, TriggeredPowerQuery triggeredPowerQuery)
     {
-      Tracker.TrackException(exception, new { context.InstanceId });
+      Tracker.TrackException(exception);
 
       // todo: send a message to send an email
 
-      return await NotifyPowerUpdated(context, PowerUpdatedStatus.Error, powerQuery);
+      return await NotifyPowerUpdated(context, PowerUpdatedStatus.Error, triggeredPowerQuery);
     }
   }
 }

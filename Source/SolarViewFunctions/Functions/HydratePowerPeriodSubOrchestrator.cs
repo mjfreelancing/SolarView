@@ -2,6 +2,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Exceptions;
+using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Factories;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.SolarEdge;
@@ -26,12 +27,13 @@ namespace SolarViewFunctions.Functions
       // allowing exceptions to bubble back to the caller
 
       MakeTrackerReplaySafe(context);
+      Tracker.AppendDefaultProperties(context.GetTrackingProperties());
 
       var powerQuery = context.GetInput<PowerQuery>();
 
       Tracker.TrackInfo(
-        $"Received a request to orchestrate a power refresh for SiteId {powerQuery.SiteId} between {powerQuery.StartDateTime} and {powerQuery.EndDateTime}",
-        new {context.InstanceId}
+        $"Received a request to orchestrate a power refresh for SiteId {powerQuery.SiteId} " +
+        $"between {powerQuery.StartDateTime} and {powerQuery.EndDateTime}"
       );
 
       // need to get the site API key

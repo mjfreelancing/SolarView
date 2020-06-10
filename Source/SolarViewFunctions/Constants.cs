@@ -19,6 +19,9 @@
     {
       public const string Sites = "Sites";
       public const string Power = "Power";
+      public const string PowerWeekly = "PowerWeekly";
+      public const string PowerMonthly = "PowerMonthly";
+      public const string PowerYearly = "PowerYearly";
       public const string PowerUpdateHistory = "PowerUpdateHistory";
     }
 
@@ -37,8 +40,8 @@
 
     public static class RefreshHour
     {
-      public const int SummaryEmail = 1;
-      public const int Aggregation = 2;
+      public const int SummaryEmail = 1;    // 1am each day
+      public const int Aggregation = 2;     // 2am each day
     }
 
     public static class Orchestration
@@ -50,7 +53,13 @@
     {
       // Cheat sheet: https://arminreiter.com/2017/02/azure-functions-time-trigger-cron-cheat-sheet/
       public const string CronScheduleEveryHour = "0 0 */1 * * *";
-      public const string CronScheduleEveryMinute = "0 */1 * * * *";      // (for local testing)
+      public const string CronScheduleEveryMinute = "0 */1 * * * *";        // (for local testing)
+      public const string CronScheduleEveryFiveMinutes = "0 */5 * * * *";   // (for local testing)
+    }
+
+    public static class AggregationOptions
+    {
+      public const string CultureName = "en-US";
     }
   }
 }

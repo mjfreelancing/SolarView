@@ -43,7 +43,7 @@ namespace SolarViewFunctions.SolarEdge
         return SolarDataResponse.Error(response.StatusCode);
       }
 
-      tracker.TrackInfo($"SolarEdge response status = {response.StatusCode}", new { context.InstanceId });
+      tracker.TrackInfo($"SolarEdge response status = {response.StatusCode}");
 
       var solarData = JsonConvert.DeserializeObject<SolarData>(response.Content);
 

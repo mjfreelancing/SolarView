@@ -33,8 +33,11 @@ namespace SolarViewFunctions.Functions
     {
       try
       {
+        Tracker.AppendDefaultProperties(new { queueMessage.MessageId });
+
         var emailRequest = queueMessage.DeserializeFromMessage<SiteSummaryEmailRequest>();
 
+        // the date will be for the previous day
         Tracker.TrackEvent(nameof(ProcessPowerSummaryEmailMessage), new { emailRequest.SiteId, Date = emailRequest.LocalDate });
 
         var siteInfo = await sitesTable.GetItemAsync<SiteInfo>("SiteId", emailRequest.SiteId).ConfigureAwait(false);
@@ -60,7 +63,7 @@ namespace SolarViewFunctions.Functions
 
           foreach (var item in items)
           {
-            var line = $"{item.StartDate} - {item.EndDate} : {item.Status}";
+            var line = $"{item.StartDateTime} - {item.EndDateTime} : {item.Status}";
             content.AppendLine(line);
           }
 
@@ -80,7 +83,7 @@ namespace SolarViewFunctions.Functions
       }
       catch (Exception exception)
       {
-        Tracker.TrackException(exception, new { queueMessage.MessageId });
+        Tracker.TrackException(exception);
 
         // allow the message to be re-tried (or deadletter)
         throw;

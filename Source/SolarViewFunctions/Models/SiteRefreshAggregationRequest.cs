@@ -3,6 +3,7 @@ namespace SolarViewFunctions.Models
   public class SiteRefreshAggregationRequest
   {
     public string SiteId { get; set; }
-    public string DateTime { get; set; }      // assumed to be site local time
+    public string StartDate { get; set; }     // assumed to be site local date (no time)
+    public string EndDate { get; set; }
   }
 }

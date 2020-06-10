@@ -7,12 +7,8 @@
 
 * Create a proper email template
 
-* Implement daily aggregations
-
-* Implement weekly aggregations
-
 * Implement monthly aggregations
 
 * Implement yearly aggregations
 
-* handle unknown site via manual request - assume internal will never fail
+* repository pattern to stop using CloudTable directly

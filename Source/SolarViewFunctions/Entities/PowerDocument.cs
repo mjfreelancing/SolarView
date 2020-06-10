@@ -1,7 +1,6 @@
 ﻿using AllOverIt.Extensions;
 using AllOverIt.Helpers;
 using SolarViewFunctions.Models;
-using System;
 using System.Collections.Generic;
 
 namespace SolarViewFunctions.Entities
@@ -9,9 +8,9 @@ namespace SolarViewFunctions.Entities
   // energy container of the solar database
   public class PowerDocument
   {
-    public string id => $"{Site}_{Date:yyyyMMdd}";
+    public string id { get; set; }
     public string Site { get; set; }
-    public DateTime Date { get; set; }
+    public string Date { get; set; }
     public IEnumerable<SolarViewMeter> Meters { get; set; }
 
     // required by cosmos (even when upserting)
@@ -26,6 +25,8 @@ namespace SolarViewFunctions.Entities
 
       Date = solarDay.Date;
       Meters = solarDay.Meters.AsReadOnlyList();
+
+      id = $"{Site}_{Date.Replace("-", string.Empty)}";
     }
   }
 }

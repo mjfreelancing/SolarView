@@ -2,6 +2,7 @@ using Microsoft.Azure.ServiceBus.Core;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.ServiceBus;
+using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Helpers;
 using SolarViewFunctions.Models.Messages;
 using SolarViewFunctions.Tracking;
@@ -9,27 +10,29 @@ using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
 {
-  public class NotifyPowerUpdateStatusMessage : FunctionBase
+  public class NotifyPowerUpdatedStatusMessage : FunctionBase
   {
-    public NotifyPowerUpdateStatusMessage(ITracker tracker)
+    public NotifyPowerUpdatedStatusMessage(ITracker tracker)
       : base(tracker)
     {
     }
 
-    [FunctionName(nameof(NotifyPowerUpdateStatusMessage))]
+    [FunctionName(nameof(NotifyPowerUpdatedStatusMessage))]
     public async Task<PowerUpdatedStatus> Run(
       [ActivityTrigger] IDurableActivityContext context,
       [ServiceBus(Constants.Queues.PowerUpdated, EntityType.Queue, Connection = Constants.ConnectionStringNames.SolarViewServiceBus)] MessageSender messagesQueue)
     {
       // allowing exceptions to bubble back to the caller
 
+      Tracker.AppendDefaultProperties(context.GetTrackingProperties());
+      
       var updatedMessage = context.GetInput<PowerUpdatedMessage>();
 
-      Tracker.TrackEvent(nameof(NotifyPowerUpdateStatusMessage), new { context.InstanceId, updatedMessage.Status });
+      Tracker.TrackEvent(nameof(NotifyPowerUpdatedStatusMessage), updatedMessage);
 
-      var queueMessage = MessageHelpers.SerializeToMessage(updatedMessage, new { updatedMessage.Status });
+      var queueMessage = MessageHelpers.SerializeToMessage(updatedMessage);
 
-      Tracker.TrackInfo($"Sending a {nameof(NotifyPowerUpdateStatusMessage)} for SiteId {updatedMessage.SiteId}, Status {updatedMessage.Status}");
+      Tracker.TrackInfo($"Sending a {nameof(NotifyPowerUpdatedStatusMessage)} for SiteId {updatedMessage.SiteId}, Status {updatedMessage.Status}");
 
       await messagesQueue.SendAsync(queueMessage).ConfigureAwait(false);
 

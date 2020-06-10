@@ -27,9 +27,9 @@ namespace SolarViewFunctions.Functions
     {
       try
       {
-        Tracker.TrackEvent(nameof(TriggerSendPowerSummaryEmail));
-
         var currentTimeUtc = DateTime.UtcNow;
+
+        Tracker.TrackEvent(nameof(TriggerSendPowerSummaryEmail), new { RefreshTimeUtc = currentTimeUtc });
 
         // determine what sites are due for a power summary email
         var sites = SitesHelpers.GetSites(sitesTable, site =>
@@ -52,7 +52,7 @@ namespace SolarViewFunctions.Functions
           .Select(site => new SiteSummaryEmailRequest
           {
             SiteId = site.SiteId,
-            LocalDate = $"{site.UtcToLocalTime(currentTimeUtc).Date.AddDays(-1).GetSolarDateString()}"
+            LocalDate = $"{site.UtcToLocalTime(currentTimeUtc).Date.AddDays(-1).GetSolarDateString()}"    // only sending yyyy-MM-dd
           });
 
         // queue of messages

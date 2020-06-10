@@ -1,3 +1,4 @@
+using AllOverIt.Extensions;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SolarViewFunctions.Entities;
@@ -23,6 +24,7 @@ namespace SolarViewFunctions.Functions
       try
       {
         MakeTrackerReplaySafe(context);
+        Tracker.AppendDefaultProperties(context.GetTrackingProperties());
 
         var refreshRequest = context.GetInput<SiteRefreshPowerRequest>();
         var siteLocalTime = refreshRequest.DateTime.ParseSolarDateTime();
@@ -32,13 +34,15 @@ namespace SolarViewFunctions.Functions
         var siteInfo = await context.CallActivityWithRetryAsync<SiteInfo>(nameof(GetSiteInfo), GetDefaultRetryOptions(), refreshRequest.SiteId);
 
         // next refresh time is in the site's timezone
-        Tracker.TrackInfo($"Received info for SiteId {refreshRequest.SiteId}, next refresh due {siteInfo.NextRefreshDue}");
+        Tracker.TrackInfo(siteInfo.LastRefreshDateTime.IsNullOrEmpty()
+          ? $"Received info for SiteId {refreshRequest.SiteId}, pending initial refresh"
+          : $"Received info for SiteId {refreshRequest.SiteId}, last refresh was {siteInfo.LastRefreshDateTime}");
 
         await RefreshSite(context, siteInfo, siteLocalTime);
       }
       catch (Exception exception)
       {
-        Tracker.TrackException(exception.UnwrapFunctionException(), new { context.InstanceId });
+        Tracker.TrackException(exception.UnwrapFunctionException());
 
         // todo: send a message to send an email
       }
@@ -64,36 +68,33 @@ namespace SolarViewFunctions.Functions
         $"{startDateTime.GetSolarDateTimeString()} and {endDateTime.GetSolarDateTimeString()}"
       );
 
-      var powerQuery = new TriggeredPowerQuery
+      var triggeredPowerQuery = new TriggeredPowerQuery(siteInfo.UtcToLocalTime(context.CurrentUtcDateTime), RefreshTriggerType.Timed)
       {
-        Trigger = RefreshTriggerType.Timed,
         SiteId = siteInfo.SiteId,
         StartDateTime = startDateTime.GetSolarDateTimeString(),
         EndDateTime = endDateTime.GetSolarDateTimeString()
       };
 
-      await ProcessSitePowerQuery(context, powerQuery);
-      await UpdateSitesRefreshTimes(context, siteInfo, powerQuery);
+      await ProcessSitePowerQuery(context, triggeredPowerQuery);
+      await UpdateSiteLastRefreshTime(context, siteInfo, triggeredPowerQuery);
     }
 
-    private Task ProcessSitePowerQuery(IDurableOrchestrationContext context, TriggeredPowerQuery powerQuery)
+    private Task ProcessSitePowerQuery(IDurableOrchestrationContext context, TriggeredPowerQuery triggeredPowerQuery)
     {
       Tracker.TrackInfo(
-        $"Initiating power hydration orchestration for SiteId {powerQuery.SiteId} is between " +
-        $"{powerQuery.StartDateTime} and {powerQuery.EndDateTime}"
+        $"Initiating power hydration orchestration for SiteId {triggeredPowerQuery.SiteId} is between " +
+        $"{triggeredPowerQuery.StartDateTime} and {triggeredPowerQuery.EndDateTime}"
       );
 
       // fire off a request to (potentially) split the request into multiple date ranges
-      return context.CallSubOrchestratorWithRetryAsync(nameof(HydratePowerOrchestrator), GetDefaultRetryOptions(), powerQuery);
+      return context.CallSubOrchestratorWithRetryAsync(nameof(HydratePowerOrchestrator), GetDefaultRetryOptions(), triggeredPowerQuery);
     }
 
-    private Task UpdateSitesRefreshTimes(IDurableOrchestrationContext context, SiteInfo siteInfo, PowerQuery powerQuery)
+    private Task UpdateSiteLastRefreshTime(IDurableOrchestrationContext context, SiteInfo siteInfo, PowerQuery powerQuery)
     {
       Tracker.TrackInfo($"Initiating a request to update SiteId {powerQuery.SiteId} with a last refresh date of {powerQuery.EndDateTime}");
 
-      // update the refresh timestamps for this site - will only occur of there are no errors.
-      // if there is an error then the request will be re-processed when the trigger is next fired.
-      siteInfo.UpdateRefreshTimes(powerQuery.EndDateTime);
+      siteInfo.LastRefreshDateTime = powerQuery.EndDateTime;
       return context.CallActivityWithRetryAsync(nameof(UpdateSitesTable), GetDefaultRetryOptions(), siteInfo);
     }
   }

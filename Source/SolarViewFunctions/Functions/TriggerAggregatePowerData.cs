@@ -23,10 +23,10 @@ namespace SolarViewFunctions.Functions
       {
         Tracker.TrackEvent(nameof(TriggerAggregatePowerData));
 
-        // sequentially performs daily weekly, monthly, yearly aggregation
+        // sequentially performs weekly, monthly, yearly aggregation
         var instanceId = await orchestrationClient.StartNewAsync(nameof(AggregatePowerData));
 
-        Tracker.TrackInfo($"Started {nameof(AggregatePowerData)}, InstanceId = {instanceId}");
+        Tracker.TrackInfo($"Started {nameof(AggregatePowerData)}", new {InstanceId = instanceId});
       }
       catch (Exception exception)
       {

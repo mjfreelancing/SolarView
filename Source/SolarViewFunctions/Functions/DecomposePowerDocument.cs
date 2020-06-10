@@ -22,20 +22,21 @@ namespace SolarViewFunctions.Functions
       try
       {
         MakeTrackerReplaySafe(context);
+        Tracker.AppendDefaultProperties(context.GetTrackingProperties());
 
         var document = context.GetInput<Document>();
 
-        Tracker.TrackEvent(nameof(DecomposePowerDocument), new { DocumentId = document.Id });
+        Tracker.TrackEvent(nameof(DecomposePowerDocument), new {DocumentId = document.Id});
 
         PowerDocument powerDocument = (dynamic)document;
 
-        Tracker.TrackInfo($"Processing decomposition of document {document.Id}", new { context.InstanceId });
+        Tracker.TrackInfo($"Processing decomposition of document {document.Id}");
 
         await context.CallActivityAsync(nameof(PersistPowerDocumentAsMeterPoints), powerDocument);
       }
       catch (Exception exception)
       {
-        Tracker.TrackException(exception.UnwrapFunctionException(), new { context.InstanceId });
+        Tracker.TrackException(exception.UnwrapFunctionException());
 
         // todo: send a message to send an email
       }
