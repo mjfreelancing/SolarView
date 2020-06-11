@@ -1,12 +1,15 @@
 using AllOverIt.Extensions;
+using AllOverIt.Helpers;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.WebJobs;
 using SendGrid.Helpers.Mail;
-using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.Models.Messages;
+using SolarViewFunctions.Repository;
+using SolarViewFunctions.Repository.PowerUpdateHistory;
+using SolarViewFunctions.Repository.Sites;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Linq;
@@ -19,16 +22,19 @@ namespace SolarViewFunctions.Functions
 
   public class ProcessPowerSummaryEmailMessage : FunctionBase
   {
-    public ProcessPowerSummaryEmailMessage(ITracker tracker)
+    private readonly ISolarViewRepositoryFactory _repositoryFactory;
+
+    public ProcessPowerSummaryEmailMessage(ITracker tracker, ISolarViewRepositoryFactory repositoryFactory)
       : base(tracker)
     {
+      _repositoryFactory = repositoryFactory.WhenNotNull(nameof(repositoryFactory));
     }
 
     [FunctionName(nameof(ProcessPowerSummaryEmailMessage))]
     public async Task Run(
       [ServiceBusTrigger(Constants.Queues.SummaryEmail, Connection = Constants.ConnectionStringNames.SolarViewServiceBus)] Message queueMessage,
-      [Table(Constants.Table.Sites)] CloudTable sitesTable,
-      [Table(Constants.Table.PowerUpdateHistory)] CloudTable historyTable,
+      [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable,
+      [Table(Constants.Table.PowerUpdateHistory, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable updateHistoryTable,
       [SendGrid(ApiKey = "SolarViewSendGridApiKey")] IAsyncCollector<SendGridMessage> sendGridCollector)
     {
       try
@@ -40,12 +46,14 @@ namespace SolarViewFunctions.Functions
         // the date will be for the previous day
         Tracker.TrackEvent(nameof(ProcessPowerSummaryEmailMessage), new { emailRequest.SiteId, Date = emailRequest.LocalDate });
 
-        var siteInfo = await sitesTable.GetItemAsync<SiteInfo>("SiteId", emailRequest.SiteId).ConfigureAwait(false);
+        var sitesRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
+        var updateHistoryRepository = _repositoryFactory.Create<IPowerUpdateHistoryRepository>(updateHistoryTable);
 
-        var partitionKey = $"{emailRequest.SiteId}_{emailRequest.LocalDate}";
+        var siteInfo = await sitesRepository.GetSiteAsync(emailRequest.SiteId);
 
-        var historyGroups = historyTable
-          .GetPartitionItems<PowerUpdateEntity>(partitionKey)
+        var historyItems = await updateHistoryRepository.GetPowerUpdatesAsyncEnumerable(emailRequest.SiteId, emailRequest.LocalDate.ParseSolarDate());
+
+        var historyGroups = historyItems
           .Where(item => item.Status != $"{PowerUpdatedStatus.Started}")
           .GroupBy(item => item.Trigger);
 

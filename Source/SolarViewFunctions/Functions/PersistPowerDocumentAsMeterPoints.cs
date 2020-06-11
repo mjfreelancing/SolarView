@@ -1,9 +1,12 @@
 using AllOverIt.Extensions;
+using AllOverIt.Helpers;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
+using SolarViewFunctions.Repository;
+using SolarViewFunctions.Repository.Power;
 using SolarViewFunctions.Tracking;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,15 +15,18 @@ namespace SolarViewFunctions.Functions
 {
   public class PersistPowerDocumentAsMeterPoints : FunctionBase
   {
-    public PersistPowerDocumentAsMeterPoints(ITracker tracker)
+    private readonly ISolarViewRepositoryFactory _repositoryFactory;
+
+    public PersistPowerDocumentAsMeterPoints(ITracker tracker, ISolarViewRepositoryFactory repositoryFactory)
       : base(tracker)
     {
+      _repositoryFactory = repositoryFactory.WhenNotNull(nameof(repositoryFactory));
     }
 
     [FunctionName(nameof(PersistPowerDocumentAsMeterPoints))]
     public async Task Run(
       [ActivityTrigger] IDurableActivityContext context,
-      [Table(Constants.Table.Power)] CloudTable powerTable)
+      [Table(Constants.Table.Power, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable powerTable)
     {
       // allowing exceptions to bubble back to the caller
 
@@ -36,7 +42,8 @@ namespace SolarViewFunctions.Functions
 
       Tracker.TrackInfo($"Persisting {entities.Count} meter points from document {powerDocument.id}");
 
-      await powerTable.BatchInsertOrReplaceAsync(entities).ConfigureAwait(false);
+      var powerRepository = _repositoryFactory.Create<IPowerRepository>(powerTable);
+      await powerRepository.UpsertAsync(entities).ConfigureAwait(false);
     }
   }
 }

@@ -5,26 +5,32 @@ using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
+using SolarViewFunctions.Repository;
+using SolarViewFunctions.Repository.Power;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using SolarViewFunctions.Repository.PowerMonthly;
 
 namespace SolarViewFunctions.Functions
 {
   public class AggregatePowerMonthly : FunctionBase
   {
-    public AggregatePowerMonthly(ITracker tracker)
+    private readonly ISolarViewRepositoryFactory _repositoryFactory;
+
+    public AggregatePowerMonthly(ITracker tracker, ISolarViewRepositoryFactory repositoryFactory)
       : base(tracker)
     {
+      _repositoryFactory = repositoryFactory.WhenNotNull(nameof(repositoryFactory));
     }
 
     [FunctionName(nameof(AggregatePowerMonthly))]
     public async Task Run([ActivityTrigger] IDurableActivityContext context,
-      [Table(Constants.Table.Power)] CloudTable powerTable,
-      [Table(Constants.Table.PowerMonthly)] CloudTable monthlyTable)
+      [Table(Constants.Table.Power, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable powerTable,
+      [Table(Constants.Table.PowerMonthly, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable monthlyTable)
     {
       // allowing exceptions to bubble back to the caller
 
@@ -35,11 +41,15 @@ namespace SolarViewFunctions.Functions
 
       var startDate = request.StartDate.ParseSolarDate();    // expecting yyyy-MM-dd
       var endDate = request.EndDate.ParseSolarDate();
+      var siteStartDate = request.SiteStartDate.ParseSolarDate();
 
-      Tracker.TrackInfo($"Processing monthly aggregation for SiteId {request.SiteId} between {startDate.GetSolarDateTimeString()} and {endDate.GetSolarDateTimeString()}");
+      Tracker.TrackInfo($"Processing monthly aggregation for SiteId {request.SiteId}");   // don't log start/end date because it's not representative of what may be processed
 
       var cultureInfo = new CultureInfo(Constants.AggregationOptions.CultureName);
       var calendar = cultureInfo.Calendar;
+
+      var powerRepository = _repositoryFactory.Create<IPowerRepository>(powerTable);
+      var powerMonthlyRepository = _repositoryFactory.Create<IPowerMonthlyRepository>(monthlyTable);
 
       IEnumerable<Task> GetMonthlyTasks()
       {
@@ -53,14 +63,9 @@ namespace SolarViewFunctions.Functions
           var monthEndDate = new DateTime(trackingStartDate.Year, trackingStartDate.Month, lastDayInMonth);
 
           // the first/last month may not be a complete month
-          if (monthStartDate < startDate)
+          if (monthStartDate < siteStartDate)
           {
-            monthStartDate = startDate;
-          }
-
-          if (monthEndDate > endDate)
-          {
-            monthEndDate = endDate;
+            monthStartDate = siteStartDate;
           }
 
           var daysToCollect = (monthEndDate - monthStartDate).Days + 1;
@@ -68,10 +73,10 @@ namespace SolarViewFunctions.Functions
           foreach (var meterType in EnumHelper.GetEnumValues<MeterType>())
           {
             Tracker.TrackInfo(
-              $"Aggregating {meterType} data for SiteId {request.SiteId}, ({monthStartDate.GetSolarDateString()} to {monthEndDate.GetSolarDateString()})"
+              $"Aggregating monthly {meterType} data for SiteId {request.SiteId}, ({monthStartDate.GetSolarDateString()} to {monthEndDate.GetSolarDateString()})"
             );
 
-            yield return PersistAggregatedMeterValues(powerTable, monthlyTable, request.SiteId, meterType, monthStartDate, daysToCollect);
+            yield return PersistAggregatedMeterValues(powerRepository, powerMonthlyRepository, request.SiteId, meterType, monthStartDate, daysToCollect);
           }
         }
       }
@@ -83,7 +88,7 @@ namespace SolarViewFunctions.Functions
       Tracker.TrackInfo($"Monthly power data aggregation is complete for SiteId {request.SiteId}");
     }
 
-    private static Task PersistAggregatedMeterValues(CloudTable powerTable, CloudTable monthlyTable, string siteId, MeterType meterType,
+    private static async Task PersistAggregatedMeterValues(IPowerRepository powerRepository, IPowerMonthlyRepository powerMonthlyRepository, string siteId, MeterType meterType,
       DateTime startDate, int daysToCollect)
     {
       var timeWatts = new Dictionary<string, double>();
@@ -91,11 +96,9 @@ namespace SolarViewFunctions.Functions
       for (var dayOffset = 0; dayOffset < daysToCollect; dayOffset++)
       {
         var date = startDate.AddDays(dayOffset);
-        var partitionKey = $"{siteId}_{date:yyyyMMdd}_{meterType}";
+        var meterEntities = powerRepository.GetMeterPowerAsyncEnumerable(siteId, date, meterType);
 
-        var entities = powerTable.GetPartitionItems<MeterPower>(partitionKey);
-
-        foreach (var entity in entities)
+        await foreach (var entity in meterEntities)
         {
           var totalWatts = timeWatts.GetValueOrDefault(entity.Time) + entity.Watts;
           timeWatts[entity.Time] = totalWatts;
@@ -111,7 +114,7 @@ namespace SolarViewFunctions.Functions
         return new MeterPowerMonth(siteId, startDate, endDate, time, meterType, watts);
       });
 
-      return monthlyTable.BatchInsertOrReplaceAsync(aggregatedEntities);
+      await powerMonthlyRepository.UpsertAsync(aggregatedEntities);
     }
   }
 }

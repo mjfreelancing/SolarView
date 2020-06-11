@@ -1,3 +1,4 @@
+using AllOverIt.Helpers;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.ServiceBus.Core;
 using Microsoft.Azure.WebJobs;
@@ -5,24 +6,29 @@ using Microsoft.Azure.WebJobs.ServiceBus;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Helpers;
 using SolarViewFunctions.Models;
+using SolarViewFunctions.Repository;
+using SolarViewFunctions.Repository.Sites;
 using SolarViewFunctions.Tracking;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
 {
   public class TriggerSendPowerSummaryEmail : FunctionBase
   {
-    public TriggerSendPowerSummaryEmail(ITracker tracker)
+    private readonly ISolarViewRepositoryFactory _repositoryFactory;
+
+    public TriggerSendPowerSummaryEmail(ITracker tracker, ISolarViewRepositoryFactory repositoryFactory)
       : base(tracker)
     {
+      _repositoryFactory = repositoryFactory.WhenNotNull(nameof(repositoryFactory));
     }
 
     [FunctionName(nameof(TriggerSendPowerSummaryEmail))]
     public async Task Run(
       [TimerTrigger(Constants.Trigger.CronScheduleEveryHour, RunOnStartup = false)] TimerInfo timer,
-      [Table(Constants.Table.Sites)] CloudTable sitesTable,
+      [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable,
       [ServiceBus(Constants.Queues.SummaryEmail, EntityType.Queue, Connection = Constants.ConnectionStringNames.SolarViewServiceBus)] MessageSender summaryQueue)
     {
       try
@@ -31,43 +37,43 @@ namespace SolarViewFunctions.Functions
 
         Tracker.TrackEvent(nameof(TriggerSendPowerSummaryEmail), new { TriggerTimeUtc = $"{currentTimeUtc.GetSolarDateTimeString()} (UTC)" });
 
-        // determine what sites are due for a power summary email
-        var sites = SitesHelpers.GetSites(sitesTable, site =>
+        var sitesRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
+
+        var queueTasks = new List<Task>();
+
+        await foreach (var site in sitesRepository.GetAllSitesAsyncEnumerable())
         {
           var siteLocalTime = site.UtcToLocalTime(currentTimeUtc);
-          return siteLocalTime.Hour == Constants.RefreshHour.SummaryEmail;
-        });
 
-        Tracker.TrackInfo(sites.Count == 0
-          ? "No sites are due for a power summary email"
-          : $"Power summary emails are due for {sites.Count} site(s)");
+          // determine what sites are due for a power summary email
+          if (siteLocalTime.Hour == Constants.RefreshHour.SummaryEmail)
+          {
+            var request = new SiteSummaryEmailRequest
+            {
+              SiteId = site.SiteId,
+              LocalDate = $"{site.UtcToLocalTime(currentTimeUtc).Date.AddDays(-1).GetSolarDateString()}" // only sending yyyy-MM-dd
+            };
 
-        if (sites.Count == 0)
-        {
-          return;
+            var message = MessageHelpers.SerializeToMessage(request);
+
+            Tracker.TrackInfo($"Sending a {nameof(SiteSummaryEmailRequest)} message for SiteId {request.SiteId}");
+
+            var task = summaryQueue.SendAsync(message);
+
+            queueTasks.Add(task);
+          }
         }
 
-        // create requests for the previous day of each site
-        var requests = sites
-          .Select(site => new SiteSummaryEmailRequest
-          {
-            SiteId = site.SiteId,
-            LocalDate = $"{site.UtcToLocalTime(currentTimeUtc).Date.AddDays(-1).GetSolarDateString()}"    // only sending yyyy-MM-dd
-          });
-
-        // queue of messages
-        var queueTasks = requests.Select(request =>
+        if (queueTasks.Count == 0)
         {
-          var message = MessageHelpers.SerializeToMessage(request);
+          Tracker.TrackInfo("No sites are due for a power summary email");
+        }
+        else
+        {
+          await Task.WhenAll(queueTasks).ConfigureAwait(false);
 
-          Tracker.TrackInfo($"Sending a {nameof(SiteSummaryEmailRequest)} message for SiteId {request.SiteId}");
-
-          return summaryQueue.SendAsync(message);
-        });
-
-        await Task.WhenAll(queueTasks).ConfigureAwait(false);
-
-        Tracker.TrackInfo("All site power summary messages have been sent");
+          Tracker.TrackInfo("All site power summary messages have been sent");
+        }
       }
       catch (Exception exception)
       {

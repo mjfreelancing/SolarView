@@ -2,8 +2,8 @@ using AutoMapper;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using SolarViewFunctions.Factories;
+using SolarViewFunctions.Repository;
 using SolarViewFunctions.Tracking;
-using System.Reflection;
 
 [assembly: FunctionsStartup(typeof(SolarViewFunctions.Startup))]
 
@@ -13,10 +13,13 @@ namespace SolarViewFunctions
   {
     public override void Configure(IFunctionsHostBuilder builder)
     {
-      builder.Services.AddAutoMapper(Assembly.GetAssembly(GetType()));
-
       builder.Services.AddScoped<ITracker, TelemetryTracker>();
-      builder.Services.AddScoped<IRetryOptionsFactory, RetryOptionsFactory>();
+      builder.Services.AddSingleton<IRetryOptionsFactory, RetryOptionsFactory>();
+      builder.Services.AddSingleton<ISolarViewRepositoryFactory, SolarViewRepositoryFactory>();
+
+      var provider = builder.Services.AddAutoMapper(typeof(Startup)).BuildServiceProvider();
+      provider.GetService<IMapper>().ConfigurationProvider.AssertConfigurationIsValid();
+
 
       // using the code below results in the content of host.json being ignore (wrong hub name and route)
       // adding the file to the list makes no difference - now using the ExecutionContext within the functions

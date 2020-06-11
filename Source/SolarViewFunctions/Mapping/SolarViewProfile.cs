@@ -15,6 +15,8 @@ namespace SolarViewFunctions.Mapping
       CreateMap<HydratePowerRequest, TriggeredPowerQuery>()
         .ForMember(dest => dest.StartDateTime, opt => opt.MapFrom(src => src.StartDate))
         .ForMember(dest => dest.EndDateTime, opt => opt.MapFrom(src => src.EndDate))
+        .ForMember(dest => dest.TriggerDateTime, opt => opt.Ignore())
+        .ForMember(dest => dest.Trigger, opt => opt.Ignore())
         .AfterMap((src, dest) =>
         {
           // Force the update to use full day boundaries to ensure docs are not partially replaced.
@@ -23,17 +25,23 @@ namespace SolarViewFunctions.Mapping
           dest.EndDateTime = DateTime.ParseExact(dest.EndDateTime, "yyyy-MM-dd", null).Date.AddHours(23).AddMinutes(59).GetSolarDateTimeString();   // 23:59:00
         });
 
-      CreateMap<TriggeredPowerQuery, PowerUpdatedMessage>();
+      CreateMap<TriggeredPowerQuery, PowerUpdatedMessage>()
+        .ForMember(dest => dest.Status, opt => opt.Ignore());
+
       CreateMap<TriggeredPowerQuery, PowerQuery>();
 
-      CreateMap<PowerUpdatedMessage, PowerUpdateEntity>()
+      CreateMap<PowerUpdatedMessage, PowerUpdate>()
         .ForMember(dest => dest.Status, opt => opt.MapFrom(src => $"{src.Status}"))
+        .ForMember(dest => dest.PartitionKey, opt => opt.Ignore())
+        .ForMember(dest => dest.RowKey, opt => opt.Ignore())
+        .ForMember(dest => dest.Timestamp, opt => opt.Ignore())
+        .ForMember(dest => dest.ETag, opt => opt.Ignore())
         .AfterMap((src, dest) =>
         {
-          // this is currently mapped within a non-durable function so DateTime.UtcNow.Ticks is fine.
-          // Even if the mapping was moved to a durable function we're concerned with the RowKey being non-deterministic.
+          // this is currently mapped within a non-durable function so Guid.NewGuid() is fine.
+          // Even if the mapping invocation was moved to a durable function we're not concerned with the RowKey being non-deterministic.
           dest.PartitionKey = $"{src.SiteId}_{src.TriggerDateTime.Substring(0, 10)}";
-          dest.RowKey = $"{DateTime.UtcNow.Ticks}_{Guid.NewGuid()}";
+          dest.RowKey = $"{Guid.NewGuid()}";
         });
     }
   }

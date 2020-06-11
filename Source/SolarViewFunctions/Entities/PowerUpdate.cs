@@ -2,7 +2,7 @@ using Microsoft.Azure.Cosmos.Table;
 
 namespace SolarViewFunctions.Entities
 {
-  public class PowerUpdateEntity : TableEntity
+  public class PowerUpdate : TableEntity
   {
     public string TriggerDateTime { get; set; }     // yyyy-MM-dd HH:mm:ss (local)
     public string Trigger { get; set; }             // of type RefreshTriggerType

@@ -10,6 +10,8 @@ using SolarViewFunctions.Entities;
 using SolarViewFunctions.Exceptions;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
+using SolarViewFunctions.Repository;
+using SolarViewFunctions.Repository.Sites;
 using SolarViewFunctions.Tracking;
 using SolarViewFunctions.Validators;
 using System;
@@ -22,17 +24,19 @@ namespace SolarViewFunctions.Functions
   public class TriggerManualHydratePower : FunctionBase
   {
     private readonly IMapper _mapper;
+    private readonly ISolarViewRepositoryFactory _repositoryFactory;
 
-    public TriggerManualHydratePower(ITracker tracker, IMapper mapper)
+    public TriggerManualHydratePower(ITracker tracker, IMapper mapper, ISolarViewRepositoryFactory repositoryFactory)
       : base(tracker)
     {
       _mapper = mapper.WhenNotNull(nameof(mapper));
+      _repositoryFactory = repositoryFactory.WhenNotNull(nameof(repositoryFactory));
     }
 
     [FunctionName(nameof(TriggerManualHydratePower))]
     public async Task<HttpResponseMessage> Run(
       [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "Power/Hydrate")] HttpRequestMessage request,
-      [Table(Constants.Table.Sites)] CloudTable sitesTable,
+      [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable,
       [DurableClient] IDurableOrchestrationClient orchestrationClient)
     {
       var triggerDateTime = DateTime.UtcNow;
@@ -44,8 +48,10 @@ namespace SolarViewFunctions.Functions
       {
         Tracker.TrackEvent(nameof(TriggerManualHydratePower), new { TriggerTimeUtc = $"{triggerDateTime.GetSolarDateTimeString()} (UTC)" });
 
+        var siteRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
+
         ValidateRequest(hydrateRequest);
-        var siteInfo = await GetValidatedRequestedSiteAsync(hydrateRequest, sitesTable);
+        var siteInfo = await GetValidatedRequestedSiteAsync(hydrateRequest, siteRepository);
 
         var triggeredPowerQuery = _mapper.Map<TriggeredPowerQuery>(hydrateRequest);
         triggeredPowerQuery.TriggerDateTime = siteInfo.UtcToLocalTime(triggerDateTime).GetSolarDateTimeString();
@@ -86,9 +92,9 @@ namespace SolarViewFunctions.Functions
       }
     }
 
-    private static async Task<SiteInfo> GetValidatedRequestedSiteAsync(HydratePowerRequest hydrateRequest, CloudTable sitesTable)
+    private static async Task<SiteInfo> GetValidatedRequestedSiteAsync(HydratePowerRequest hydrateRequest, ISitesRepository sitesRepository)
     {
-      var siteInfo = await sitesTable.GetItemAsync<SiteInfo>("SiteId", hydrateRequest.SiteId);
+      var siteInfo = await sitesRepository.GetSiteAsync(hydrateRequest.SiteId);
 
       var validator = new HydratePowerSiteValidator(siteInfo);
 

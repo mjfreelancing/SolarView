@@ -1,4 +1,4 @@
-using AllOverIt.Extensions;
+using AllOverIt.Helpers;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.ServiceBus.Core;
 using Microsoft.Azure.WebJobs;
@@ -6,24 +6,29 @@ using Microsoft.Azure.WebJobs.ServiceBus;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Helpers;
 using SolarViewFunctions.Models;
+using SolarViewFunctions.Repository;
+using SolarViewFunctions.Repository.Sites;
 using SolarViewFunctions.Tracking;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
 {
   public class TriggerSitesRefreshPowerData : FunctionBase
   {
-    public TriggerSitesRefreshPowerData(ITracker tracker)
+    private readonly ISolarViewRepositoryFactory _repositoryFactory;
+
+    public TriggerSitesRefreshPowerData(ITracker tracker, ISolarViewRepositoryFactory repositoryFactory)
       : base(tracker)
     {
+      _repositoryFactory = repositoryFactory.WhenNotNull(nameof(repositoryFactory));
     }
 
     [FunctionName(nameof(TriggerSitesRefreshPowerData))]
     public async Task Run(
-      [TimerTrigger(Constants.Trigger.CronScheduleEveryHour, RunOnStartup = false)] TimerInfo timer,
-      [Table(Constants.Table.Sites)] CloudTable sitesTable,
+      [TimerTrigger(Constants.Trigger.CronScheduleEveryMinute, RunOnStartup = false)] TimerInfo timer,
+      [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable,
       [ServiceBus(Constants.Queues.SolarPower, EntityType.Queue, Connection = Constants.ConnectionStringNames.SolarViewServiceBus)] MessageSender refreshQueue)
     {
       try
@@ -32,41 +37,42 @@ namespace SolarViewFunctions.Functions
 
         Tracker.TrackEvent(nameof(TriggerSitesRefreshPowerData), new { TriggerTimeUtc = $"{currentTimeUtc.GetSolarDateTimeString()} (UTC)"});
 
-        var requests = SitesHelpers
-          .GetSites(sitesTable, site => currentTimeUtc >= site.GetNextRefreshDueUtc())
-          .Select(site =>
+        var sitesRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
+
+        var queueTasks = new List<Task>();
+
+        await foreach (var site in sitesRepository.GetAllSitesAsyncEnumerable())
+        {
+          if (currentTimeUtc >= site.GetNextRefreshDueUtc())
           {
             var requestTimeUtc = currentTimeUtc.AddSeconds(-currentTimeUtc.Second);
 
-            return new SiteRefreshPowerRequest
+            var request = new SiteRefreshPowerRequest
             {
               SiteId = site.SiteId,
               DateTime = site.UtcToLocalTime(requestTimeUtc).GetSolarDateTimeString()
             };
-          })
-          .AsReadOnlyList();
 
-        Tracker.TrackInfo(requests.Count == 0
-          ? "No sites are due for a refresh of solar power data"
-          : $"Determined {requests.Count} site(s) are due for a refresh of solar power data");
+            var message = MessageHelpers.SerializeToMessage(request);
 
-        if (requests.Count == 0)
-        {
-          return;
+            Tracker.TrackInfo($"Sending a {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, DateTime {request.DateTime}");
+
+            var task = refreshQueue.SendAsync(message);
+
+            queueTasks.Add(task);
+          }
         }
 
-        var queueTasks = requests.Select(request =>
+        if (queueTasks.Count == 0)
         {
-          var message = MessageHelpers.SerializeToMessage(request);
+          Tracker.TrackInfo("No sites are due for a power summary email");
+        }
+        else
+        {
+          await Task.WhenAll(queueTasks).ConfigureAwait(false);
 
-          Tracker.TrackInfo($"Sending a {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, DateTime {request.DateTime}");
-
-          return refreshQueue.SendAsync(message);
-        });
-
-        await Task.WhenAll(queueTasks);
-
-        Tracker.TrackInfo("All site power refresh messages have been sent");
+          Tracker.TrackInfo("All site power refresh messages have been sent");
+        }
       }
       catch (Exception exception)
       {

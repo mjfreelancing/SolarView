@@ -36,6 +36,7 @@
     {
       public const string SolarViewCosmos = "SolarViewCosmosConnectionString";
       public const string SolarViewServiceBus = "SolarViewServiceBusConnectionString";
+      public const string SolarViewStorage = "SolarViewStorageConnectionString";
     }
 
     public static class RefreshHour

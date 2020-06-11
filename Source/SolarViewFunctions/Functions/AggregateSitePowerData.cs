@@ -1,3 +1,5 @@
+using AllOverIt.Helpers;
+using AutoMapper;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SolarViewFunctions.Entities;
@@ -20,9 +22,12 @@ namespace SolarViewFunctions.Functions
       {nameof(AggregatePowerYearly), "yearly"}
     };
 
-    public AggregateSitePowerData(IRetryOptionsFactory retryOptionsFactory, ITracker tracker)
+    private readonly IMapper _mapper;
+
+    public AggregateSitePowerData(IRetryOptionsFactory retryOptionsFactory, ITracker tracker, IMapper mapper)
       : base(retryOptionsFactory, tracker)
     {
+      _mapper = mapper.WhenNotNull(nameof(mapper));
     }
 
     [FunctionName(nameof(AggregateSitePowerData))]
@@ -58,12 +63,9 @@ namespace SolarViewFunctions.Functions
         var aggregateStartDate = year == startDate.Year ? startDate : new DateTime(year, 1, 1);
         var aggregateEndDate = year == endDate.Year ? endDate : new DateTime(year, 12, 31);
 
-        var aggregateRequest = new SiteRefreshAggregationRequest
-        {
-          SiteId = request.SiteId,
-          StartDate = aggregateStartDate.GetSolarDateString(),
-          EndDate = aggregateEndDate.GetSolarDateString()
-        };
+        var aggregateRequest = _mapper.Map<SiteRefreshAggregationRequest>(request);
+        aggregateRequest.StartDate = aggregateStartDate.GetSolarDateString();
+        aggregateRequest.EndDate = aggregateEndDate.GetSolarDateString();
 
         yield return GetAggregationBatch(context, aggregateRequest);
       }
