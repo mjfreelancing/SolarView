@@ -1,11 +1,11 @@
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
@@ -21,34 +21,30 @@ namespace SolarViewFunctions.Functions
     public async Task Run(
       [CosmosDBTrigger(Constants.Cosmos.SolarDatabase, Constants.Cosmos.PowerCollection,
         ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos,
-        LeaseCollectionName = Constants.Cosmos.PowerLeases)] IReadOnlyList<Document> documents,
+        LeaseCollectionName = Constants.Cosmos.PowerLeases)] IReadOnlyList<Document> powerDocuments,
+      [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
+        ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments,
       [DurableClient] IDurableOrchestrationClient orchestrationClient)
     {
-      try
+      Tracker.TrackEvent(nameof(TriggerPowerDocumentDecomposition));
+      Tracker.TrackInfo($"Received {powerDocuments.Count} documents for decomposition");
+
+      foreach (var document in powerDocuments)
       {
-        Tracker.TrackEvent(nameof(TriggerPowerDocumentDecomposition),
-          new
-          {
-            TriggerTimeUtc = $"{DateTime.UtcNow.GetSolarDateTimeString()} (UTC)",
-            DocumentCount = documents.Count
-          });
+        try
+        {
+          var instanceId = await orchestrationClient.StartNewAsync(nameof(DecomposePowerDocument), document);
 
-        Tracker.TrackInfo($"Received {documents.Count} documents for decomposition");
+          Tracker.TrackInfo($"Initiated {nameof(DecomposePowerDocument)} for document Id {document.Id}, InstanceId {instanceId}");
+        }
+        catch (Exception exception)
+        {
+          Tracker.TrackException(exception);
 
-        var tasks = documents.Select(document => orchestrationClient.StartNewAsync(nameof(DecomposePowerDocument), document));
+          PowerDocument powerDocument = (dynamic)document;
 
-        var instanceIds = await Task.WhenAll(tasks);
-
-        Tracker.TrackInfo(
-          $"Started {documents.Count} instance(s) of {nameof(DecomposePowerDocument)}",
-          new { InstanceIds = string.Join(", ", instanceIds) }
-        );
-      }
-      catch (Exception exception)
-      {
-        Tracker.TrackException(exception);
-
-        // todo: send a message to send an email
+          await exceptionDocuments.AddNotificationAsync<TriggerPowerDocumentDecomposition>(powerDocument.SiteId, exception, null);
+        }
       }
     }
   }

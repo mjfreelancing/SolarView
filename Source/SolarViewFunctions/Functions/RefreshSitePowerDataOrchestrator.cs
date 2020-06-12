@@ -19,32 +19,49 @@ namespace SolarViewFunctions.Functions
     }
 
     [FunctionName(nameof(RefreshSitePowerDataOrchestrator))]
-    public async Task Run([OrchestrationTrigger] IDurableOrchestrationContext context)
+    public async Task Run([OrchestrationTrigger] IDurableOrchestrationContext context,
+      [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
+        ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments)
     {
+      MakeTrackerReplaySafe(context);
+      Tracker.AppendDefaultProperties(context.GetTrackingProperties());
+
+      SiteRefreshPowerRequest request = null;
+
       try
       {
-        MakeTrackerReplaySafe(context);
-        Tracker.AppendDefaultProperties(context.GetTrackingProperties());
+        request = context.GetInput<SiteRefreshPowerRequest>();
+        var siteLocalTime = request.DateTime.ParseSolarDateTime();
 
-        var refreshRequest = context.GetInput<SiteRefreshPowerRequest>();
-        var siteLocalTime = refreshRequest.DateTime.ParseSolarDateTime();
+        Tracker.TrackInfo($"Processing a {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, DateTime {request.DateTime}");
 
-        Tracker.TrackInfo($"Processing a {nameof(SiteRefreshPowerRequest)} message for SiteId {refreshRequest.SiteId}, DateTime {refreshRequest.DateTime}");
-
-        var siteInfo = await context.CallActivityWithRetryAsync<SiteInfo>(nameof(GetSiteInfo), GetDefaultRetryOptions(), refreshRequest.SiteId);
+        var siteInfo = await context.CallActivityWithRetryAsync<SiteInfo>(nameof(GetSiteInfo), GetDefaultRetryOptions(), request.SiteId);
 
         // next refresh time is in the site's timezone
         Tracker.TrackInfo(siteInfo.LastRefreshDateTime.IsNullOrEmpty()
-          ? $"Received info for SiteId {refreshRequest.SiteId}, pending initial refresh"
-          : $"Received info for SiteId {refreshRequest.SiteId}, last refresh was {siteInfo.LastRefreshDateTime}");
+          ? $"Received info for SiteId {request.SiteId}, pending initial refresh"
+          : $"Received info for SiteId {request.SiteId}, last refresh was {siteInfo.LastRefreshDateTime}");
 
         await RefreshSite(context, siteInfo, siteLocalTime);
       }
       catch (Exception exception)
       {
-        Tracker.TrackException(exception.UnwrapFunctionException());
+        var trackedException = exception.UnwrapFunctionException();
 
-        // todo: send a message to send an email
+        Tracker.TrackException(trackedException);
+
+        var notification = new
+        {
+          request?.SiteId,
+          ContextInput = request
+        };
+
+        Tracker.TrackException(exception, notification);
+
+        if (!request?.SiteId.IsNullOrEmpty() ?? false)
+        {
+          await exceptionDocuments.AddNotificationAsync<RefreshSitePowerDataOrchestrator>(request.SiteId, exception, notification);
+        }
       }
     }
 
@@ -79,15 +96,15 @@ namespace SolarViewFunctions.Functions
       await UpdateSiteLastRefreshTime(context, siteInfo, triggeredPowerQuery);
     }
 
-    private Task ProcessSitePowerQuery(IDurableOrchestrationContext context, TriggeredPowerQuery triggeredPowerQuery)
+    private Task ProcessSitePowerQuery(IDurableOrchestrationContext context, PowerQuery powerQuery)
     {
       Tracker.TrackInfo(
-        $"Initiating power hydration orchestration for SiteId {triggeredPowerQuery.SiteId} is between " +
-        $"{triggeredPowerQuery.StartDateTime} and {triggeredPowerQuery.EndDateTime}"
+        $"Initiating power hydration orchestration for SiteId {powerQuery.SiteId} is between " +
+        $"{powerQuery.StartDateTime} and {powerQuery.EndDateTime}"
       );
 
       // fire off a request to (potentially) split the request into multiple date ranges
-      return context.CallSubOrchestratorWithRetryAsync(nameof(HydratePowerOrchestrator), GetDefaultRetryOptions(), triggeredPowerQuery);
+      return context.CallSubOrchestratorWithRetryAsync(nameof(HydratePowerOrchestrator), GetDefaultRetryOptions(), powerQuery);
     }
 
     private Task UpdateSiteLastRefreshTime(IDurableOrchestrationContext context, SiteInfo siteInfo, PowerQuery powerQuery)

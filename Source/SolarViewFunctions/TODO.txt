@@ -1,14 +1,78 @@
 
-* Send a message for all exceptions
+* Create a proper email template - check all functions sending emails and clean them up
 
-* Create a new function to process exception messages -> send as email
+* Track down why the SolarEdge requests are not showing on the Application Insights Application Map
 
-* Create deadletter functions for all queues
+* Re-check all exception handling (and bubbling up) and email reporting after creating an architecture diagram (to confirm the flow)
 
-* Create a proper email template
 
-* Implement monthly aggregations
+====================================================================================================================================
 
-* Implement yearly aggregations
+Notes for when Razor is supported:
 
-* repository pattern to stop using CloudTable directly
+  Eventually want to use razor pages to create email templates
+
+  Consider using: https://github.com/toddams/RazorLight - not yet supporting azure functions (v2.0.0-beta7)
+   - a blog: https://blog.jonblankenship.com/2020/04/05/razor-powered-e-mail-in-azure-functions/
+   - razor syntax: https://docs.microsoft.com/en-us/aspnet/core/mvc/views/razor?view=aspnetcore-3.1
+                   https://www.w3schools.com/asp/razor_syntax.asp
+   - GitHub Issue: https://github.com/Azure/Azure-Functions/issues/1138
+  
+        var project = new BlobRazorLightProject();
+
+        var engine = new RazorLightEngineBuilder()
+          .UseProject(project)
+          .UseMemoryCachingProvider()
+          .Build();
+
+        // some model for the razor page
+        var model = new { };
+
+        var template = await engine.CompileRenderAsync("some key", model);
+
+        ...
+
+
+  Blob bindings: https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-storage-blob-input?tabs=csharp
+
+  public class BlobRazorLightProject : RazorLightProject
+  {
+    // provide the blob
+    public BlobRazorLightProject()
+    {
+    }
+
+    public override Task<RazorLightProjectItem> GetItemAsync(string templateKey)
+    {
+      var content = "Hello World";      // load a template from blob based on the templateKey
+
+      RazorLightProjectItem item = new BlobRazorLightProjectItem(templateKey, content);
+
+      return Task.FromResult(item);
+    }
+
+    public override Task<IEnumerable<RazorLightProjectItem>> GetImportsAsync(string templateKey)
+    {
+      return Task.FromResult(Enumerable.Empty<RazorLightProjectItem>());
+    }
+  }
+
+  public class BlobRazorLightProjectItem : RazorLightProjectItem
+  {
+    private readonly string _content;
+    public override string Key { get; }
+    public override bool Exists => !_content.IsNullOrEmpty();
+
+    public BlobRazorLightProjectItem(string key, string content)
+    {
+      _content = content;
+      Key = key;
+    }
+
+    public override Stream Read()
+    {
+      return new MemoryStream(Encoding.UTF8.GetBytes(_content));
+    }
+  }
+
+  

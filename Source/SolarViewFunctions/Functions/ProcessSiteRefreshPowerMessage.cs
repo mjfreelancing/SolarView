@@ -1,6 +1,8 @@
+using AllOverIt.Extensions;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Factories;
 using SolarViewFunctions.Models;
@@ -19,32 +21,45 @@ namespace SolarViewFunctions.Functions
 
     [FunctionName(nameof(ProcessSiteRefreshPowerMessage))]
     public async Task Run(
-      [ServiceBusTrigger(Constants.Queues.SolarPower, Connection = Constants.ConnectionStringNames.SolarViewServiceBus)] Message queueMessage,
+      [ServiceBusTrigger(Constants.Queues.PowerRefresh, Connection = Constants.ConnectionStringNames.SolarViewServiceBus)] Message queueMessage,
+      [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
+        ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments,
       [DurableClient] IDurableOrchestrationClient orchestrationClient)
     {
+      Tracker.AppendDefaultProperties(new { queueMessage.MessageId });
+
+      SiteRefreshPowerRequest request = null;
+
       try
       {
-        Tracker.AppendDefaultProperties(new { queueMessage.MessageId });
-
         Tracker.TrackEvent(nameof(ProcessSiteRefreshPowerMessage));
 
-        var refreshRequest = queueMessage.DeserializeFromMessage<SiteRefreshPowerRequest>();
+        request = queueMessage.DeserializeFromMessage<SiteRefreshPowerRequest>();
 
-        Tracker.TrackInfo($"Received a new {nameof(SiteRefreshPowerRequest)} message for SiteId {refreshRequest.SiteId}, DateTime {refreshRequest.DateTime}");
+        Tracker.TrackInfo($"Received a new {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, DateTime {request.DateTime}");
 
-        var instanceId = await orchestrationClient.StartNewAsync(nameof(RefreshSitePowerDataOrchestrator), refreshRequest);
+        var instanceId = await orchestrationClient.StartNewAsync(nameof(RefreshSitePowerDataOrchestrator), request);
 
         Tracker.TrackInfo(
-          $"Initiated processing of the {nameof(SiteRefreshPowerRequest)} message for SiteId {refreshRequest.SiteId}",
+          $"Initiated processing of the {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}",
           new {InstanceId = instanceId}
         );
       }
       catch (Exception exception)
       {
-        Tracker.TrackException(exception);
+        var notification = new
+        {
+          request?.SiteId,
+          QueueMessageId = queueMessage.MessageId,
+          MessageContent = request
+        };
 
-        // allow the message to be re-tried (or deadletter)
-        throw;
+        Tracker.TrackException(exception, notification);
+
+        if (!request?.SiteId.IsNullOrEmpty() ?? false)
+        {
+          await exceptionDocuments.AddNotificationAsync<ProcessSiteRefreshPowerMessage>(request.SiteId, exception, notification);
+        }
       }
     }
   }

@@ -7,13 +7,13 @@ using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Power;
+using SolarViewFunctions.Repository.PowerMonthly;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
-using SolarViewFunctions.Repository.PowerMonthly;
 
 namespace SolarViewFunctions.Functions
 {
@@ -53,14 +53,14 @@ namespace SolarViewFunctions.Functions
 
       IEnumerable<Task> GetMonthlyTasks()
       {
-        for (var trackingStartDate = new DateTime(startDate.Year, startDate.Month, 1);
+        for (var trackingStartDate = startDate.TrimToDayOfMonth(1);
           trackingStartDate <= endDate;
           trackingStartDate = trackingStartDate.AddMonths(1))
         {
-          var monthStartDate = new DateTime(trackingStartDate.Year, trackingStartDate.Month, 1);
+          var monthStartDate = trackingStartDate.TrimToDayOfMonth(1);
 
           var lastDayInMonth = calendar.GetDaysInMonth(trackingStartDate.Year, trackingStartDate.Month);
-          var monthEndDate = new DateTime(trackingStartDate.Year, trackingStartDate.Month, lastDayInMonth);
+          var monthEndDate = trackingStartDate.TrimToDayOfMonth(lastDayInMonth);
 
           // the first/last month may not be a complete month
           if (monthStartDate < siteStartDate)
@@ -72,9 +72,8 @@ namespace SolarViewFunctions.Functions
 
           foreach (var meterType in EnumHelper.GetEnumValues<MeterType>())
           {
-            Tracker.TrackInfo(
-              $"Aggregating monthly {meterType} data for SiteId {request.SiteId}, ({monthStartDate.GetSolarDateString()} to {monthEndDate.GetSolarDateString()})"
-            );
+            Tracker.TrackInfo($"Aggregating monthly {meterType} data for SiteId {request.SiteId}, ({monthStartDate.GetSolarDateString()} " +
+                              $"to {monthEndDate.GetSolarDateString()})");
 
             yield return PersistAggregatedMeterValues(powerRepository, powerMonthlyRepository, request.SiteId, meterType, monthStartDate, daysToCollect);
           }
@@ -83,7 +82,7 @@ namespace SolarViewFunctions.Functions
 
       var tasks = GetMonthlyTasks();
 
-      await Task.WhenAll(tasks);
+      await Task.WhenAll(tasks).ConfigureAwait(false);
 
       Tracker.TrackInfo($"Monthly power data aggregation is complete for SiteId {request.SiteId}");
     }
@@ -114,7 +113,7 @@ namespace SolarViewFunctions.Functions
         return new MeterPowerMonth(siteId, startDate, endDate, time, meterType, watts);
       });
 
-      await powerMonthlyRepository.UpsertAsync(aggregatedEntities);
+      await powerMonthlyRepository.UpsertAsync(aggregatedEntities).ConfigureAwait(false);
     }
   }
 }

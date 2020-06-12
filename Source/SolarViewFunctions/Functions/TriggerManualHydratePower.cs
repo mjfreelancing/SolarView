@@ -1,3 +1,4 @@
+using AllOverIt.Extensions;
 using AllOverIt.Helpers;
 using AutoMapper;
 using Microsoft.Azure.Cosmos.Table;
@@ -37,15 +38,19 @@ namespace SolarViewFunctions.Functions
     public async Task<HttpResponseMessage> Run(
       [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "Power/Hydrate")] HttpRequestMessage request,
       [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable,
+      [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
+        ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments,
       [DurableClient] IDurableOrchestrationClient orchestrationClient)
     {
-      var triggerDateTime = DateTime.UtcNow;
-      var hydrateRequest = await request.Content.ReadAsAsync<HydratePowerRequest>();
-
-      Tracker.AppendDefaultProperties(hydrateRequest);
+      HydratePowerRequest hydrateRequest = null;
 
       try
       {
+        var triggerDateTime = DateTime.UtcNow;
+        hydrateRequest = await request.Content.ReadAsAsync<HydratePowerRequest>();
+
+        Tracker.AppendDefaultProperties(hydrateRequest);
+
         Tracker.TrackEvent(nameof(TriggerManualHydratePower), new { TriggerTimeUtc = $"{triggerDateTime.GetSolarDateTimeString()} (UTC)" });
 
         var siteRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
@@ -66,16 +71,28 @@ namespace SolarViewFunctions.Functions
         // 'statusQueryGetUri' : &showHistoryOutput=true&showHistory=true
         return orchestrationClient.CreateCheckStatusResponse(request, instanceId);
       }
-      catch(PreConditionException exception)
+      catch (PreConditionException exception)
       {
         Tracker.TrackWarn($"Request rejected due to {exception.ErrorCount} precondition failure(s), first = {exception.Errors.First().Message}",
-          new {Reason = JsonConvert.SerializeObject(exception.Errors, Formatting.None)});
+          new { Reason = JsonConvert.SerializeObject(exception.Errors, Formatting.None) });
 
         return exception.GetPreConditionErrorResponse();
       }
       catch (Exception exception)
       {
-        Tracker.TrackException(exception, new {Request = $"{request}"});
+        var notification = new
+        {
+          hydrateRequest?.SiteId,
+          Request = $"{request}",
+          RequestContent = hydrateRequest
+        };
+
+        Tracker.TrackException(exception, notification);
+
+        if (!hydrateRequest?.SiteId.IsNullOrEmpty() ?? false)
+        {
+          await exceptionDocuments.AddNotificationAsync<TriggerManualHydratePower>(hydrateRequest.SiteId, exception, notification);
+        }
 
         return exception.GetInternalServerErrorResponse();
       }

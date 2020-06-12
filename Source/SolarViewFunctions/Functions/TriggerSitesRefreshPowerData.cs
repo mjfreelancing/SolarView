@@ -3,6 +3,7 @@ using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.ServiceBus.Core;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.ServiceBus;
+using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Helpers;
 using SolarViewFunctions.Models;
@@ -10,7 +11,6 @@ using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Sites;
 using SolarViewFunctions.Tracking;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
@@ -27,58 +27,68 @@ namespace SolarViewFunctions.Functions
 
     [FunctionName(nameof(TriggerSitesRefreshPowerData))]
     public async Task Run(
-      [TimerTrigger(Constants.Trigger.CronScheduleEveryMinute, RunOnStartup = false)] TimerInfo timer,
+      [TimerTrigger(Constants.Trigger.CronScheduleEveryHour, RunOnStartup = false)] TimerInfo timer,
       [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable,
-      [ServiceBus(Constants.Queues.SolarPower, EntityType.Queue, Connection = Constants.ConnectionStringNames.SolarViewServiceBus)] MessageSender refreshQueue)
+      [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
+        ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments,
+      [ServiceBus(Constants.Queues.PowerRefresh, EntityType.Queue, Connection = Constants.ConnectionStringNames.SolarViewServiceBus)] MessageSender refreshQueue)
     {
       try
       {
         var currentTimeUtc = DateTime.UtcNow;
 
-        Tracker.TrackEvent(nameof(TriggerSitesRefreshPowerData), new { TriggerTimeUtc = $"{currentTimeUtc.GetSolarDateTimeString()} (UTC)"});
+        Tracker.TrackEvent(nameof(TriggerSitesRefreshPowerData));
 
         var sitesRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
 
-        var queueTasks = new List<Task>();
-
         await foreach (var site in sitesRepository.GetAllSitesAsyncEnumerable())
         {
-          if (currentTimeUtc >= site.GetNextRefreshDueUtc())
-          {
-            var requestTimeUtc = currentTimeUtc.AddSeconds(-currentTimeUtc.Second);
-
-            var request = new SiteRefreshPowerRequest
-            {
-              SiteId = site.SiteId,
-              DateTime = site.UtcToLocalTime(requestTimeUtc).GetSolarDateTimeString()
-            };
-
-            var message = MessageHelpers.SerializeToMessage(request);
-
-            Tracker.TrackInfo($"Sending a {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, DateTime {request.DateTime}");
-
-            var task = refreshQueue.SendAsync(message);
-
-            queueTasks.Add(task);
-          }
+          await ProcessSiteRefreshPowerRequest(currentTimeUtc, site, refreshQueue, exceptionDocuments).ConfigureAwait(false);
         }
 
-        if (queueTasks.Count == 0)
-        {
-          Tracker.TrackInfo("No sites are due for a power summary email");
-        }
-        else
-        {
-          await Task.WhenAll(queueTasks).ConfigureAwait(false);
-
-          Tracker.TrackInfo("All site power refresh messages have been sent");
-        }
+        Tracker.TrackInfo("All sites have been processed for power refresh requests");
       }
       catch (Exception exception)
       {
         Tracker.TrackException(exception);
+      }
+    }
 
-        // todo: send a message to report via email
+    private async Task ProcessSiteRefreshPowerRequest(DateTime currentTimeUtc, SiteInfo siteInfo, ISenderClient refreshQueue,
+      IAsyncCollector<ExceptionDocument> exceptionDocuments)
+    {
+      SiteRefreshPowerRequest request = null;
+
+      try
+      {
+        if (currentTimeUtc >= siteInfo.GetNextRefreshDueUtc())
+        {
+          var requestTimeUtc = currentTimeUtc.AddSeconds(-currentTimeUtc.Second);
+
+          request = new SiteRefreshPowerRequest
+          {
+            SiteId = siteInfo.SiteId,
+            DateTime = siteInfo.UtcToLocalTime(requestTimeUtc).GetSolarDateTimeString()
+          };
+
+          var message = MessageHelpers.SerializeToMessage(request);
+
+          Tracker.TrackInfo($"Sending a {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, DateTime {request.DateTime}");
+
+          await refreshQueue.SendAsync(message).ConfigureAwait(false);
+        }
+      }
+      catch (Exception exception)
+      {
+        var notification = new
+        {
+          siteInfo.SiteId,
+          Request = request
+        };
+
+        Tracker.TrackException(exception, notification);
+
+        await exceptionDocuments.AddNotificationAsync<TriggerSitesRefreshPowerData>(siteInfo.SiteId, exception, notification).ConfigureAwait(false);
       }
     }
   }

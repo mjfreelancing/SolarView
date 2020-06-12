@@ -22,7 +22,7 @@ namespace SolarViewFunctions.Functions
     }
 
     [FunctionName(nameof(GetSiteInfo))]
-    public async Task<SiteInfo> Run(
+    public Task<SiteInfo> Run(
       [ActivityTrigger] IDurableActivityContext context,
       [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable)
     {
@@ -34,10 +34,7 @@ namespace SolarViewFunctions.Functions
 
       Tracker.TrackInfo($"Getting info for SiteId {siteId}");
 
-      var sitesRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
-      //var sitesRepository = _repositoryFactory.CreateSitesRepository(sitesTable);
-
-      return await sitesRepository.GetSiteAsync(siteId).ConfigureAwait(false);
+      return _repositoryFactory.Create<ISitesRepository>(sitesTable).GetSiteAsync(siteId);
     }
   }
 }

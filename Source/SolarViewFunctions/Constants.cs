@@ -9,10 +9,12 @@
 
     public static class Queues
     {
-      public const string PowerUpdated = "powerupdated";
-      public const string SolarPower = "solarpower";
-      public const string SummaryEmail = "summaryemail";
-      public const string Exception = "exception";
+      public const string PowerRefresh = "power-refresh";
+      public const string PowerRefreshDeadletter = "power-refresh/$DeadLetterQueue";
+      public const string PowerUpdated = "power-updated";
+      public const string PowerUpdatedDeadletter = "power-updated/$DeadLetterQueue";
+      public const string SummaryEmail = "summary-email";
+      public const string SummaryEmailDeadletter = "summary-email/$DeadLetterQueue";
     }
 
     public static class Table
@@ -29,7 +31,9 @@
     {
       public const string SolarDatabase = "solar";
       public const string PowerCollection = "power";
-      public const string PowerLeases = "powerleases";
+      public const string PowerLeases = "power-leases";
+      public const string ExceptionCollection = "exception";
+      public const string ExceptionLeases = "exception-leases";
     }
 
     public static class ConnectionStringNames

@@ -41,7 +41,7 @@ namespace SolarViewFunctions.Functions
         {
           var powerDocument = new PowerDocument(siteData.SiteId, solarDay);
 
-          Tracker.TrackInfo($"Saving document {powerDocument.id} for SiteId {siteData.SiteId}, {powerDocument.Date}");
+          Tracker.TrackInfo($"Saving document {powerDocument.Id} for SiteId {siteData.SiteId}, {powerDocument.Date}");
 
           yield return powerDocuments.AddAsync(powerDocument);
         }

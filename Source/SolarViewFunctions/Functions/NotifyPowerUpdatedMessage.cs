@@ -10,14 +10,14 @@ using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
 {
-  public class NotifyPowerUpdatedStatusMessage : FunctionBase
+  public class NotifyPowerUpdatedMessage : FunctionBase
   {
-    public NotifyPowerUpdatedStatusMessage(ITracker tracker)
+    public NotifyPowerUpdatedMessage(ITracker tracker)
       : base(tracker)
     {
     }
 
-    [FunctionName(nameof(NotifyPowerUpdatedStatusMessage))]
+    [FunctionName(nameof(NotifyPowerUpdatedMessage))]
     public async Task<PowerUpdatedStatus> Run(
       [ActivityTrigger] IDurableActivityContext context,
       [ServiceBus(Constants.Queues.PowerUpdated, EntityType.Queue, Connection = Constants.ConnectionStringNames.SolarViewServiceBus)] MessageSender messagesQueue)
@@ -28,11 +28,11 @@ namespace SolarViewFunctions.Functions
       
       var updatedMessage = context.GetInput<PowerUpdatedMessage>();
 
-      Tracker.TrackEvent(nameof(NotifyPowerUpdatedStatusMessage), updatedMessage);
+      Tracker.TrackEvent(nameof(NotifyPowerUpdatedMessage), updatedMessage);
 
       var queueMessage = MessageHelpers.SerializeToMessage(updatedMessage);
 
-      Tracker.TrackInfo($"Sending a {nameof(NotifyPowerUpdatedStatusMessage)} for SiteId {updatedMessage.SiteId}, Status {updatedMessage.Status}");
+      Tracker.TrackInfo($"Sending a {nameof(NotifyPowerUpdatedMessage)} for SiteId {updatedMessage.SiteId}, Status {updatedMessage.Status}");
 
       await messagesQueue.SendAsync(queueMessage).ConfigureAwait(false);
 

@@ -1,3 +1,4 @@
+using AllOverIt.Extensions;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
@@ -17,18 +18,21 @@ namespace SolarViewFunctions.Functions
     }
 
     [FunctionName(nameof(DecomposePowerDocument))]
-    public async Task Run([OrchestrationTrigger] IDurableOrchestrationContext context)
+    public async Task Run([OrchestrationTrigger] IDurableOrchestrationContext context,
+      [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection, 
+        ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments)
     {
+      MakeTrackerReplaySafe(context);
+      Tracker.AppendDefaultProperties(context.GetTrackingProperties());
+
+      PowerDocument powerDocument = null;
+      var document = context.GetInput<Document>();
+
       try
       {
-        MakeTrackerReplaySafe(context);
-        Tracker.AppendDefaultProperties(context.GetTrackingProperties());
+        Tracker.TrackEvent(nameof(DecomposePowerDocument), new { DocumentId = document.Id });
 
-        var document = context.GetInput<Document>();
-
-        Tracker.TrackEvent(nameof(DecomposePowerDocument), new {DocumentId = document.Id});
-
-        PowerDocument powerDocument = (dynamic)document;
+        powerDocument = (dynamic)document;
 
         Tracker.TrackInfo($"Processing decomposition of document {document.Id}");
 
@@ -36,9 +40,22 @@ namespace SolarViewFunctions.Functions
       }
       catch (Exception exception)
       {
-        Tracker.TrackException(exception.UnwrapFunctionException());
+        var trackedException = exception.UnwrapFunctionException();
 
-        // todo: send a message to send an email
+        var notification = new
+        {
+          powerDocument?.SiteId,
+          DocumentId = document.Id,
+          document.SelfLink,
+          document.ResourceId
+        };
+
+        Tracker.TrackException(trackedException, notification);
+
+        if (!powerDocument?.SiteId.IsNullOrEmpty() ?? false)
+        {
+          await exceptionDocuments.AddNotificationAsync<DecomposePowerDocument>(powerDocument.SiteId, trackedException, notification);
+        }
       }
     }
   }

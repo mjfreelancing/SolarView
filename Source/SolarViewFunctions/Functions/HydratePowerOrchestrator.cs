@@ -3,6 +3,7 @@ using AllOverIt.Helpers;
 using AutoMapper;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using SolarViewFunctions.Entities;
 using SolarViewFunctions.Exceptions;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Factories;
@@ -28,7 +29,9 @@ namespace SolarViewFunctions.Functions
     }
 
     [FunctionName(nameof(HydratePowerOrchestrator))]
-    public async Task<PowerUpdatedStatus> Run([OrchestrationTrigger] IDurableOrchestrationContext context)
+    public async Task<PowerUpdatedStatus> Run([OrchestrationTrigger] IDurableOrchestrationContext context,
+      [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
+        ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments)
     {
       MakeTrackerReplaySafe(context);
       Tracker.AppendDefaultProperties(context.GetTrackingProperties());
@@ -87,7 +90,22 @@ namespace SolarViewFunctions.Functions
       }
       catch (Exception exception)
       {
-        return await HandleException(exception.UnwrapFunctionException(), context, triggeredPowerQuery);
+        var trackedException = exception.UnwrapFunctionException();
+
+        var notification = new
+        {
+          triggeredPowerQuery.SiteId,
+          ContextInput = triggeredPowerQuery
+        };
+
+        Tracker.TrackException(trackedException, notification);
+
+        if (!triggeredPowerQuery.SiteId.IsNullOrEmpty())
+        {
+          await exceptionDocuments.AddNotificationAsync<HydratePowerOrchestrator>(triggeredPowerQuery.SiteId, trackedException, notification);
+        }
+
+        return await NotifyPowerUpdated(context, PowerUpdatedStatus.Error, triggeredPowerQuery);
       }
     }
 
@@ -98,16 +116,7 @@ namespace SolarViewFunctions.Functions
 
       Tracker.TrackInfo($"Sending '{status}' status notification for SiteId {message.SiteId}, Trigger {message.Trigger}");
 
-      return context.CallActivityWithRetryAsync<PowerUpdatedStatus>(nameof(NotifyPowerUpdatedStatusMessage), GetDefaultRetryOptions(), message);
-    }
-
-    private async Task<PowerUpdatedStatus> HandleException(Exception exception, IDurableOrchestrationContext context, TriggeredPowerQuery triggeredPowerQuery)
-    {
-      Tracker.TrackException(exception);
-
-      // todo: send a message to send an email
-
-      return await NotifyPowerUpdated(context, PowerUpdatedStatus.Error, triggeredPowerQuery);
+      return context.CallActivityWithRetryAsync<PowerUpdatedStatus>(nameof(NotifyPowerUpdatedMessage), GetDefaultRetryOptions(), message);
     }
   }
 }

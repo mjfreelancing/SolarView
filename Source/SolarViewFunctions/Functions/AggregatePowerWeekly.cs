@@ -7,13 +7,13 @@ using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Power;
+using SolarViewFunctions.Repository.PowerWeekly;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
-using SolarViewFunctions.Repository.PowerWeekly;
 
 namespace SolarViewFunctions.Functions
 {
@@ -39,7 +39,7 @@ namespace SolarViewFunctions.Functions
 
       var request = context.GetInput<SiteRefreshAggregationRequest>();
 
-      var startDate = request.StartDate.ParseSolarDate();    // expecting yyyy-MM-dd
+      var startDate = request.StartDate.ParseSolarDate();
       var endDate = request.EndDate.ParseSolarDate();
       var siteStartDate = request.SiteStartDate.ParseSolarDate();
 
@@ -85,7 +85,7 @@ namespace SolarViewFunctions.Functions
 
       var tasks = GetWeeklyTasks();
 
-      await Task.WhenAll(tasks);
+      await Task.WhenAll(tasks).ConfigureAwait(false);
 
       Tracker.TrackInfo($"Weekly power data aggregation is complete for SiteId {request.SiteId}");
     }

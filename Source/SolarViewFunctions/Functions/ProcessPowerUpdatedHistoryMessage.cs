@@ -1,3 +1,4 @@
+using AllOverIt.Extensions;
 using AllOverIt.Helpers;
 using AutoMapper;
 using Microsoft.Azure.Cosmos.Table;
@@ -29,30 +30,43 @@ namespace SolarViewFunctions.Functions
     [FunctionName(nameof(ProcessPowerUpdatedHistoryMessage))]
     public async Task Run(
       [ServiceBusTrigger(Constants.Queues.PowerUpdated, Connection = Constants.ConnectionStringNames.SolarViewServiceBus)] Message queueMessage,
-      [Table(Constants.Table.PowerUpdateHistory, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable historyTable)
+      [Table(Constants.Table.PowerUpdateHistory, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable historyTable,
+      [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
+        ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments)
     {
+      Tracker.AppendDefaultProperties(new { queueMessage.MessageId });
+
+      PowerUpdatedMessage request = null;
+
       try
       {
-        Tracker.AppendDefaultProperties(new { queueMessage.MessageId });
+        request = queueMessage.DeserializeFromMessage<PowerUpdatedMessage>();
 
-        var updatedMessage = queueMessage.DeserializeFromMessage<PowerUpdatedMessage>();
+        Tracker.TrackEvent(nameof(ProcessPowerUpdatedHistoryMessage), new { queueMessage.MessageId, request.Status });
 
-        Tracker.TrackEvent(nameof(ProcessPowerUpdatedHistoryMessage), new { queueMessage.MessageId, updatedMessage.Status });
+        Tracker.TrackInfo($"Updating {nameof(Constants.Table.PowerUpdateHistory)} table for SiteId {request.SiteId} with status " +
+                          $"{request.Status} for date range {request.StartDateTime} to {request.EndDateTime}");
 
-        Tracker.TrackInfo($"Updating {nameof(Constants.Table.PowerUpdateHistory)} table for SiteId {updatedMessage.SiteId} with status " +
-                          $"{updatedMessage.Status} for date range {updatedMessage.StartDateTime} to {updatedMessage.EndDateTime}");
-
-        var entity = _mapper.Map<PowerUpdate>(updatedMessage);
+        var entity = _mapper.Map<PowerUpdate>(request);
 
         var historyRepository = _repositoryFactory.Create<IPowerUpdateHistoryRepository>(historyTable);
         await historyRepository.Upsert(entity).ConfigureAwait(false);
       }
       catch (Exception exception)
       {
-        Tracker.TrackException(exception);
+        var notification = new
+        {
+          request?.SiteId,
+          QueueMessageId = queueMessage.MessageId,
+          MessageContent = request
+        };
 
-        // allow the message to be re-tried (or deadletter)
-        throw;
+        Tracker.TrackException(exception, notification);
+
+        if (!request?.SiteId.IsNullOrEmpty() ?? false)
+        {
+          await exceptionDocuments.AddNotificationAsync<ProcessPowerUpdatedHistoryMessage>(request.SiteId, exception, notification);
+        }
       }
     }
   }

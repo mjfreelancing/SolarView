@@ -3,6 +3,7 @@ using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using SolarViewFunctions.Factories;
 using SolarViewFunctions.Repository;
+using SolarViewFunctions.SendGrid;
 using SolarViewFunctions.Tracking;
 
 [assembly: FunctionsStartup(typeof(SolarViewFunctions.Startup))]
@@ -14,6 +15,7 @@ namespace SolarViewFunctions
     public override void Configure(IFunctionsHostBuilder builder)
     {
       builder.Services.AddScoped<ITracker, TelemetryTracker>();
+      builder.Services.AddScoped<ISendGridEmailCreator, SendGridEmailCreator>();
       builder.Services.AddSingleton<IRetryOptionsFactory, RetryOptionsFactory>();
       builder.Services.AddSingleton<ISolarViewRepositoryFactory, SolarViewRepositoryFactory>();
 

@@ -12,8 +12,8 @@ namespace SolarViewFunctions.Extensions
         ? siteInfo.StartDate.ParseSolarDate()
         : siteInfo.LastRefreshDateTime.ParseSolarDateTime();
 
-      // floor the current time to the minute 
-      var endDateTime = siteLocalTime.AddSeconds(-siteLocalTime.Second);
+      // floor the current time to the hour 
+      var endDateTime = siteLocalTime.TrimToHour();
 
       return (startDateTime, endDateTime);
     }
@@ -25,7 +25,10 @@ namespace SolarViewFunctions.Extensions
         return DateTime.MinValue;
       }
 
-      var nextRefreshTime = siteInfo.LastRefreshDateTime.ParseSolarDateTime().AddHours(1);
+      // truncate the next refresh to the hour
+      var lastRefreshTime = siteInfo.LastRefreshDateTime.ParseSolarDateTime();
+      var nextRefreshTime = lastRefreshTime.TrimToHour().AddHours(1);
+
       var tzi = TimeZoneInfo.FindSystemTimeZoneById(siteInfo.TimeZoneId);
 
       return TimeZoneInfo.ConvertTimeToUtc(nextRefreshTime, tzi);

@@ -22,7 +22,7 @@ namespace SolarViewFunctions.Functions
     }
 
     [FunctionName(nameof(UpdateSitesTable))]
-    public async Task Run(
+    public Task Run(
       [ActivityTrigger] IDurableActivityContext context,
       [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable)
     {
@@ -35,7 +35,7 @@ namespace SolarViewFunctions.Functions
       Tracker.TrackInfo($"Updating info for SiteId {siteInfo.SiteId}");
 
       var sitesRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
-      await sitesRepository.Upsert(siteInfo).ConfigureAwait(false);
+      return sitesRepository.Upsert(siteInfo);
     }
   }
 }

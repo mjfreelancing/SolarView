@@ -7,12 +7,12 @@ using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Power;
+using SolarViewFunctions.Repository.PowerYearly;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using SolarViewFunctions.Repository.PowerYearly;
 
 namespace SolarViewFunctions.Functions
 {
@@ -78,7 +78,7 @@ namespace SolarViewFunctions.Functions
 
       var tasks = GetYearlyTasks();
 
-      await Task.WhenAll(tasks);
+      await Task.WhenAll(tasks).ConfigureAwait(false);
 
       Tracker.TrackInfo($"Yearly power data aggregation is complete for SiteId {request.SiteId}");
     }
@@ -109,7 +109,7 @@ namespace SolarViewFunctions.Functions
           return new MeterPowerYear(siteId, startDate, endDate, time, meterType, watts);
         });
 
-      await powerYearlyRepository.UpsertAsync(aggregatedEntities);
+      await powerYearlyRepository.UpsertAsync(aggregatedEntities).ConfigureAwait(false);
     }
   }
 }

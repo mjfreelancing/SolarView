@@ -2,14 +2,13 @@ using AllOverIt.Helpers;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Sites;
 using SolarViewFunctions.Tracking;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
@@ -28,63 +27,57 @@ namespace SolarViewFunctions.Functions
     public async Task Run(
       [TimerTrigger(Constants.Trigger.CronScheduleEveryHour, RunOnStartup = false)] TimerInfo timer,
       [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable,
+      [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
+        ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments,
       [DurableClient] IDurableOrchestrationClient orchestrationClient)
     {
       try
       {
         var currentTimeUtc = DateTime.UtcNow;
-        Tracker.TrackEvent(nameof(TriggerAggregatePowerData), new { TriggerTimeUtc = $"{currentTimeUtc.GetSolarDateTimeString()} (UTC)" });
+        Tracker.TrackEvent(nameof(TriggerAggregatePowerData));
 
         var siteRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
 
         var allSites = siteRepository.GetAllSitesAsyncEnumerable();
 
-        var aggregationTasks = new List<(string SiteId, Task<string> SiteTask)>();
-
-        await foreach (var site in allSites)
+        await foreach (var siteInfo in allSites)
         {
-          if (site.UtcToLocalTime(currentTimeUtc).Hour == Constants.RefreshHour.Aggregation)
+          try
           {
-            var (startDate, endDate) = site.GetNextAggregationPeriod(site.UtcToLocalTime(currentTimeUtc).Date);
-
-            if (endDate > startDate)
+            if (siteInfo.UtcToLocalTime(currentTimeUtc).Hour == Constants.RefreshHour.Aggregation)
             {
-              var request = new SiteRefreshAggregationRequest
+              var (startDate, endDate) = siteInfo.GetNextAggregationPeriod(siteInfo.UtcToLocalTime(currentTimeUtc).Date);
+
+              if (endDate > startDate)
               {
-                SiteId = site.SiteId,
-                SiteStartDate = site.StartDate,
-                StartDate = startDate.GetSolarDateString(),
-                EndDate = endDate.GetSolarDateString()
-              };
+                var request = new SiteRefreshAggregationRequest
+                {
+                  SiteId = siteInfo.SiteId,
+                  SiteStartDate = siteInfo.StartDate,
+                  StartDate = startDate.GetSolarDateString(),
+                  EndDate = endDate.GetSolarDateString()
+                };
 
-              // sequentially performs weekly, monthly, yearly aggregation
-              var task = orchestrationClient.StartNewAsync(nameof(AggregateSitePowerData), request);
+                // sequentially performs weekly, monthly, yearly aggregation
+                var instanceId = await orchestrationClient.StartNewAsync(nameof(AggregateSitePowerData), request);
 
-              aggregationTasks.Add((request.SiteId, task));
+                Tracker.TrackInfo($"Power data aggregation for SiteId {siteInfo.SiteId} has been scheduled", new { InstanceId = instanceId });
+              }
             }
           }
-        }
-
-        if (aggregationTasks.Count == 0)
-        {
-          Tracker.TrackInfo("No sites are due for a power data aggregation");
-        }
-        else
-        {
-          Tracker.TrackInfo($"Power data aggregation has begun for {aggregationTasks.Count} site(s)");
-
-          var tasks = aggregationTasks.Select(item => item.SiteTask);
-          await Task.WhenAll(tasks).ConfigureAwait(false);
-
-          foreach (var (siteId, siteTask) in aggregationTasks)
+          catch (Exception exception)
           {
-            Tracker.TrackInfo($"Power data aggregation for SiteId {siteId} has been scheduled", new {InstanceId = siteTask.Result});
+            Tracker.TrackException(exception);
+
+            await exceptionDocuments.AddNotificationAsync<TriggerAggregatePowerData>(siteInfo.SiteId, exception, null);
           }
         }
+
+        Tracker.TrackInfo("All sites have been processed for data aggregation requests");
       }
       catch (Exception exception)
       {
-        Tracker.TrackException(exception.UnwrapFunctionException());
+        Tracker.TrackException(exception);
       }
     }
   }
