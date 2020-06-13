@@ -4,9 +4,9 @@ using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.ServiceBus;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Helpers;
-using SolarViewFunctions.Models.Messages;
 using SolarViewFunctions.Tracking;
 using System.Threading.Tasks;
+using SolarViewFunctions.Models;
 
 namespace SolarViewFunctions.Functions
 {

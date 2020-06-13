@@ -1,3 +1,4 @@
+using AllOverIt.Extensions;
 using AllOverIt.Helpers;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
@@ -90,8 +91,8 @@ namespace SolarViewFunctions.Functions
       Tracker.TrackInfo($"Weekly power data aggregation is complete for SiteId {request.SiteId}");
     }
 
-    private static async Task PersistAggregatedMeterValues(IPowerRepository powerRepository, IPowerWeeklyRepository powerWeeklyRepository, string siteId, MeterType meterType,
-      int weekNumber, DateTime startDate, int daysToCollect)
+    private static async Task PersistAggregatedMeterValues(IPowerRepository powerRepository, IPowerWeeklyRepository powerWeeklyRepository,
+      string siteId, MeterType meterType, int weekNumber, DateTime startDate, int daysToCollect)
     {
       var timeWatts = new Dictionary<string, double>();
 

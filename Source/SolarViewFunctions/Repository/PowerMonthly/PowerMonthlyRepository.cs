@@ -1,7 +1,8 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos.Table;
 using SolarViewFunctions.Entities;
+using SolarViewFunctions.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Repository.PowerMonthly
 {
@@ -10,6 +11,13 @@ namespace SolarViewFunctions.Repository.PowerMonthly
     public PowerMonthlyRepository(CloudTable table)
       : base(table)
     {
+    }
+
+    public IAsyncEnumerable<MeterPowerMonth> GetMeterData(string siteId, int year, int month, MeterType meterType)
+    {
+      var partitionKey = $"{siteId}_{year}{month:D2}_{meterType}";
+
+      return GetAllAsyncEnumerable(partitionKey);
     }
 
     public Task UpsertAsync(IEnumerable<MeterPowerMonth> entities)

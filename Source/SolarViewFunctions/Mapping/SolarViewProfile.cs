@@ -3,7 +3,6 @@ using SolarViewFunctions.Dto;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
-using SolarViewFunctions.Models.Messages;
 using System;
 
 namespace SolarViewFunctions.Mapping

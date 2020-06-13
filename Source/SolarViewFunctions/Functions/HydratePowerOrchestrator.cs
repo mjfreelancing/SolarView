@@ -9,7 +9,6 @@ using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Factories;
 using SolarViewFunctions.Helpers;
 using SolarViewFunctions.Models;
-using SolarViewFunctions.Models.Messages;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Collections.Generic;

@@ -7,7 +7,6 @@ using SendGrid.Helpers.Mail;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
-using SolarViewFunctions.Models.Messages;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.PowerUpdateHistory;
 using SolarViewFunctions.Repository.Sites;

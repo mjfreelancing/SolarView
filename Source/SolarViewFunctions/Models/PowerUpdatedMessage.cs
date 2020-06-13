@@ -1,4 +1,4 @@
-namespace SolarViewFunctions.Models.Messages
+namespace SolarViewFunctions.Models
 {
   public class PowerUpdatedMessage
   {

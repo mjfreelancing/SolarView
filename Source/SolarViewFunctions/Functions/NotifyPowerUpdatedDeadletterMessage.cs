@@ -7,13 +7,13 @@ using Newtonsoft.Json;
 using SendGrid.Helpers.Mail;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
-using SolarViewFunctions.Models.Messages;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Sites;
 using SolarViewFunctions.SendGrid;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Threading.Tasks;
+using SolarViewFunctions.Models;
 
 namespace SolarViewFunctions.Functions
 {

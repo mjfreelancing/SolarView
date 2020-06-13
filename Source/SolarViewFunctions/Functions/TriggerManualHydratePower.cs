@@ -1,6 +1,8 @@
 using AllOverIt.Extensions;
 using AllOverIt.Helpers;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
@@ -10,6 +12,7 @@ using SolarViewFunctions.Dto;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Exceptions;
 using SolarViewFunctions.Extensions;
+using SolarViewFunctions.HttpResults;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Sites;
@@ -17,7 +20,6 @@ using SolarViewFunctions.Tracking;
 using SolarViewFunctions.Validators;
 using System;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
@@ -35,8 +37,8 @@ namespace SolarViewFunctions.Functions
     }
 
     [FunctionName(nameof(TriggerManualHydratePower))]
-    public async Task<HttpResponseMessage> Run(
-      [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "Power/Hydrate")] HttpRequestMessage request,
+    public async Task<IActionResult> Run(
+      [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "power/{siteId}/hydrate")] HttpRequest request, string siteId,
       [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable,
       [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
         ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments,
@@ -47,16 +49,22 @@ namespace SolarViewFunctions.Functions
       try
       {
         var triggerDateTime = DateTime.UtcNow;
-        hydrateRequest = await request.Content.ReadAsAsync<HydratePowerRequest>();
+
+        hydrateRequest = new HydratePowerRequest
+        {
+          SiteId = siteId,
+          StartDate = request.Query["StartDate"],
+          EndDate = request.Query["EndDate"]
+        };
 
         Tracker.AppendDefaultProperties(hydrateRequest);
 
-        Tracker.TrackEvent(nameof(TriggerManualHydratePower), new { TriggerTimeUtc = $"{triggerDateTime.GetSolarDateTimeString()} (UTC)" });
+        Tracker.TrackEvent(nameof(TriggerManualHydratePower));
 
         var siteRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
 
         ValidateRequest(hydrateRequest);
-        var siteInfo = await GetValidatedRequestedSiteAsync(hydrateRequest, siteRepository);
+        var siteInfo = await hydrateRequest.GetValidatedSiteInfo(siteRepository);
 
         var triggeredPowerQuery = _mapper.Map<TriggeredPowerQuery>(hydrateRequest);
         triggeredPowerQuery.TriggerDateTime = siteInfo.UtcToLocalTime(triggerDateTime).GetSolarDateTimeString();
@@ -76,7 +84,7 @@ namespace SolarViewFunctions.Functions
         Tracker.TrackWarn($"Request rejected due to {exception.ErrorCount} precondition failure(s), first = {exception.Errors.First().Message}",
           new { Reason = JsonConvert.SerializeObject(exception.Errors, Formatting.None) });
 
-        return exception.GetPreConditionErrorResponse();
+        return new PreConditionErrorResult(exception);
       }
       catch (Exception exception)
       {
@@ -94,7 +102,7 @@ namespace SolarViewFunctions.Functions
           await exceptionDocuments.AddNotificationAsync<TriggerManualHydratePower>(hydrateRequest.SiteId, exception, notification);
         }
 
-        return exception.GetInternalServerErrorResponse();
+        return new InternalServerErrorResult(exception);
       }
     }
 
@@ -107,23 +115,6 @@ namespace SolarViewFunctions.Functions
       {
         throw new PreConditionException(validationResult.Errors);
       }
-    }
-
-    private static async Task<SiteInfo> GetValidatedRequestedSiteAsync(HydratePowerRequest hydrateRequest, ISitesRepository sitesRepository)
-    {
-      var siteInfo = await sitesRepository.GetSiteAsync(hydrateRequest.SiteId);
-
-      var validator = new HydratePowerSiteValidator(siteInfo);
-
-      // ReSharper disable once MethodHasAsyncOverload
-      var validationResult = validator.Validate(hydrateRequest);
-
-      if (!validationResult.IsValid)
-      {
-        throw new PreConditionException(validationResult.Errors);
-      }
-
-      return siteInfo;
     }
   }
 }
