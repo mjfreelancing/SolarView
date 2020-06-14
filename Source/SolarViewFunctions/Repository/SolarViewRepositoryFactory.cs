@@ -2,7 +2,6 @@ using Microsoft.Azure.Cosmos.Table;
 using SolarViewFunctions.Repository.Power;
 using SolarViewFunctions.Repository.PowerMonthly;
 using SolarViewFunctions.Repository.PowerUpdateHistory;
-using SolarViewFunctions.Repository.PowerWeekly;
 using SolarViewFunctions.Repository.PowerYearly;
 using SolarViewFunctions.Repository.Sites;
 using System;
@@ -17,7 +16,6 @@ namespace SolarViewFunctions.Repository
       {
         {Constants.Table.Sites, table => new SitesRepository(table)},
         {Constants.Table.Power, table => new PowerRepository(table)},
-        {Constants.Table.PowerWeekly, table => new PowerWeeklyRepository(table)},
         {Constants.Table.PowerMonthly, table => new PowerMonthlyRepository(table)},
         {Constants.Table.PowerYearly, table => new PowerYearlyRepository(table)},
         {Constants.Table.PowerUpdateHistory, table => new PowerUpdateHistoryRepository(table)}

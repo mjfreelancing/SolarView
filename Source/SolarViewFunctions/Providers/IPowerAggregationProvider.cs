@@ -12,6 +12,6 @@ namespace SolarViewFunctions.Providers
     CloudTable PowerMonthlyTable { get; set; }
     CloudTable PowerYearlyTable { get; set; }
 
-    Task<IEnumerable<TimeWatts>> Aggregate(string siteId, MeterType meterType, DateTime startDate, DateTime endDate);
+    Task<IEnumerable<TimeWatts>> GetAverageDayView(string siteId, MeterType meterType, DateTime startDate, DateTime endDate);
   }
 }

@@ -73,7 +73,7 @@ namespace SolarViewFunctions.Functions
           }
         }
 
-        Tracker.TrackInfo("All sites have been processed for data aggregation requests");
+        Tracker.TrackInfo("Data aggregation requests have been scheduled for all sites");
       }
       catch (Exception exception)
       {

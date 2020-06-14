@@ -19,9 +19,7 @@ namespace SolarViewFunctions.Functions
     }
 
     [FunctionName(nameof(RefreshSitePowerDataOrchestrator))]
-    public async Task Run([OrchestrationTrigger] IDurableOrchestrationContext context,
-      [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
-        ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments)
+    public async Task Run([OrchestrationTrigger] IDurableOrchestrationContext context)
     {
       MakeTrackerReplaySafe(context);
       Tracker.AppendDefaultProperties(context.GetTrackingProperties());
@@ -60,7 +58,8 @@ namespace SolarViewFunctions.Functions
 
         if (!request?.SiteId.IsNullOrEmpty() ?? false)
         {
-          await exceptionDocuments.AddNotificationAsync<RefreshSitePowerDataOrchestrator>(request.SiteId, exception, notification);
+          // can't use I/O in an orchestration context so need to indirectly report the problem via another activity
+          await context.NotifyException<RefreshSitePowerDataOrchestrator>(GetDefaultRetryOptions(), request.SiteId, trackedException, notification);
         }
       }
     }

@@ -3,7 +3,6 @@ using AllOverIt.Helpers;
 using AutoMapper;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using SolarViewFunctions.Entities;
 using SolarViewFunctions.Exceptions;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Factories;
@@ -28,9 +27,7 @@ namespace SolarViewFunctions.Functions
     }
 
     [FunctionName(nameof(HydratePowerOrchestrator))]
-    public async Task<PowerUpdatedStatus> Run([OrchestrationTrigger] IDurableOrchestrationContext context,
-      [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
-        ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments)
+    public async Task<PowerUpdatedStatus> Run([OrchestrationTrigger] IDurableOrchestrationContext context)
     {
       MakeTrackerReplaySafe(context);
       Tracker.AppendDefaultProperties(context.GetTrackingProperties());
@@ -101,7 +98,8 @@ namespace SolarViewFunctions.Functions
 
         if (!triggeredPowerQuery.SiteId.IsNullOrEmpty())
         {
-          await exceptionDocuments.AddNotificationAsync<HydratePowerOrchestrator>(triggeredPowerQuery.SiteId, trackedException, notification);
+          // can't use I/O in an orchestration context so need to indirectly report the problem via another activity
+          await context.NotifyException<HydratePowerOrchestrator>(GetDefaultRetryOptions(), triggeredPowerQuery.SiteId, trackedException, notification);
         }
 
         return await NotifyPowerUpdated(context, PowerUpdatedStatus.Error, triggeredPowerQuery);

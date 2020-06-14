@@ -21,7 +21,6 @@
     {
       public const string Sites = "Sites";
       public const string Power = "Power";
-      public const string PowerWeekly = "PowerWeekly";
       public const string PowerMonthly = "PowerMonthly";
       public const string PowerYearly = "PowerYearly";
       public const string PowerUpdateHistory = "PowerUpdateHistory";

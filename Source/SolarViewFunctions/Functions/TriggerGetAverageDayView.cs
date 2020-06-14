@@ -69,7 +69,7 @@ namespace SolarViewFunctions.Functions
         _powerAggregationProvider.PowerMonthlyTable = powerMonthlyTable;
         _powerAggregationProvider.PowerYearlyTable = powerYearlyTable;
 
-        var timeWatts = await _powerAggregationProvider.Aggregate(
+        var timeWatts = await _powerAggregationProvider.GetAverageDayView(
           averageDayRequest.SiteId,
           meterType.As<MeterType>(),
           averageDayRequest.StartDate.ParseSolarDate(),

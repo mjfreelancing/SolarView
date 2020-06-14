@@ -17,7 +17,6 @@ namespace SolarViewFunctions.Functions
   {
     private static readonly IDictionary<string, string> AggregateFunctions = new Dictionary<string, string>
     {
-      {nameof(AggregatePowerWeekly), "weekly"},
       {nameof(AggregatePowerMonthly), "monthly"},
       {nameof(AggregatePowerYearly), "yearly"}
     };

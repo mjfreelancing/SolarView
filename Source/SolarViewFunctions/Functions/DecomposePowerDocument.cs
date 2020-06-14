@@ -18,9 +18,7 @@ namespace SolarViewFunctions.Functions
     }
 
     [FunctionName(nameof(DecomposePowerDocument))]
-    public async Task Run([OrchestrationTrigger] IDurableOrchestrationContext context,
-      [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection, 
-        ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments)
+    public async Task Run([OrchestrationTrigger] IDurableOrchestrationContext context)
     {
       MakeTrackerReplaySafe(context);
       Tracker.AppendDefaultProperties(context.GetTrackingProperties());
@@ -54,7 +52,8 @@ namespace SolarViewFunctions.Functions
 
         if (!powerDocument?.SiteId.IsNullOrEmpty() ?? false)
         {
-          await exceptionDocuments.AddNotificationAsync<DecomposePowerDocument>(powerDocument.SiteId, trackedException, notification);
+          // can't use I/O in an orchestration context so need to indirectly report the problem via another activity
+          await context.NotifyException<DecomposePowerDocument>(GetDefaultRetryOptions(), powerDocument.SiteId, trackedException, notification);
         }
       }
     }

@@ -56,7 +56,7 @@ namespace SolarViewFunctions.Providers
 
     // assumes to be processing full days
     // dates are assumed to be in the site local time
-    public async Task<IEnumerable<TimeWatts>> Aggregate(string siteId, MeterType meterType, DateTime startDate, DateTime endDate)
+    public async Task<IEnumerable<TimeWatts>> GetAverageDayView(string siteId, MeterType meterType, DateTime startDate, DateTime endDate)
     {
       // determine what full years and months we have, then the remaining individual days
       var yearPeriods = GetYearPeriods(startDate, endDate).AsReadOnlyList();
@@ -113,7 +113,8 @@ namespace SolarViewFunctions.Providers
 
         var formattedTime = $"{timespan.Hours:D2}:{timespan.Minutes:D2}";
         var averageWatts = totalDays == 0 ? 0.0d : totalWatts / totalDays;
-        meterReadings.Add(new TimeWatts(formattedTime, averageWatts));
+
+        meterReadings.Add(new TimeWatts(formattedTime, Math.Round(averageWatts, 6, MidpointRounding.AwayFromZero)));
       }
 
       return meterReadings;

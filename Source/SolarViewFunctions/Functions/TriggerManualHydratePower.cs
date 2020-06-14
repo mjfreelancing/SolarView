@@ -1,8 +1,6 @@
 using AllOverIt.Extensions;
 using AllOverIt.Helpers;
 using AutoMapper;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
@@ -20,6 +18,7 @@ using SolarViewFunctions.Tracking;
 using SolarViewFunctions.Validators;
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
@@ -37,8 +36,8 @@ namespace SolarViewFunctions.Functions
     }
 
     [FunctionName(nameof(TriggerManualHydratePower))]
-    public async Task<IActionResult> Run(
-      [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "power/{siteId}/hydrate")] HttpRequest request, string siteId,
+    public async Task<HttpResponseMessage> Run(
+      [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "hydrate/{siteId}")] HttpRequestMessage request, string siteId,
       [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable,
       [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
         ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments,
@@ -50,12 +49,8 @@ namespace SolarViewFunctions.Functions
       {
         var triggerDateTime = DateTime.UtcNow;
 
-        hydrateRequest = new HydratePowerRequest
-        {
-          SiteId = siteId,
-          StartDate = request.Query["StartDate"],
-          EndDate = request.Query["EndDate"]
-        };
+        hydrateRequest = await request.Content.ReadAsAsync<HydratePowerRequest>();
+        hydrateRequest.SiteId = siteId;
 
         Tracker.AppendDefaultProperties(hydrateRequest);
 
@@ -84,7 +79,7 @@ namespace SolarViewFunctions.Functions
         Tracker.TrackWarn($"Request rejected due to {exception.ErrorCount} precondition failure(s), first = {exception.Errors.First().Message}",
           new { Reason = JsonConvert.SerializeObject(exception.Errors, Formatting.None) });
 
-        return new PreConditionErrorResult(exception);
+        return new PreConditionErrorResponse(exception);
       }
       catch (Exception exception)
       {
@@ -102,7 +97,7 @@ namespace SolarViewFunctions.Functions
           await exceptionDocuments.AddNotificationAsync<TriggerManualHydratePower>(hydrateRequest.SiteId, exception, notification);
         }
 
-        return new InternalServerErrorResult(exception);
+        return new InternalServerErrorResponse(exception);
       }
     }
 
