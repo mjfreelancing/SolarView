@@ -100,17 +100,51 @@ namespace SolarViewFunctions.Validation
         .WithErrorCode($"{ValidationReason.InvalidDate}");
     }
 
-    // using string fields for date values
     protected IRuleBuilderOptions<TType, string> RegisterIsValidDateRange(Expression<Func<TType, string>> expression1, Expression<Func<TType, string>> expression2,
       bool allowSameDate, string format)
     {
-      return RegisterDateRangeValidation(
-        expression1,
-        expression2,
-        allowSameDate,
-        expression => RegisterIsValidDate(expression, format),
-        value => ValidationHelpers.GetDateValue(value, format)
-      );
+      // validate both values are provided and in the required format
+      RegisterIsRequired(expression1).DependentRules(() => { RegisterIsValidDate(expression1, format); });
+      RegisterIsRequired(expression2).DependentRules(() => { RegisterIsValidDate(expression2, format); });
+
+      // only validates it's a valid range if both values are in the required format
+      return RuleFor(expression1)
+        .Must((model, property, context) =>
+        {
+          var otherPropertyName = ValidationHelpers.GetPropertyName(expression2);
+          var otherPropertyValue = expression2.Compile().Invoke(model);
+
+          context.MessageFormatter
+            .AppendArgument("ComparedPropertyName", otherPropertyName)
+            .AppendArgument("ComparedPropertyValue", otherPropertyValue);
+
+          if (!ValidationHelpers.TryGetDateValue(property, format, out var date1))
+          {
+            return false;
+          }
+
+          if (!ValidationHelpers.TryGetDateValue(otherPropertyValue, format, out var date2))
+          {
+            return false;
+          }
+
+          return allowSameDate
+            ? date1 <= date2
+            : date1 < date2;
+        })
+        .When(model =>
+        {
+          var value1 = expression1.Compile().Invoke(model);
+          var value2 = expression2.Compile().Invoke(model);
+
+          return ValidationHelpers.TryGetDateValue(value1, format, out var _) && 
+                 ValidationHelpers.TryGetDateValue(value2, format, out var _);
+        })
+        .WithName(ValidationHelpers.GetPropertyName(expression1))
+        .WithMessage(allowSameDate
+          ? "The field '{PropertyName}' must have a date less than or equal to '{ComparedPropertyName}'"
+          : "The field '{PropertyName}' must have a date less than '{ComparedPropertyName}'")
+        .WithErrorCode($"{ValidationReason.InvalidDateRange}");
     }
 
     protected IRuleBuilderOptions<TType, TProperty> RegisterIsGreaterThan<TProperty>(Expression<Func<TType, TProperty>> expression, TProperty value)
@@ -358,63 +392,21 @@ namespace SolarViewFunctions.Validation
     private static string GetBoundsErrorMessage<TProperty>(TProperty lowerBound, bool lowerInclusive, TProperty upperBound, bool upperInclusive)
       where TProperty : struct, IComparable<TProperty>, IComparable
     {
-      var messagePrefix = "The field '{PropertyName}' is not within the bounds ";
       var lowerComparison = GetComparison(lowerInclusive);
       var upperComparison = GetComparison(upperInclusive);
       var bounds = $"{lowerBound} {lowerComparison} value {upperComparison} {upperBound}";
 
-      return $"{messagePrefix}{bounds}";
+      return $"The field '{{PropertyName}}' is not within the bounds {bounds}";
     }
 
     private static string GetBoundsErrorMessage<TProperty>(TProperty? lowerBound, bool lowerInclusive, TProperty? upperBound, bool upperInclusive)
       where TProperty : struct, IComparable<TProperty>, IComparable
     {
-      var messagePrefix = "The field '{PropertyName}' is not within the bounds ";
       var lowerComparison = GetComparison(lowerInclusive);
       var upperComparison = GetComparison(upperInclusive);
       var bounds = $"{lowerBound} {lowerComparison} value {upperComparison} {upperBound}";
 
-      return $"{messagePrefix}{bounds}";
-    }
-
-    private IRuleBuilderOptions<TType, string> RegisterDateRangeValidation(Expression<Func<TType, string>> expression1, Expression<Func<TType, string>> expression2,
-      bool allowSameDate, Action<Expression<Func<TType, string>>> registerIsValidDate, Func<string, DateTime?> getDateValue)
-    {
-      //RegisterIsRequired(expression1).DependentRules(() => registerIsValidDate.Invoke(expression1));
-      //RegisterIsRequired(expression2).DependentRules(() => registerIsValidDate.Invoke(expression2));
-
-      return RuleFor(expression1)
-        .Must((model, property, context) =>
-        {
-          var otherPropertyName = ValidationHelpers.GetPropertyName(expression2);
-          var otherPropertyValue = expression2.Compile().Invoke(model);
-
-          context.MessageFormatter
-            .AppendArgument("ComparedPropertyName", otherPropertyName)
-            .AppendArgument("ComparedPropertyValue", otherPropertyValue);
-
-          var date1 = getDateValue.Invoke(property);
-          var date2 = getDateValue.Invoke(otherPropertyValue);
-
-          return allowSameDate
-            ? date1 <= date2
-            : date1 < date2;
-        })
-        .When(model =>
-        {
-          var value1 = expression1.Compile().Invoke(model);
-          var date1 = getDateValue.Invoke(value1);
-
-          var value2 = expression2.Compile().Invoke(model);
-          var date2 = getDateValue.Invoke(value2);
-
-          return date1 != null && date2 != null;
-        })
-        .WithName(ValidationHelpers.GetPropertyName(expression1))
-        .WithMessage(allowSameDate
-          ? "The field '{PropertyName}' must have a date less than or equal to '{ComparedPropertyName}'"
-          : "The field '{PropertyName}' must have a date less than '{ComparedPropertyName}'")
-        .WithErrorCode($"{ValidationReason.InvalidDateRange}");
+      return $"The field '{{PropertyName}}' is not within the bounds {bounds}";
     }
 
     private static string GetComparison(bool inclusive)

@@ -16,9 +16,9 @@ namespace SolarViewFunctions.Validation
       return property.Name ?? string.Empty;
     }
 
-    public static DateTime? GetDateValue(string value, string format)
+    public static bool TryGetDateValue(string value, string format, out DateTime dateTime)
     {
-      return GetDateValue(value, new[] { format });
+      return TryGetDateValue(value, new[] { format }, out dateTime);
     }
 
     public static ValidationError CreatePreConditionError(string propertyName, object attemptedValue, string message)
@@ -26,16 +26,16 @@ namespace SolarViewFunctions.Validation
       return new ValidationError(propertyName, attemptedValue, ValidationReason.InternalPreCondition, message);
     }
 
-    private static DateTime? GetDateValue(string value, string[] formats)
+    private static bool TryGetDateValue(string value, string[] formats, out DateTime dateTime)
     {
+      dateTime = DateTime.MinValue;
+
       if (value.IsNullOrEmpty() || formats.IsNullOrEmpty())
       {
-        return default;
+        return false;
       }
 
-      return DateTime.TryParseExact(value, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime)
-        ? dateTime
-        : default(DateTime?);
+      return DateTime.TryParseExact(value, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTime);
     }
   }
 }
