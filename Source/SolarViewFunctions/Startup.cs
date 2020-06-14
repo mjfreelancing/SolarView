@@ -25,6 +25,10 @@ namespace SolarViewFunctions
       provider.GetService<IMapper>().ConfigurationProvider.AssertConfigurationIsValid();
 
 
+      // See the link below to see how app settings can be extracted and assigned to a custom type - can be useful for unit testing
+      // https://docs.microsoft.com/en-us/azure/azure-functions/functions-dotnet-dependency-injection#working-with-options-and-settings
+
+
       // using the code below results in the content of host.json being ignore (wrong hub name and route)
       // adding the file to the list makes no difference - now using the ExecutionContext within the functions
 

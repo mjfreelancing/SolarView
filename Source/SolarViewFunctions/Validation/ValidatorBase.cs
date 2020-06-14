@@ -113,17 +113,6 @@ namespace SolarViewFunctions.Validation
       );
     }
 
-    protected IConditionBuilder RegisterOptionalIsValidDateRange(Expression<Func<TType, string>> expression1, Expression<Func<TType, string>> expression2,
-      bool allowSameDate, string format)
-    {
-      return When(model => !expression1.Compile().Invoke(model).IsNullOrEmpty() ||
-                           !expression2.Compile().Invoke(model).IsNullOrEmpty(),
-        () =>
-        {
-          RegisterIsValidDateRange(expression1, expression2, allowSameDate, format);
-        });
-    }
-
     protected IRuleBuilderOptions<TType, TProperty> RegisterIsGreaterThan<TProperty>(Expression<Func<TType, TProperty>> expression, TProperty value)
       where TProperty : struct, IComparable<TProperty>, IComparable
     {
@@ -391,9 +380,8 @@ namespace SolarViewFunctions.Validation
     private IRuleBuilderOptions<TType, string> RegisterDateRangeValidation(Expression<Func<TType, string>> expression1, Expression<Func<TType, string>> expression2,
       bool allowSameDate, Action<Expression<Func<TType, string>>> registerIsValidDate, Func<string, DateTime?> getDateValue)
     {
-
-      RegisterIsRequired(expression1).DependentRules(() => registerIsValidDate.Invoke(expression1));
-      RegisterIsRequired(expression2).DependentRules(() => registerIsValidDate.Invoke(expression2));
+      //RegisterIsRequired(expression1).DependentRules(() => registerIsValidDate.Invoke(expression1));
+      //RegisterIsRequired(expression2).DependentRules(() => registerIsValidDate.Invoke(expression2));
 
       return RuleFor(expression1)
         .Must((model, property, context) =>
