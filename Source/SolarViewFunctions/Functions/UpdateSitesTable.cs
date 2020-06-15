@@ -33,14 +33,12 @@ namespace SolarViewFunctions.Functions
 
       var siteProperties = context.GetInput<Dictionary<string, string>>();
 
-      var siteId = siteProperties["SiteId"];
+      var siteId = siteProperties[Constants.Table.SitesPartitionKey];
 
-      var entity = new DynamicTableEntity("SiteId", siteId)
+      var entity = new DynamicTableEntity(Constants.Table.SitesPartitionKey, siteId)
       {
         // will be updating SiteInfo.LastAggregationDate or SiteInfo.LastRefreshDateTime
-        Properties = siteProperties
-          .Select(item => new KeyValuePair<string,EntityProperty>(item.Key, new EntityProperty(item.Value)))
-          .ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+        Properties = siteProperties.ToDictionary(kvp =>kvp.Key,kvp=> new EntityProperty(kvp.Value))
       };
 
       Tracker.TrackInfo($"Updating info for SiteId {siteId}");

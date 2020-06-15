@@ -14,12 +14,12 @@ namespace SolarViewFunctions.Repository.Sites
 
     public Task<SiteInfo> GetSiteAsync(string siteId)
     {
-      return GetAsync("SiteId", siteId);
+      return GetAsync(Constants.Table.SitesPartitionKey, siteId);
     }
 
     public IAsyncEnumerable<SiteInfo> GetAllSitesAsyncEnumerable()
     {
-      return GetAllAsyncEnumerable("SiteId");
+      return GetAllAsyncEnumerable(Constants.Table.SitesPartitionKey);
     }
 
     public Task<TableResult> MergeAsync(ITableEntity entity)

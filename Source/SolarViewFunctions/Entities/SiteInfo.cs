@@ -2,10 +2,9 @@ using Microsoft.Azure.Cosmos.Table;
 
 namespace SolarViewFunctions.Entities
 {
-  // Sites table
   public class SiteInfo : TableEntity
   {
-    // PartitionKey == "SiteId"
+    // PartitionKey == "SiteId"  (Constants.Table.SitesPartitionKey)
     // RowKey => value of SiteId
     public string SiteId { get; set; }
     public string StartDate { get; set; }                   // first full day where all meter data is available (yyyy-MM-dd)
