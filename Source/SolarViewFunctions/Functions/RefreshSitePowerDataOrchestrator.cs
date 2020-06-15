@@ -7,6 +7,7 @@ using SolarViewFunctions.Factories;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.Tracking;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
@@ -92,7 +93,9 @@ namespace SolarViewFunctions.Functions
       };
 
       await ProcessSitePowerQuery(context, triggeredPowerQuery);
-      await UpdateSiteLastRefreshTime(context, siteInfo, triggeredPowerQuery);
+
+      siteInfo.LastRefreshDateTime = triggeredPowerQuery.EndDateTime;
+      await UpdateSiteLastRefreshTime(context, siteInfo);
     }
 
     private Task ProcessSitePowerQuery(IDurableOrchestrationContext context, PowerQuery powerQuery)
@@ -106,12 +109,17 @@ namespace SolarViewFunctions.Functions
       return context.CallSubOrchestratorWithRetryAsync(nameof(HydratePowerOrchestrator), GetDefaultRetryOptions(), powerQuery);
     }
 
-    private Task UpdateSiteLastRefreshTime(IDurableOrchestrationContext context, SiteInfo siteInfo, PowerQuery powerQuery)
+    private Task UpdateSiteLastRefreshTime(IDurableOrchestrationContext context, SiteInfo siteInfo)
     {
-      Tracker.TrackInfo($"Initiating a request to update SiteId {powerQuery.SiteId} with a last refresh date of {powerQuery.EndDateTime}");
+      Tracker.TrackInfo($"Initiating a request to update SiteId {siteInfo.SiteId} with a last refresh date of {siteInfo.LastRefreshDateTime}");
 
-      siteInfo.LastRefreshDateTime = powerQuery.EndDateTime;
-      return context.CallActivityWithRetryAsync(nameof(UpdateSitesTable), GetDefaultRetryOptions(), siteInfo);
+      var siteUpdates = new Dictionary<string, string>
+      {
+        {nameof(SiteInfo.SiteId), siteInfo.SiteId},
+        {nameof(SiteInfo.LastRefreshDateTime), siteInfo.LastRefreshDateTime}
+      };
+
+      return context.CallActivityWithRetryAsync(nameof(UpdateSitesTable), GetDefaultRetryOptions(), siteUpdates);
     }
   }
 }

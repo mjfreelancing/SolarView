@@ -22,9 +22,9 @@ namespace SolarViewFunctions.Repository.Sites
       return GetAllAsyncEnumerable("SiteId");
     }
 
-    public Task<TableResult> Upsert(SiteInfo entity)
+    public Task<TableResult> MergeAsync(ITableEntity entity)
     {
-      return InsertOrReplaceAsync(entity);
+      return ExecuteAsync(TableOperation.InsertOrMerge, entity);
     }
   }
 }

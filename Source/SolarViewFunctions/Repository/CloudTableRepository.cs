@@ -125,6 +125,12 @@ namespace SolarViewFunctions.Repository
       return ExecuteAsync(TableOperation.Delete, entity);
     }
 
+    // can be used by derived classes if they want to send a DynamicTableEntity (it inherits from ITableEntity)
+    protected Task<TableResult> ExecuteAsync(Func<ITableEntity, TableOperation> operation, ITableEntity entity)
+    {
+      return _table.ExecuteAsync(operation.Invoke(entity));
+    }
+
     private async Task<IEnumerable<TableBatchResult>> DoBatchOperationAsync(IEnumerable<TEntity> entities, Action<TableBatchOperation, ITableEntity> operation)
     {
       IEnumerable<Task<TableBatchResult>> GetBatchTasksAsync()
@@ -202,11 +208,6 @@ namespace SolarViewFunctions.Repository
 
         token = queryResult.ContinuationToken;
       } while (token != null);
-    }
-
-    private Task<TableResult> ExecuteAsync(Func<ITableEntity, TableOperation> operation, ITableEntity entity)
-    {
-      return _table.ExecuteAsync(operation.Invoke(entity));
     }
   }
 }

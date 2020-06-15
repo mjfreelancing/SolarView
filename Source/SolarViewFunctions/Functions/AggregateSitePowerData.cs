@@ -83,12 +83,15 @@ namespace SolarViewFunctions.Functions
 
     private async Task UpdateLastAggregationEndDate(IDurableOrchestrationContext context, string siteId, string endDate)
     {
-      var siteInfo = await context.CallActivityWithRetryAsync<SiteInfo>(nameof(GetSiteInfo), GetDefaultRetryOptions(), siteId);
-
       Tracker.TrackInfo($"Updating last aggregation end date to {endDate}");
-      siteInfo.LastAggregationDate = endDate;
 
-      await context.CallActivityWithRetryAsync(nameof(UpdateSitesTable), GetDefaultRetryOptions(), siteInfo);
+      var siteUpdates = new Dictionary<string, string>
+      {
+        {nameof(SiteInfo.SiteId), siteId},
+        {nameof(SiteInfo.LastAggregationDate), endDate}
+      };
+
+      await context.CallActivityWithRetryAsync(nameof(UpdateSitesTable), GetDefaultRetryOptions(), siteUpdates);
     }
   }
 }

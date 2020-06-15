@@ -37,7 +37,7 @@ namespace SolarViewFunctions.Functions
 
     [FunctionName(nameof(TriggerManualHydratePower))]
     public async Task<HttpResponseMessage> Run(
-      [HttpTrigger(AuthorizationLevel.Function, "post", Route = "hydrate/{siteId}")] HttpRequestMessage request, string siteId,
+      [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "hydrate/{siteId}")] HttpRequestMessage request, string siteId,
       [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable,
       [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
         ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments,

@@ -2,11 +2,12 @@ using AllOverIt.Helpers;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Sites;
 using SolarViewFunctions.Tracking;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
@@ -29,13 +30,23 @@ namespace SolarViewFunctions.Functions
       // allowing exceptions to bubble back to the caller
 
       Tracker.AppendDefaultProperties(context.GetTrackingProperties());
-      
-      var siteInfo = context.GetInput<SiteInfo>();
 
-      Tracker.TrackInfo($"Updating info for SiteId {siteInfo.SiteId}");
+      var siteProperties = context.GetInput<Dictionary<string, string>>();
+
+      var siteId = siteProperties["SiteId"];
+
+      var entity = new DynamicTableEntity("SiteId", siteId)
+      {
+        // will be updating SiteInfo.LastAggregationDate or SiteInfo.LastRefreshDateTime
+        Properties = siteProperties
+          .Select(item => new KeyValuePair<string,EntityProperty>(item.Key, new EntityProperty(item.Value)))
+          .ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+      };
+
+      Tracker.TrackInfo($"Updating info for SiteId {siteId}");
 
       var sitesRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
-      await sitesRepository.Upsert(siteInfo);
+      await sitesRepository.MergeAsync(entity);
     }
   }
 }

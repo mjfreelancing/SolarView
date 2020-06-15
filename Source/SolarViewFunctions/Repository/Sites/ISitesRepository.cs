@@ -9,6 +9,6 @@ namespace SolarViewFunctions.Repository.Sites
   {
     Task<SiteInfo> GetSiteAsync(string siteId);
     IAsyncEnumerable<SiteInfo> GetAllSitesAsyncEnumerable();
-    Task<TableResult> Upsert(SiteInfo entity);
+    Task<TableResult> MergeAsync(ITableEntity entity);
   }
 }

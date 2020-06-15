@@ -37,7 +37,7 @@ namespace SolarViewFunctions.Functions
 
     [FunctionName(nameof(TriggerGetAverageDayView))]
     public async Task<IActionResult> Run(
-      [HttpTrigger(AuthorizationLevel.Function, "get", Route = "power/{siteId}/{meterType}/average")] HttpRequest request, string siteId, string meterType,
+      [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "power/{siteId}/{meterType}/average")] HttpRequest request, string siteId, string meterType,
       [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable,
       [Table(Constants.Table.Power, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable powerTable,
       [Table(Constants.Table.PowerMonthly, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable powerMonthlyTable,
