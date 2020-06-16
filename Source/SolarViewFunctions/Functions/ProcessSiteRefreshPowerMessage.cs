@@ -36,7 +36,7 @@ namespace SolarViewFunctions.Functions
 
         request = queueMessage.DeserializeFromMessage<SiteRefreshPowerRequest>();
 
-        Tracker.TrackInfo($"Received a new {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, DateTime {request.DateTime}");
+        Tracker.TrackInfo($"Received a new {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, ending {request.EndDateTime}");
 
         var instanceId = await orchestrationClient.StartNewAsync(nameof(RefreshSitePowerDataOrchestrator), request);
 

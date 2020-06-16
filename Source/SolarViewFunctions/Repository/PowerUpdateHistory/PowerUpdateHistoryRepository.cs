@@ -3,6 +3,7 @@ using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Repository.PowerUpdateHistory
@@ -14,14 +15,24 @@ namespace SolarViewFunctions.Repository.PowerUpdateHistory
     {
     }
 
-    public Task<IEnumerable<PowerUpdate>> GetPowerUpdatesAsyncEnumerable(string siteId, DateTime date)
+    public async Task<IEnumerable<PowerUpdate>> GetPowerUpdatesAsyncEnumerable(string siteId, DateTime startDate, DateTime endDate)
     {
-      var partitionKey = $"{siteId}_{date.GetSolarDateString()}";
+      var tasks = new List<Task<IEnumerable<PowerUpdate>>>();
 
-      return GetAllAsync(partitionKey);
+      for (var date = startDate; date <= endDate; date = date.AddDays(1))
+      {
+        var partitionKey = $"{siteId}_{date.GetSolarDateString()}";
+
+        var task = GetAllAsync(partitionKey);
+        tasks.Add(task);
+      }
+
+      var updates = await Task.WhenAll(tasks).ConfigureAwait(false);
+
+      return updates.SelectMany(item => item);
     }
 
-    public Task<TableResult> Upsert(PowerUpdate entity)
+    public Task<TableResult> UpsertAsync(PowerUpdate entity)
     {
       return InsertOrReplaceAsync(entity);
     }

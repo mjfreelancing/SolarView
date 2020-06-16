@@ -61,19 +61,25 @@ namespace SolarViewFunctions.Functions
 
       try
       {
-        if (currentTimeUtc >= siteInfo.GetNextRefreshDueUtc())
-        {
-          var requestTimeUtc = currentTimeUtc.AddSeconds(-currentTimeUtc.Second);
+        var siteLocalTime = siteInfo.UtcToLocalTime(currentTimeUtc);
 
+        var lastRefreshDateTime = siteInfo.GetLastRefreshDateTime();
+        var nextRefreshDue = lastRefreshDateTime.AddHours(1);
+
+        if (siteLocalTime > nextRefreshDue)
+        {
           request = new SiteRefreshPowerRequest
           {
             SiteId = siteInfo.SiteId,
-            DateTime = siteInfo.UtcToLocalTime(requestTimeUtc).GetSolarDateTimeString()
+            StartDateTime = lastRefreshDateTime.GetSolarDateTimeString(),
+            EndDateTime = siteLocalTime.TrimToHour().GetSolarDateTimeString()
           };
 
           var message = MessageHelpers.SerializeToMessage(request);
 
-          Tracker.TrackInfo($"Sending a {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, DateTime {request.DateTime}");
+          Tracker.TrackInfo(
+            $"Sending a {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, from {request.StartDateTime} to {request.EndDateTime}",
+            new {siteInfo.SiteId});
 
           await refreshQueue.SendAsync(message).ConfigureAwait(false);
         }

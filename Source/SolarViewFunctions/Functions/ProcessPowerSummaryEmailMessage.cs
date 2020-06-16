@@ -7,6 +7,7 @@ using SendGrid.Helpers.Mail;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
+using SolarViewFunctions.Providers;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.PowerUpdateHistory;
 using SolarViewFunctions.Repository.Sites;
@@ -22,12 +23,15 @@ namespace SolarViewFunctions.Functions
   public class ProcessPowerSummaryEmailMessage : FunctionBase
   {
     private readonly ISolarViewRepositoryFactory _repositoryFactory;
+    private readonly ISitesUpdateProvider _sitesUpdateProvider;
     private readonly ISendGridEmailCreator _emailCreator;
 
-    public ProcessPowerSummaryEmailMessage(ITracker tracker, ISolarViewRepositoryFactory repositoryFactory, ISendGridEmailCreator emailCreator)
+    public ProcessPowerSummaryEmailMessage(ITracker tracker, ISolarViewRepositoryFactory repositoryFactory,
+      ISitesUpdateProvider sitesUpdateProvider, ISendGridEmailCreator emailCreator)
       : base(tracker)
     {
       _repositoryFactory = repositoryFactory.WhenNotNull(nameof(repositoryFactory));
+      _sitesUpdateProvider = sitesUpdateProvider.WhenNotNull(nameof(sitesUpdateProvider));
       _emailCreator = emailCreator.WhenNotNull(nameof(emailCreator));
     }
 
@@ -49,13 +53,14 @@ namespace SolarViewFunctions.Functions
       {
         request = queueMessage.DeserializeFromMessage<SiteSummaryEmailRequest>();
 
-        // the date will be for the previous day
-        Tracker.TrackEvent(nameof(ProcessPowerSummaryEmailMessage), new { request.SiteId, Date = request.LocalDate });
+        Tracker.TrackEvent(nameof(ProcessPowerSummaryEmailMessage), request);
 
         var siteInfo = await _repositoryFactory.Create<ISitesRepository>(sitesTable).GetSiteAsync(request.SiteId);
 
         var updateHistoryRepository = _repositoryFactory.Create<IPowerUpdateHistoryRepository>(updateHistoryTable);
-        var historyItems = await updateHistoryRepository.GetPowerUpdatesAsyncEnumerable(request.SiteId, request.LocalDate.ParseSolarDate());
+
+        var historyItems = await updateHistoryRepository.GetPowerUpdatesAsyncEnumerable(request.SiteId,
+          request.StartDate.ParseSolarDate(), request.EndDate.ParseSolarDate());
 
         var historyGroups = historyItems
           .Where(item => item.Status != $"{PowerUpdatedStatus.Started}")
@@ -63,7 +68,7 @@ namespace SolarViewFunctions.Functions
 
         // temporary until razor can be used
         var content = new StringBuilder();
-        content.AppendLine($"Power Update Summary for SiteId {request.SiteId} on {request.LocalDate}");
+        content.AppendLine($"Power Update Summary for SiteId {request.SiteId} as of {request.EndDate}");
         content.AppendLine();
 
         foreach (var kvp in historyGroups)
@@ -87,6 +92,9 @@ namespace SolarViewFunctions.Functions
         //text/html
         var email = _emailCreator.CreateMessage(siteInfo, "Power Update Summary", "text/plain", $"{content}");
         await sendGridCollector.AddAsync(email).ConfigureAwait(false);
+
+        // update the sites table to indicate when the last summary email was sent
+        await _sitesUpdateProvider.UpdateSiteAttributeAsync(sitesTable, siteInfo.SiteId, nameof(SiteInfo.LastSummaryDate), request.EndDate);
       }
       catch (Exception exception)
       {

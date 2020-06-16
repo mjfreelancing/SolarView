@@ -3,8 +3,7 @@ using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SolarViewFunctions.Extensions;
-using SolarViewFunctions.Repository;
-using SolarViewFunctions.Repository.Sites;
+using SolarViewFunctions.Providers;
 using SolarViewFunctions.Tracking;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,12 +13,12 @@ namespace SolarViewFunctions.Functions
 {
   public class UpdateSitesTable : FunctionBase
   {
-    private readonly ISolarViewRepositoryFactory _repositoryFactory;
+    private readonly ISitesUpdateProvider _sitesUpdateProvider;
 
-    public UpdateSitesTable(ITracker tracker, ISolarViewRepositoryFactory repositoryFactory)
+    public UpdateSitesTable(ITracker tracker, ISitesUpdateProvider sitesUpdateProvider)
       : base(tracker)
     {
-      _repositoryFactory = repositoryFactory.WhenNotNull(nameof(repositoryFactory));
+      _sitesUpdateProvider = sitesUpdateProvider.WhenNotNull(nameof(sitesUpdateProvider));
     }
 
     [FunctionName(nameof(UpdateSitesTable))]
@@ -35,16 +34,12 @@ namespace SolarViewFunctions.Functions
 
       var siteId = siteProperties[Constants.Table.SitesPartitionKey];
 
-      var entity = new DynamicTableEntity(Constants.Table.SitesPartitionKey, siteId)
-      {
-        // will be updating SiteInfo.LastAggregationDate or SiteInfo.LastRefreshDateTime
-        Properties = siteProperties.ToDictionary(kvp =>kvp.Key,kvp=> new EntityProperty(kvp.Value))
-      };
-
       Tracker.TrackInfo($"Updating info for SiteId {siteId}");
 
-      var sitesRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
-      await sitesRepository.MergeAsync(entity);
+      foreach (var (name, value) in siteProperties.Where(item => item.Key != Constants.Table.SitesPartitionKey))
+      {
+        await _sitesUpdateProvider.UpdateSiteAttributeAsync(sitesTable, siteId, name, value).ConfigureAwait(false);
+      }
     }
   }
 }

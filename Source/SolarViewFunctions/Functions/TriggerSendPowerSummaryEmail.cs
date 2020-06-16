@@ -63,20 +63,27 @@ namespace SolarViewFunctions.Functions
       {
         var siteLocalTime = siteInfo.UtcToLocalTime(currentTimeUtc);
 
-        // determine what sites are due for a power summary email
-        if (siteLocalTime.Hour == Constants.RefreshHour.SummaryEmail)
+        // check subsequent hours in case a trigger was missed
+        if (siteLocalTime.Hour >= Constants.RefreshHour.SummaryEmail)
         {
-          request = new SiteSummaryEmailRequest
+          var lastSummaryDate = siteInfo.GetLastSummaryDate();
+          var nextDueDate = siteLocalTime.Date.AddDays(-1);         // not reporting the current day as it is not yet over
+
+          if (nextDueDate > lastSummaryDate)
           {
-            SiteId = siteInfo.SiteId,
-            LocalDate = $"{siteInfo.UtcToLocalTime(currentTimeUtc).Date.AddDays(-1).GetSolarDateString()}" // only sending yyyy-MM-dd
-          };
+            request = new SiteSummaryEmailRequest
+            {
+              SiteId = siteInfo.SiteId,
+              StartDate = lastSummaryDate.GetSolarDateString(),
+              EndDate = nextDueDate.GetSolarDateString()
+            };
 
-          var message = MessageHelpers.SerializeToMessage(request);
+            var message = MessageHelpers.SerializeToMessage(request);
 
-          Tracker.TrackInfo($"Sending a {nameof(SiteSummaryEmailRequest)} message for SiteId {request.SiteId}");
+            Tracker.TrackInfo($"Sending a {nameof(SiteSummaryEmailRequest)} message for SiteId {request.SiteId}", new {siteInfo.SiteId});
 
-          await summaryQueue.SendAsync(message).ConfigureAwait(false);
+            await summaryQueue.SendAsync(message).ConfigureAwait(false);
+          }
         }
       }
       catch (Exception exception)

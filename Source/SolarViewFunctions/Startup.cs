@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using SolarViewFunctions.Factories;
+using SolarViewFunctions.Functions;
 using SolarViewFunctions.Providers;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.SendGrid;
@@ -20,6 +21,7 @@ namespace SolarViewFunctions
       builder.Services.AddSingleton<IRetryOptionsFactory, RetryOptionsFactory>();
       builder.Services.AddSingleton<ISolarViewRepositoryFactory, SolarViewRepositoryFactory>();
       builder.Services.AddScoped<IPowerAggregationProvider, PowerAggregationProvider>();
+      builder.Services.AddScoped<ISitesUpdateProvider, SitesUpdateProvider>();
 
       var provider = builder.Services.AddAutoMapper(typeof(Startup)).BuildServiceProvider();
       provider.GetService<IMapper>().ConfigurationProvider.AssertConfigurationIsValid();

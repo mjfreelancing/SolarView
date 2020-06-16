@@ -30,9 +30,8 @@ namespace SolarViewFunctions.Functions
       try
       {
         request = context.GetInput<SiteRefreshPowerRequest>();
-        var siteLocalTime = request.DateTime.ParseSolarDateTime();
 
-        Tracker.TrackInfo($"Processing a {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, DateTime {request.DateTime}");
+        Tracker.TrackInfo($"Processing a {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, between {request.StartDateTime} and {request.EndDateTime}");
 
         var siteInfo = await context.CallActivityWithRetryAsync<SiteInfo>(nameof(GetSiteInfo), GetDefaultRetryOptions(), request.SiteId);
 
@@ -41,7 +40,7 @@ namespace SolarViewFunctions.Functions
           ? $"Received info for SiteId {request.SiteId}, pending initial refresh"
           : $"Received info for SiteId {request.SiteId}, last refresh was {siteInfo.LastRefreshDateTime}");
 
-        await RefreshSite(context, siteInfo, siteLocalTime);
+        await RefreshSite(context, siteInfo, request.StartDateTime.ParseSolarDateTime(), request.EndDateTime.ParseSolarDateTime());
       }
       catch (Exception exception)
       {
@@ -65,10 +64,8 @@ namespace SolarViewFunctions.Functions
       }
     }
 
-    private async Task RefreshSite(IDurableOrchestrationContext context, SiteInfo siteInfo, DateTime siteLocalTime)
+    private async Task RefreshSite(IDurableOrchestrationContext context, SiteInfo siteInfo, DateTime startDateTime, DateTime endDateTime)
     {
-      var (startDateTime, endDateTime) = siteInfo.GetNextRefreshPeriod(siteLocalTime);
-
       // ignore any message received that is earlier than the site's 'LastRefreshEnd'
       if (endDateTime < startDateTime)
       {
