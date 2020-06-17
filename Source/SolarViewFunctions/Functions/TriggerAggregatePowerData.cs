@@ -77,7 +77,7 @@ namespace SolarViewFunctions.Functions
             };
 
             // sequentially performs monthly then yearly aggregation
-            var instanceId = await orchestrationClient.StartNewAsync(nameof(AggregateSitePowerData), request);
+            var instanceId = await orchestrationClient.StartNewAsync(nameof(AggregateSitePowerData), request).ConfigureAwait(false);
 
             Tracker.TrackInfo(
               $"Power data aggregation for SiteId {siteInfo.SiteId} has been scheduled for {request.StartDate} to {request.EndDate}",
@@ -89,7 +89,8 @@ namespace SolarViewFunctions.Functions
       {
         Tracker.TrackException(exception);
 
-        await exceptionDocuments.AddNotificationAsync<TriggerAggregatePowerData>(siteInfo.SiteId, exception, null);
+        await exceptionDocuments.AddNotificationAsync<TriggerAggregatePowerData>(siteInfo.SiteId, exception, null).ConfigureAwait(false);
+        await exceptionDocuments.FlushAsync().ConfigureAwait(false);
       }
     }
   }

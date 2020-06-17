@@ -6,12 +6,12 @@ using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.WebJobs;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
+using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.PowerUpdateHistory;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Threading.Tasks;
-using SolarViewFunctions.Models;
 
 namespace SolarViewFunctions.Functions
 {
@@ -65,7 +65,8 @@ namespace SolarViewFunctions.Functions
 
         if (!request?.SiteId.IsNullOrEmpty() ?? false)
         {
-          await exceptionDocuments.AddNotificationAsync<ProcessPowerUpdatedHistoryMessage>(request.SiteId, exception, notification);
+          await exceptionDocuments.AddNotificationAsync<ProcessPowerUpdatedHistoryMessage>(request.SiteId, exception, notification).ConfigureAwait(false);
+          await exceptionDocuments.FlushAsync().ConfigureAwait(false);
         }
       }
     }

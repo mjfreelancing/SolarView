@@ -99,7 +99,7 @@ namespace SolarViewFunctions.Functions
 
         Tracker.TrackException(exception, notification);
 
-        await exceptionDocuments.AddNotificationAsync<TriggerSendPowerSummaryEmail>(siteInfo.SiteId, exception, notification);
+        await exceptionDocuments.AddNotificationAsync<TriggerSendPowerSummaryEmail>(siteInfo.SiteId, exception, notification).ConfigureAwait(false);
       }
     }
   }

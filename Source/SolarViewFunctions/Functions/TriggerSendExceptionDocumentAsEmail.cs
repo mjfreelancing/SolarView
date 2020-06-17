@@ -53,6 +53,7 @@ namespace SolarViewFunctions.Functions
 
           var email = _emailCreator.CreateMessage(siteInfo, "Exception", "text/plain", content);
           await sendGridCollector.AddAsync(email).ConfigureAwait(false);
+          await sendGridCollector.FlushAsync().ConfigureAwait(false);
         }
         catch (Exception exception)
         {

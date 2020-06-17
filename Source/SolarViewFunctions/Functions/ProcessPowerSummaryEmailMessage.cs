@@ -92,6 +92,7 @@ namespace SolarViewFunctions.Functions
         //text/html
         var email = _emailCreator.CreateMessage(siteInfo, "Power Update Summary", "text/plain", $"{content}");
         await sendGridCollector.AddAsync(email).ConfigureAwait(false);
+        await sendGridCollector.FlushAsync().ConfigureAwait(false);
 
         // update the sites table to indicate when the last summary email was sent
         await _sitesUpdateProvider.UpdateSiteAttributeAsync(sitesTable, siteInfo.SiteId, nameof(SiteInfo.LastSummaryDate), request.EndDate);
@@ -109,7 +110,8 @@ namespace SolarViewFunctions.Functions
 
         if (!request?.SiteId.IsNullOrEmpty() ?? false)
         {
-          await exceptionDocuments.AddNotificationAsync<ProcessPowerSummaryEmailMessage>(request.SiteId, exception, notification);
+          await exceptionDocuments.AddNotificationAsync<ProcessPowerSummaryEmailMessage>(request.SiteId, exception, notification).ConfigureAwait(false);
+          await sendGridCollector.FlushAsync().ConfigureAwait(false);
         }
       }
     }

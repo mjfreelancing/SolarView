@@ -38,7 +38,7 @@ namespace SolarViewFunctions.Functions
 
         Tracker.TrackInfo($"Received a new {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, ending {request.EndDateTime}");
 
-        var instanceId = await orchestrationClient.StartNewAsync(nameof(RefreshSitePowerDataOrchestrator), request);
+        var instanceId = await orchestrationClient.StartNewAsync(nameof(RefreshSitePowerDataOrchestrator), request).ConfigureAwait(false);
 
         Tracker.TrackInfo(
           $"Initiated processing of the {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}",
@@ -58,7 +58,8 @@ namespace SolarViewFunctions.Functions
 
         if (!request?.SiteId.IsNullOrEmpty() ?? false)
         {
-          await exceptionDocuments.AddNotificationAsync<ProcessSiteRefreshPowerMessage>(request.SiteId, exception, notification);
+          await exceptionDocuments.AddNotificationAsync<ProcessSiteRefreshPowerMessage>(request.SiteId, exception, notification).ConfigureAwait(false);
+          await exceptionDocuments.FlushAsync().ConfigureAwait(false);
         }
       }
     }

@@ -1,9 +1,9 @@
-using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Tracking;
+using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
 {
@@ -24,7 +24,8 @@ namespace SolarViewFunctions.Functions
 
       var exceptionDocument = context.GetInput<ExceptionDocument>();
 
-      await exceptionDocuments.AddAsync(exceptionDocument);
+      await exceptionDocuments.AddAsync(exceptionDocument).ConfigureAwait(false);
+      await exceptionDocuments.FlushAsync().ConfigureAwait(false);
     }
   }
 }
