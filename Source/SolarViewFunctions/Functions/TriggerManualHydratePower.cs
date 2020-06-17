@@ -65,7 +65,7 @@ namespace SolarViewFunctions.Functions
         triggeredPowerQuery.TriggerDateTime = siteInfo.UtcToLocalTime(triggerDateTime).GetSolarDateTimeString();
         triggeredPowerQuery.Trigger = RefreshTriggerType.Manual;
 
-        var instanceId = await orchestrationClient.StartNewAsync(nameof(HydratePowerOrchestrator), triggeredPowerQuery);
+        var instanceId = await orchestrationClient.StartNewAsync(nameof(HydratePowerOrchestrator), triggeredPowerQuery).ConfigureAwait(false);
 
         Tracker.TrackInfo($"Started {nameof(HydratePowerOrchestrator)} for a manual power hydration of SiteId {siteInfo.SiteId} at " +
                           $"{siteInfo.UtcToLocalTime(triggerDateTime).GetSolarDateTimeString()} (local)");
@@ -94,7 +94,7 @@ namespace SolarViewFunctions.Functions
 
         if (!hydrateRequest?.SiteId.IsNullOrEmpty() ?? false)
         {
-          await exceptionDocuments.AddNotificationAsync<TriggerManualHydratePower>(hydrateRequest.SiteId, exception, notification);
+          await exceptionDocuments.AddNotificationAsync<TriggerManualHydratePower>(hydrateRequest.SiteId, exception, notification).ConfigureAwait(false);
         }
 
         return new InternalServerErrorResponse(exception);

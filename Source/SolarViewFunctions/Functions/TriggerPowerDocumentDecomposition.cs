@@ -33,7 +33,7 @@ namespace SolarViewFunctions.Functions
       {
         try
         {
-          var instanceId = await orchestrationClient.StartNewAsync(nameof(DecomposePowerDocument), document);
+          var instanceId = await orchestrationClient.StartNewAsync(nameof(DecomposePowerDocument), document).ConfigureAwait(false);
 
           Tracker.TrackInfo($"Initiated {nameof(DecomposePowerDocument)} for document Id {document.Id}, InstanceId {instanceId}");
         }
@@ -43,7 +43,7 @@ namespace SolarViewFunctions.Functions
 
           PowerDocument powerDocument = (dynamic)document;
 
-          await exceptionDocuments.AddNotificationAsync<TriggerPowerDocumentDecomposition>(powerDocument.SiteId, exception, null);
+          await exceptionDocuments.AddNotificationAsync<TriggerPowerDocumentDecomposition>(powerDocument.SiteId, exception, null).ConfigureAwait(false);
         }
       }
     }

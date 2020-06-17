@@ -7,13 +7,13 @@ using Newtonsoft.Json;
 using SendGrid.Helpers.Mail;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
+using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Sites;
 using SolarViewFunctions.SendGrid;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Threading.Tasks;
-using SolarViewFunctions.Models;
 
 namespace SolarViewFunctions.Functions
 {
@@ -54,6 +54,7 @@ namespace SolarViewFunctions.Functions
 
         var email = _emailCreator.CreateMessage(siteInfo, "Power Updated - Deadletter", "text/plain", content);
         await sendGridCollector.AddAsync(email).ConfigureAwait(false);
+        await sendGridCollector.FlushAsync().ConfigureAwait(false);
       }
       catch (Exception exception)
       {
@@ -69,6 +70,7 @@ namespace SolarViewFunctions.Functions
         if (!request?.SiteId.IsNullOrEmpty() ?? false)
         {
           await exceptionDocuments.AddNotificationAsync<NotifyPowerUpdatedDeadletterMessage>(request.SiteId, exception, notification);
+          await exceptionDocuments.FlushAsync().ConfigureAwait(false);
         }
       }
     }

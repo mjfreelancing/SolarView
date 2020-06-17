@@ -98,7 +98,7 @@ namespace SolarViewFunctions.Functions
 
         if (!averageDayRequest?.SiteId.IsNullOrEmpty() ?? false)
         {
-          await exceptionDocuments.AddNotificationAsync<TriggerGetAverageDayView>(averageDayRequest.SiteId, exception, notification);
+          await exceptionDocuments.AddNotificationAsync<TriggerGetAverageDayView>(averageDayRequest.SiteId, exception, notification).ConfigureAwait(false);
         }
 
         return new InternalServerErrorResult(exception);

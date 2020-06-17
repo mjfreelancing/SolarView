@@ -54,6 +54,7 @@ namespace SolarViewFunctions.Functions
 
         var email = _emailCreator.CreateMessage(siteInfo, "Power Refresh - Deadletter", "text/plain", content);
         await sendGridCollector.AddAsync(email).ConfigureAwait(false);
+        await sendGridCollector.FlushAsync().ConfigureAwait(false);
       }
       catch (Exception exception)
       {
@@ -68,7 +69,8 @@ namespace SolarViewFunctions.Functions
 
         if (!request?.SiteId.IsNullOrEmpty() ?? false)
         {
-          await exceptionDocuments.AddNotificationAsync<ProcessSiteRefreshPowerDeadletterMessage>(request.SiteId, exception, notification);
+          await exceptionDocuments.AddNotificationAsync<ProcessSiteRefreshPowerDeadletterMessage>(request.SiteId, exception, notification).ConfigureAwait(false);
+          await exceptionDocuments.FlushAsync().ConfigureAwait(false);
         }
       }
     }
