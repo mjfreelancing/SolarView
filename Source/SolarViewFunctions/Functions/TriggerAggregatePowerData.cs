@@ -64,16 +64,16 @@ namespace SolarViewFunctions.Functions
         if (siteLocalTime.Hour >= Constants.RefreshHour.Aggregation)
         {
           var lastAggregationDate = siteInfo.GetLastAggregationDate();
-          var nextDueDate = siteLocalTime.Date.AddDays(-1);         // not reporting the current day as it is not yet over
+          var nextEndDate = siteLocalTime.Date.AddDays(-1);         // not reporting the current day as it is not yet over
 
-          if (nextDueDate > lastAggregationDate)
+          if (nextEndDate > lastAggregationDate)
           {
             var request = new SiteRefreshAggregationRequest
             {
               SiteId = siteInfo.SiteId,
               SiteStartDate = siteInfo.StartDate,
               StartDate = lastAggregationDate.GetSolarDateString(),
-              EndDate = nextDueDate.GetSolarDateString()
+              EndDate = nextEndDate.GetSolarDateString()
             };
 
             // sequentially performs monthly then yearly aggregation
@@ -81,7 +81,7 @@ namespace SolarViewFunctions.Functions
 
             Tracker.TrackInfo(
               $"Power data aggregation for SiteId {siteInfo.SiteId} has been scheduled for {request.StartDate} to {request.EndDate}",
-              new {siteInfo.SiteId, InstanceId = instanceId});
+              new {Request = request, InstanceId = instanceId});
           }
         }
       }

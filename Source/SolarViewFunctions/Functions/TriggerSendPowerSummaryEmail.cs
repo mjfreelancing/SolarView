@@ -67,20 +67,23 @@ namespace SolarViewFunctions.Functions
         if (siteLocalTime.Hour >= Constants.RefreshHour.SummaryEmail)
         {
           var lastSummaryDate = siteInfo.GetLastSummaryDate();
-          var nextDueDate = siteLocalTime.Date.AddDays(-1);         // not reporting the current day as it is not yet over
+          var nextEndDate = siteLocalTime.Date.AddDays(-1);         // not reporting the current day as it is not yet over
 
-          if (nextDueDate > lastSummaryDate)
+          if (nextEndDate > lastSummaryDate)
           {
             request = new SiteSummaryEmailRequest
             {
               SiteId = siteInfo.SiteId,
-              StartDate = lastSummaryDate.GetSolarDateString(),
-              EndDate = nextDueDate.GetSolarDateString()
+              StartDate = lastSummaryDate.AddDays(1).GetSolarDateString(),
+              EndDate = nextEndDate.GetSolarDateString()
             };
 
             var message = MessageHelpers.SerializeToMessage(request);
 
-            Tracker.TrackInfo($"Sending a {nameof(SiteSummaryEmailRequest)} message for SiteId {request.SiteId}", new {siteInfo.SiteId});
+            Tracker.TrackInfo(
+              $"Sending a {nameof(SiteSummaryEmailRequest)} message for SiteId {request.SiteId} between {request.StartDate} and {request.EndDate}",
+              new {Reuqest = request}
+            );
 
             await summaryQueue.SendAsync(message).ConfigureAwait(false);
           }
