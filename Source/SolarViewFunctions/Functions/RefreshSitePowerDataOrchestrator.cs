@@ -89,13 +89,20 @@ namespace SolarViewFunctions.Functions
         EndDateTime = endDateTime.GetSolarDateTimeString()
       };
 
-      await ProcessSitePowerQuery(context, triggeredPowerQuery);
+      var status = await ProcessSitePowerQuery(context, triggeredPowerQuery);
 
-      siteInfo.LastRefreshDateTime = triggeredPowerQuery.EndDateTime;
-      await UpdateSiteLastRefreshTime(context, siteInfo);
+      if (status == PowerUpdatedStatus.Completed)
+      {
+        siteInfo.LastRefreshDateTime = triggeredPowerQuery.EndDateTime;
+        await UpdateSiteLastRefreshTime(context, siteInfo);
+      }
+      else
+      {
+        Tracker.TrackWarn($"Power refresh for SiteId {siteInfo.SiteId} failed. Not updating last refresh timestamp.");
+      }
     }
 
-    private Task ProcessSitePowerQuery(IDurableOrchestrationContext context, PowerQuery powerQuery)
+    private Task<PowerUpdatedStatus> ProcessSitePowerQuery(IDurableOrchestrationContext context, PowerQuery powerQuery)
     {
       Tracker.TrackInfo(
         $"Initiating power hydration orchestration for SiteId {powerQuery.SiteId} is between " +
@@ -103,7 +110,7 @@ namespace SolarViewFunctions.Functions
       );
 
       // fire off a request to (potentially) split the request into multiple date ranges
-      return context.CallSubOrchestratorWithRetryAsync(nameof(HydratePowerOrchestrator), GetDefaultRetryOptions(), powerQuery);
+      return context.CallSubOrchestratorWithRetryAsync<PowerUpdatedStatus>(nameof(HydratePowerOrchestrator), GetDefaultRetryOptions(), powerQuery);
     }
 
     private Task UpdateSiteLastRefreshTime(IDurableOrchestrationContext context, ISiteInfo siteInfo)
