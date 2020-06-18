@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using SolarView.Common.Models;
+using SolarViewFunctions.Dto.Response;
 using SolarViewFunctions.HttpResults;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Site;
@@ -46,7 +46,7 @@ namespace SolarViewFunctions.Functions
           return new ForbiddenResult(null);
         }
 
-        var siteInfo = _mapper.Map<SecretSiteInfo>(siteEntity);
+        var siteInfo = _mapper.Map<SiteInfoResponse>(siteEntity);
 
         return new OkObjectResult(siteInfo);
       }
