@@ -21,7 +21,7 @@ namespace SolarViewFunctions.Repository.Power
       return GetAllAsyncEnumerable(partitionKey);
     }
 
-    public Task UpsertAsync(IEnumerable<MeterPower> entities)
+    public Task UpsertPowerAsync(IEnumerable<MeterPower> entities)
     {
       return BatchInsertOrReplaceAsync(entities);
     }

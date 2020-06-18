@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 using SendGrid.Helpers.Mail;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Repository;
-using SolarViewFunctions.Repository.Sites;
+using SolarViewFunctions.Repository.Site;
 using SolarViewFunctions.SendGrid;
 using SolarViewFunctions.Tracking;
 using System;
@@ -46,7 +46,7 @@ namespace SolarViewFunctions.Functions
 
           // todo: think about grouping all documents by SiteId and send one email per site
 
-          var siteInfo = await _repositoryFactory.Create<ISitesRepository>(sitesTable).GetSiteAsync(exceptionDocument.SiteId);
+          var siteInfo = await _repositoryFactory.Create<ISiteRepository>(sitesTable).GetSiteAsync(exceptionDocument.SiteId);
 
           // todo: update to load a specific razor template - just send the model in the email for now
           var content = JsonConvert.SerializeObject(exceptionDocument, Formatting.Indented);

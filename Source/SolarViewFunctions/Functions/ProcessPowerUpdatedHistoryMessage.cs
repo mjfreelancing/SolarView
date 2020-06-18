@@ -50,7 +50,7 @@ namespace SolarViewFunctions.Functions
         var entity = _mapper.Map<PowerUpdate>(request);
 
         var historyRepository = _repositoryFactory.Create<IPowerUpdateHistoryRepository>(historyTable);
-        await historyRepository.UpsertAsync(entity).ConfigureAwait(false);
+        await historyRepository.UpsertPowerUpdateAsync(entity).ConfigureAwait(false);
       }
       catch (Exception exception)
       {

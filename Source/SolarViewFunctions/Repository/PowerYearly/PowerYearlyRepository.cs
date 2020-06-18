@@ -20,7 +20,7 @@ namespace SolarViewFunctions.Repository.PowerYearly
       return GetAllAsyncEnumerable(partitionKey);
     }
 
-    public Task UpsertAsync(IEnumerable<MeterPowerYear> entities)
+    public Task UpsertYearlyPowerAsync(IEnumerable<MeterPowerYear> entities)
     {
       return BatchInsertOrReplaceAsync(entities);
     }

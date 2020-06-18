@@ -1,4 +1,4 @@
-﻿namespace SolarViewFunctions.Dto
+﻿namespace SolarViewFunctions.Dto.Request
 {
   public class HydratePowerRequest : SiteRequestBase
   {

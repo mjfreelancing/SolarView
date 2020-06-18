@@ -1,5 +1,7 @@
 using AutoMapper;
-using SolarViewFunctions.Dto;
+using SolarView.Common.Models;
+using SolarViewFunctions.Dto.Request;
+using SolarViewFunctions.Dto.Response;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
@@ -42,6 +44,9 @@ namespace SolarViewFunctions.Mapping
           dest.PartitionKey = $"{src.SiteId}_{src.TriggerDateTime.Substring(0, 10)}";
           dest.RowKey = $"{Guid.NewGuid()}";
         });
+
+      CreateMap<SiteEntity, SecretSiteInfo>();
+      CreateMap<SiteEntity, SiteInfoResponse>();
     }
   }
 }

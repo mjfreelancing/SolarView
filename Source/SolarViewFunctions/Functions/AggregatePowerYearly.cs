@@ -110,7 +110,7 @@ namespace SolarViewFunctions.Functions
           return new MeterPowerYear(siteId, startDate, endDate, time, meterType, watts);
         });
 
-      await powerYearlyRepository.UpsertAsync(aggregatedEntities).ConfigureAwait(false);
+      await powerYearlyRepository.UpsertYearlyPowerAsync(aggregatedEntities).ConfigureAwait(false);
     }
   }
 }

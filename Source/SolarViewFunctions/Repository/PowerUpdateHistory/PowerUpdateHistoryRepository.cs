@@ -32,7 +32,7 @@ namespace SolarViewFunctions.Repository.PowerUpdateHistory
       return updates.SelectMany(item => item);
     }
 
-    public Task<TableResult> UpsertAsync(PowerUpdate entity)
+    public Task<TableResult> UpsertPowerUpdateAsync(PowerUpdate entity)
     {
       return InsertOrReplaceAsync(entity);
     }

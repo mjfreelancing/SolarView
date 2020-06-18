@@ -1,6 +1,6 @@
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using SolarViewFunctions.Entities;
+using SolarView.Common.Models;
 using SolarViewFunctions.Exceptions;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Factories;
@@ -37,7 +37,7 @@ namespace SolarViewFunctions.Functions
       );
 
       // need to get the site API key
-      var siteInfo = await context.CallActivityWithRetryAsync<SiteInfo>(nameof(GetSiteInfo), GetDefaultRetryOptions(), powerQuery.SiteId);
+      var siteInfo = await context.CallActivityWithRetryAsync<SecretSiteInfo>(nameof(GetSiteInfo), GetDefaultRetryOptions(), powerQuery.SiteId);
 
       // executed via context.CallHttpAsync() - this method tracks the request
       var solarDataResponse = await SolarEdgeApi.GetSolarDataAsync(context, Constants.SolarEdge.MonitoringUri, siteInfo.ApiKey, powerQuery, Tracker);

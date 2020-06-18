@@ -2,7 +2,7 @@ using AllOverIt.Helpers;
 using AutoMapper;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using SolarViewFunctions.Entities;
+using SolarView.Common.Models;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Factories;
 using SolarViewFunctions.Models;
@@ -87,8 +87,8 @@ namespace SolarViewFunctions.Functions
 
       var siteUpdates = new Dictionary<string, string>
       {
-        {nameof(SiteInfo.SiteId), siteId},
-        {nameof(SiteInfo.LastAggregationDate), endDate}
+        {nameof(ISiteInfo.SiteId), siteId},
+        {nameof(ISiteInfo.LastAggregationDate), endDate}
       };
 
       await context.CallActivityWithRetryAsync(nameof(UpdateSitesTable), GetDefaultRetryOptions(), siteUpdates);

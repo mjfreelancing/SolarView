@@ -3,21 +3,21 @@ using SolarViewFunctions.Entities;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SolarViewFunctions.Repository.Sites
+namespace SolarViewFunctions.Repository.Site
 {
-  public class SitesRepository : CloudTableRepository<SiteInfo>, ISitesRepository
+  public class SiteRepository : CloudTableRepository<SiteEntity>, ISiteRepository
   {
-    public SitesRepository(CloudTable table)
+    public SiteRepository(CloudTable table)
       : base(table)
     {
     }
 
-    public Task<SiteInfo> GetSiteAsync(string siteId)
+    public Task<SiteEntity> GetSiteAsync(string siteId)
     {
       return GetAsync(Constants.Table.SitesPartitionKey, siteId);
     }
 
-    public IAsyncEnumerable<SiteInfo> GetAllSitesAsyncEnumerable()
+    public IAsyncEnumerable<SiteEntity> GetAllSitesAsyncEnumerable()
     {
       return GetAllAsyncEnumerable(Constants.Table.SitesPartitionKey);
     }

@@ -1,7 +1,7 @@
 using AllOverIt.Extensions;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using SolarViewFunctions.Entities;
+using SolarView.Common.Models;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Factories;
 using SolarViewFunctions.Models;
@@ -33,7 +33,7 @@ namespace SolarViewFunctions.Functions
 
         Tracker.TrackInfo($"Processing a {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, between {request.StartDateTime} and {request.EndDateTime}");
 
-        var siteInfo = await context.CallActivityWithRetryAsync<SiteInfo>(nameof(GetSiteInfo), GetDefaultRetryOptions(), request.SiteId);
+        var siteInfo = await context.CallActivityWithRetryAsync<SecretSiteInfo>(nameof(GetSiteInfo), GetDefaultRetryOptions(), request.SiteId);
 
         // next refresh time is in the site's timezone
         Tracker.TrackInfo(siteInfo.LastRefreshDateTime.IsNullOrEmpty()
@@ -64,7 +64,7 @@ namespace SolarViewFunctions.Functions
       }
     }
 
-    private async Task RefreshSite(IDurableOrchestrationContext context, SiteInfo siteInfo, DateTime startDateTime, DateTime endDateTime)
+    private async Task RefreshSite(IDurableOrchestrationContext context, SecretSiteInfo siteInfo, DateTime startDateTime, DateTime endDateTime)
     {
       // ignore any message received that is earlier than the site's 'LastRefreshEnd'
       if (endDateTime < startDateTime)
@@ -106,14 +106,14 @@ namespace SolarViewFunctions.Functions
       return context.CallSubOrchestratorWithRetryAsync(nameof(HydratePowerOrchestrator), GetDefaultRetryOptions(), powerQuery);
     }
 
-    private Task UpdateSiteLastRefreshTime(IDurableOrchestrationContext context, SiteInfo siteInfo)
+    private Task UpdateSiteLastRefreshTime(IDurableOrchestrationContext context, ISiteInfo siteInfo)
     {
       Tracker.TrackInfo($"Initiating a request to update SiteId {siteInfo.SiteId} with a last refresh date of {siteInfo.LastRefreshDateTime}");
 
       var siteUpdates = new Dictionary<string, string>
       {
-        {nameof(SiteInfo.SiteId), siteInfo.SiteId},
-        {nameof(SiteInfo.LastRefreshDateTime), siteInfo.LastRefreshDateTime}
+        {nameof(ISiteInfo.SiteId), siteInfo.SiteId},
+        {nameof(ISiteInfo.LastRefreshDateTime), siteInfo.LastRefreshDateTime}
       };
 
       return context.CallActivityWithRetryAsync(nameof(UpdateSitesTable), GetDefaultRetryOptions(), siteUpdates);

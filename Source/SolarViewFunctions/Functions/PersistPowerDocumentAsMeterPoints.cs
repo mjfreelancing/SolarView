@@ -43,7 +43,7 @@ namespace SolarViewFunctions.Functions
       Tracker.TrackInfo($"Persisting {entities.Count} meter points from document {powerDocument.Id}");
 
       var powerRepository = _repositoryFactory.Create<IPowerRepository>(powerTable);
-      await powerRepository.UpsertAsync(entities).ConfigureAwait(false);
+      await powerRepository.UpsertPowerAsync(entities).ConfigureAwait(false);
     }
   }
 }

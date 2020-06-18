@@ -114,7 +114,7 @@ namespace SolarViewFunctions.Functions
         return new MeterPowerMonth(siteId, startDate, endDate, time, meterType, watts);
       });
 
-      await powerMonthlyRepository.UpsertAsync(aggregatedEntities).ConfigureAwait(false);
+      await powerMonthlyRepository.UpsertMonthlyPowerAsync(aggregatedEntities).ConfigureAwait(false);
     }
   }
 }

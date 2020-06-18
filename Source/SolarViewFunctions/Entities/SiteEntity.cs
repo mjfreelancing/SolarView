@@ -1,8 +1,9 @@
 using Microsoft.Azure.Cosmos.Table;
+using SolarView.Common.Models;
 
 namespace SolarViewFunctions.Entities
 {
-  public class SiteInfo : TableEntity
+  public class SiteEntity : TableEntity, ISiteInfo, ISecretSiteInfo
   {
     // PartitionKey == "SiteId"  (Constants.Table.SitesPartitionKey)
     // RowKey => value of SiteId

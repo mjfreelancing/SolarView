@@ -9,7 +9,7 @@ using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository;
-using SolarViewFunctions.Repository.Sites;
+using SolarViewFunctions.Repository.Site;
 using SolarViewFunctions.SendGrid;
 using SolarViewFunctions.Tracking;
 using System;
@@ -47,7 +47,7 @@ namespace SolarViewFunctions.Functions
 
         request = queueMessage.DeserializeFromMessage<PowerUpdatedMessage>();
 
-        var siteInfo = await _repositoryFactory.Create<ISitesRepository>(sitesTable).GetSiteAsync(request.SiteId);
+        var siteInfo = await _repositoryFactory.Create<ISiteRepository>(sitesTable).GetSiteAsync(request.SiteId);
 
         // todo: update to load a specific razor template - just send the content in the email for now
         var content = JsonConvert.SerializeObject(request);

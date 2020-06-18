@@ -13,7 +13,7 @@ namespace SolarViewFunctions.Validation
     {
       var property = expression.GetFieldOrProperty();
 
-      return property.Name ?? string.Empty;
+      return property.Name;
     }
 
     public static bool TryGetDateValue(string value, string format, out DateTime dateTime)
@@ -24,6 +24,11 @@ namespace SolarViewFunctions.Validation
     public static ValidationError CreatePreConditionError(string propertyName, object attemptedValue, string message)
     {
       return new ValidationError(propertyName, attemptedValue, ValidationReason.InternalPreCondition, message);
+    }
+
+    public static ValidationError CreateValidationError(ValidationReason reason, string propertyName, object attemptedValue, string message)
+    {
+      return new ValidationError(propertyName, attemptedValue, reason, message);
     }
 
     private static bool TryGetDateValue(string value, string[] formats, out DateTime dateTime)

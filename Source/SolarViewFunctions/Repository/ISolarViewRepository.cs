@@ -1,4 +1,4 @@
-namespace SolarViewFunctions.Repository.Sites
+namespace SolarViewFunctions.Repository
 {
   public interface ISolarViewRepository
   {

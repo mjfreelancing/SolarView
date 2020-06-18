@@ -4,11 +4,11 @@ using Flurl;
 using Flurl.Http;
 using SolarView.Client.Common.KeyVault;
 using SolarView.Client.Common.Models;
+using SolarView.Common.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using SolarView.Common.Models;
 
 namespace SolarView.Client.Common.Services.SolarView
 {
@@ -31,7 +31,7 @@ namespace SolarView.Client.Common.Services.SolarView
         {
           MeterType = meterType,
           Url = new Url(_functionsUrl)
-            .AppendPathSegments("power", siteId, meterType, "average")
+            .AppendPathSegments("site", siteId, "power", meterType, "average")
             .SetQueryParams(new
             {
               StartDate = $"{startDate:yyyy-MM-dd}",

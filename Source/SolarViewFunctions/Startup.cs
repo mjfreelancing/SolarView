@@ -2,7 +2,6 @@ using AutoMapper;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using SolarViewFunctions.Factories;
-using SolarViewFunctions.Functions;
 using SolarViewFunctions.Providers;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.SendGrid;
