@@ -6,12 +6,12 @@ using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Newtonsoft.Json;
+using SolarView.Common.Models;
 using SolarViewFunctions.Dto;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Exceptions;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.HttpResults;
-using SolarViewFunctions.Models;
 using SolarViewFunctions.Providers;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Sites;
@@ -57,8 +57,7 @@ namespace SolarViewFunctions.Functions
         };
 
         Tracker.AppendDefaultProperties(averageDayRequest);
-
-        Tracker.TrackEvent(nameof(TriggerGetAverageDayView));
+        Tracker.TrackEvent(nameof(TriggerGetAverageDayView), new {MeterType = meterType});
 
         ValidateRequestAsync(averageDayRequest, sitesTable);
 

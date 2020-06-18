@@ -1,9 +1,9 @@
-﻿using System;
-using Azure;
+﻿using Azure;
 using Azure.Security.KeyVault.Secrets;
-using SolarViewBlazor.Services.KeyVault.Exceptions;
+using SolarView.Client.Common.KeyVault.Exceptions;
+using System;
 
-namespace SolarViewBlazor.Services.KeyVault.Extensions
+namespace SolarView.Client.Common.KeyVault.Extensions
 {
   public static class KeyVaultSecretExtensions
   {

@@ -1,8 +1,8 @@
-﻿using System;
-using AllOverIt.Helpers;
+﻿using AllOverIt.Helpers;
 using Azure.Security.KeyVault.Secrets;
+using System;
 
-namespace SolarViewBlazor.Services.KeyVault.Exceptions
+namespace SolarView.Client.Common.KeyVault.Exceptions
 {
   public class SecretExpiredException : Exception
   {

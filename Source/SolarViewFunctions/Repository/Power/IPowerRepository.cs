@@ -1,5 +1,5 @@
+using SolarView.Common.Models;
 using SolarViewFunctions.Entities;
-using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository.Sites;
 using System;
 using System.Collections.Generic;

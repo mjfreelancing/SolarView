@@ -1,7 +1,7 @@
-using System;
 using Microsoft.Azure.Cosmos.Table;
+using SolarView.Common.Models;
 using SolarViewFunctions.Extensions;
-using SolarViewFunctions.Models;
+using System;
 
 namespace SolarViewFunctions.Entities
 {

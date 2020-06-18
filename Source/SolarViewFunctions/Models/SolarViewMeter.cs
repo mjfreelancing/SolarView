@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using SolarView.Common.Models;
+using System.Collections.Generic;
 
 namespace SolarViewFunctions.Models
 {

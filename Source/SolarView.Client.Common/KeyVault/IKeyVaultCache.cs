@@ -1,4 +1,4 @@
-﻿namespace SolarViewBlazor.Services.KeyVault
+﻿namespace SolarView.Client.Common.KeyVault
 {
   public interface IKeyVaultCache
   {

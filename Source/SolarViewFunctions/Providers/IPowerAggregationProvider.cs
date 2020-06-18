@@ -1,4 +1,5 @@
 using Microsoft.Azure.Cosmos.Table;
+using SolarView.Common.Models;
 using SolarViewFunctions.Models;
 using System;
 using System.Collections.Generic;

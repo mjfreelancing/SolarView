@@ -2,12 +2,12 @@
 using AllOverIt.Helpers;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
-using SolarViewBlazor.Services.KeyVault.Extensions;
+using SolarView.Client.Common.KeyVault.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace SolarViewBlazor.Services.KeyVault
+namespace SolarView.Client.Common.KeyVault
 {
   public class KeyVaultCache : IKeyVaultCache
   {

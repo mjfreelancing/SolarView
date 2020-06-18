@@ -2,23 +2,25 @@
 using AllOverIt.Helpers;
 using Flurl;
 using Flurl.Http;
-using SolarViewBlazor.Models;
-using SolarViewBlazor.Services.KeyVault;
+using SolarView.Client.Common.KeyVault;
+using SolarView.Client.Common.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SolarView.Common.Models;
 
-namespace SolarViewBlazor.Services
+namespace SolarView.Client.Common.Services.SolarView
 {
   public class SolarViewService : ISolarViewService
   {
-    private string _url = "https://solarviewfunctions.azurewebsites.net";
     private readonly string _functionsKey;
+    private readonly string _functionsUrl;
 
-    public SolarViewService(IKeyVaultCache keyVault)
+    public SolarViewService(ISolarViewServiceConfiguration serviceConfiguration, IKeyVaultCache keyVault)
     {
-      _functionsKey = keyVault.GetSecret(Constants.KeyVaultSolarViewFunctionKeyName);
+      _functionsKey = keyVault.GetSecret(serviceConfiguration.KeyVaultFunctionKeyName);
+      _functionsUrl = serviceConfiguration.FunctionsUrl;
     }
 
     public async Task<IEnumerable<PowerData>> CollectData(string siteId, DateTime startDate, DateTime endDate)
@@ -28,7 +30,7 @@ namespace SolarViewBlazor.Services
         select new
         {
           MeterType = meterType,
-          Url = new Url(_url)
+          Url = new Url(_functionsUrl)
             .AppendPathSegments("power", siteId, meterType, "average")
             .SetQueryParams(new
             {

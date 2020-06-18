@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace SolarViewBlazor.Models
+namespace SolarView.Common.Models
 {
   [JsonConverter(typeof(StringEnumConverter))]
   public enum MeterType

@@ -1,6 +1,6 @@
 ﻿@page "/fetchdata"
-@using SolarViewBlazor.Models
-@using SolarViewBlazor.Services
+@using SolarView.Client.Common.Models
+@using SolarView.Client.Common.Services.SolarView
 @inject ISolarViewService SolarViewService
 
 <h1>Average Power Data</h1>
@@ -32,16 +32,16 @@ else
 			<ChartTooltipSettings Enable="true"/>
 			<ChartSeriesCollection>
 				@*green*@
-				<ChartSeries DataSource="@PowerData" Name=@nameof(Models.PowerData.Production) XName=@nameof(Models.PowerData.Time) Width="2"
-				             Opacity="0.8" Fill="#2bab4d" YName=@nameof(Models.PowerData.Production) Type="ChartSeriesType.SplineArea">
+				<ChartSeries DataSource="@PowerData" Name=@nameof(SolarView.Client.Common.Models.PowerData.Production) XName=@nameof(SolarView.Client.Common.Models.PowerData.Time) Width="2"
+				             Opacity="0.8" Fill="#2bab4d" YName=@nameof(SolarView.Client.Common.Models.PowerData.Production) Type="ChartSeriesType.SplineArea">
 				</ChartSeries>
 				@*red*@
-				<ChartSeries DataSource="@PowerData" Name=@nameof(Models.PowerData.Consumption) XName=@nameof(Models.PowerData.Time) Width="2"
-				             Opacity="0.7" Fill="#d12e2e" YName=@nameof(Models.PowerData.Consumption) Type="ChartSeriesType.SplineArea">
+				<ChartSeries DataSource="@PowerData" Name=@nameof(SolarView.Client.Common.Models.PowerData.Consumption) XName=@nameof(SolarView.Client.Common.Models.PowerData.Time) Width="2"
+				             Opacity="0.7" Fill="#d12e2e" YName=@nameof(SolarView.Client.Common.Models.PowerData.Consumption) Type="ChartSeriesType.SplineArea">
 				</ChartSeries>
 				@*blue*@
-				<ChartSeries DataSource="@PowerData" Name=@nameof(Models.PowerData.SelfConsumption) XName=@nameof(Models.PowerData.Time) Width="2"
-				             Opacity="0.9" Fill="#316bde" YName=@nameof(Models.PowerData.SelfConsumption) Type="ChartSeriesType.SplineArea">
+				<ChartSeries DataSource="@PowerData" Name=@nameof(SolarView.Client.Common.Models.PowerData.SelfConsumption) XName=@nameof(SolarView.Client.Common.Models.PowerData.Time) Width="2"
+				             Opacity="0.9" Fill="#316bde" YName=@nameof(SolarView.Client.Common.Models.PowerData.SelfConsumption) Type="ChartSeriesType.SplineArea">
 				</ChartSeries>
 			</ChartSeriesCollection>
 		</SfChart>

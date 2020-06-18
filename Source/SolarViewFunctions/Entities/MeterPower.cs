@@ -1,5 +1,5 @@
 using Microsoft.Azure.Cosmos.Table;
-using SolarViewFunctions.Models;
+using SolarView.Common.Models;
 using System;
 
 namespace SolarViewFunctions.Entities

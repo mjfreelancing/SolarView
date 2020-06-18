@@ -1,6 +1,6 @@
 using Microsoft.Azure.Cosmos.Table;
+using SolarView.Common.Models;
 using SolarViewFunctions.Entities;
-using SolarViewFunctions.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

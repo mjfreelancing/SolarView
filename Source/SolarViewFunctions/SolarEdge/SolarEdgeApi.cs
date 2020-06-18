@@ -1,6 +1,7 @@
 using AllOverIt.Helpers;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Newtonsoft.Json;
+using SolarView.Common.Models;
 using SolarViewFunctions.Helpers;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.SolarEdge.Dto.Response;

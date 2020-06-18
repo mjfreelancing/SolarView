@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SolarViewBlazor.Services;
-using SolarViewBlazor.Services.KeyVault;
+using SolarView.Client.Common.KeyVault;
+using SolarView.Client.Common.Services.SolarView;
+using SolarViewBlazor.Configuration;
 using Syncfusion.Blazor;
 using Syncfusion.Licensing;
 
@@ -31,6 +32,7 @@ namespace SolarViewBlazor
       services.AddSyncfusionBlazor();
       services.AddScoped<ISolarViewService, SolarViewService>();
       services.AddScoped<IKeyVaultConfiguration, KeyVaultConfiguration>();
+      services.AddScoped<ISolarViewServiceConfiguration, SolarViewServiceConfiguration>();
       services.AddScoped<IKeyVaultCache, KeyVaultCache>();
     }
 

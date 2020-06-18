@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
+using SolarView.Client.Common.KeyVault;
 
-namespace SolarViewBlazor.Services.KeyVault
+namespace SolarViewBlazor.Configuration
 {
   public class KeyVaultConfiguration : IKeyVaultConfiguration
   {

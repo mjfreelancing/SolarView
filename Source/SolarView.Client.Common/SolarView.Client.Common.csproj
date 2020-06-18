@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -9,13 +9,12 @@
     <PackageReference Include="Azure.Identity" Version="1.1.1" />
     <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.0.3" />
     <PackageReference Include="Flurl.Http" Version="2.4.2" />
-    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.5" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.14.0" />
-    <PackageReference Include="Syncfusion.Blazor" Version="18.1.0.57" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SolarView.Client.Common\SolarView.Client.Common.csproj" />
+    <ProjectReference Include="..\SolarView.Common\SolarView.Common.csproj" />
   </ItemGroup>
 
 </Project>

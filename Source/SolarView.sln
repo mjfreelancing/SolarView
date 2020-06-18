@@ -5,7 +5,18 @@ VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SolarViewFunctions", "SolarViewFunctions\SolarViewFunctions.csproj", "{6CE781DF-7E51-46BF-8C34-CDFB8DC7DA81}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolarViewBlazor", "SolarViewBlazor\SolarViewBlazor.csproj", "{DCBFB243-DC3F-41D9-8D5C-60E281A7D7ED}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SolarViewBlazor", "SolarViewBlazor\SolarViewBlazor.csproj", "{DCBFB243-DC3F-41D9-8D5C-60E281A7D7ED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolarView.Client.Common", "SolarView.Client.Common\SolarView.Client.Common.csproj", "{A2CDFEA1-894F-4A96-8AF5-899D3960C3AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolarView.Common", "SolarView.Common\SolarView.Common.csproj", "{431CDA2E-BA71-4A75-8BBC-96309E8D981A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4CF8037F-56CE-468D-BB5F-25D64E8F63B2}"
+	ProjectSection(SolutionItems) = preProject
+		README.txt = README.txt
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NewFolder1", "NewFolder1", "{22F90152-CC8D-4312-B278-55A7E087792D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +32,14 @@ Global
 		{DCBFB243-DC3F-41D9-8D5C-60E281A7D7ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DCBFB243-DC3F-41D9-8D5C-60E281A7D7ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DCBFB243-DC3F-41D9-8D5C-60E281A7D7ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2CDFEA1-894F-4A96-8AF5-899D3960C3AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2CDFEA1-894F-4A96-8AF5-899D3960C3AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2CDFEA1-894F-4A96-8AF5-899D3960C3AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2CDFEA1-894F-4A96-8AF5-899D3960C3AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{431CDA2E-BA71-4A75-8BBC-96309E8D981A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{431CDA2E-BA71-4A75-8BBC-96309E8D981A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{431CDA2E-BA71-4A75-8BBC-96309E8D981A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{431CDA2E-BA71-4A75-8BBC-96309E8D981A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

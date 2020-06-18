@@ -2,6 +2,7 @@ using AllOverIt.Extensions;
 using AllOverIt.Helpers;
 using AllOverIt.Tasks;
 using Microsoft.Azure.Cosmos.Table;
+using SolarView.Common.Models;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Power;
