@@ -74,7 +74,8 @@ namespace SolarViewFunctions.Functions
               SiteId = siteInfo.SiteId,
               SiteStartDate = siteInfo.StartDate,
               StartDate = lastAggregationDate.GetSolarDateString(),
-              EndDate = nextEndDate.GetSolarDateString()
+              EndDate = nextEndDate.GetSolarDateString(),
+              TriggerType = RefreshTriggerType.Timed
             };
 
             // sequentially performs monthly then yearly aggregation
@@ -82,7 +83,7 @@ namespace SolarViewFunctions.Functions
 
             Tracker.TrackInfo(
               $"Power data aggregation for SiteId {siteInfo.SiteId} has been scheduled for {request.StartDate} to {request.EndDate}",
-              new {Request = request, InstanceId = instanceId});
+              new { Request = request, InstanceId = instanceId });
           }
         }
       }

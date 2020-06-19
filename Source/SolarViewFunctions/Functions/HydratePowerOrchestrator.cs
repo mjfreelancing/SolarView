@@ -111,7 +111,7 @@ namespace SolarViewFunctions.Functions
       var message = _mapper.Map<PowerUpdatedMessage>(triggeredPowerQuery);
       message.Status = status;
 
-      Tracker.TrackInfo($"Sending '{status}' status notification for SiteId {message.SiteId}, Trigger {message.Trigger}");
+      Tracker.TrackInfo($"Sending '{status}' status notification for SiteId {message.SiteId}, TriggerType {message.TriggerType}");
 
       return context.CallActivityWithRetryAsync<PowerUpdatedStatus>(nameof(NotifyPowerUpdatedMessage), GetDefaultRetryOptions(), message);
     }

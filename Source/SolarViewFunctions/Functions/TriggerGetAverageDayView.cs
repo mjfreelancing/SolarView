@@ -108,18 +108,9 @@ namespace SolarViewFunctions.Functions
       }
     }
 
-    //private static bool IsValidMeterType(string meterType)
-    //{
-    //  if (!meterType.IsValidEnum<MeterType>())
-    //  {
-    //    var error = ValidationHelpers.CreateValidationError(ValidationReason.InvalidValue, nameof(meterType), meterType, "Invalid Meter Type");
-    //    throw new PreConditionException(error);
-    //  }
-    //}
-
-    private static void ValidateRequest(GetAverageDayViewRequest request)
+    private static void ValidateRequest(SitePeriodRequestBase request)
     {
-      var requestValidator = new GetAverageDayViewRequestValidator();
+      var requestValidator = new SitePeriodRequestValidator();
       var requestValidationResult = requestValidator.Validate(request);
 
       if (!requestValidationResult.IsValid)

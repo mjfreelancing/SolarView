@@ -37,15 +37,22 @@ namespace SolarViewFunctions.Functions
       MakeTrackerReplaySafe(context);
       Tracker.AppendDefaultProperties(context.GetTrackingProperties());
 
-      Tracker.TrackEvent(nameof(AggregateSitePowerData));
-
       var request = context.GetInput<SiteRefreshAggregationRequest>();
+
+      Tracker.TrackEvent(nameof(AggregateSitePowerData), request);
 
       var tasks = GetAggregationTasks(context, request);
 
       await Task.WhenAll(tasks);
 
-      await UpdateLastAggregationEndDate(context, request.SiteId, request.EndDate);
+      if (request.TriggerType == RefreshTriggerType.Timed)
+      {
+        await UpdateLastAggregationEndDate(context, request.SiteId, request.EndDate);
+      }
+      else
+      {
+        Tracker.TrackInfo("Not updating last aggregation end date - the aggregation was triggered manually");
+      }
     }
 
     private IEnumerable<Task> GetAggregationTasks(IDurableOrchestrationContext context, SiteRefreshAggregationRequest request)

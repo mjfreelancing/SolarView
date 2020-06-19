@@ -17,7 +17,7 @@ namespace SolarViewFunctions.Mapping
         .ForMember(dest => dest.StartDateTime, opt => opt.MapFrom(src => src.StartDate))
         .ForMember(dest => dest.EndDateTime, opt => opt.MapFrom(src => src.EndDate))
         .ForMember(dest => dest.TriggerDateTime, opt => opt.Ignore())
-        .ForMember(dest => dest.Trigger, opt => opt.Ignore())
+        .ForMember(dest => dest.TriggerType, opt => opt.Ignore())
         .AfterMap((src, dest) =>
         {
           // Force the update to use full day boundaries to ensure docs are not partially replaced.
@@ -44,6 +44,10 @@ namespace SolarViewFunctions.Mapping
           dest.PartitionKey = $"{src.SiteId}_{src.TriggerDateTime.Substring(0, 10)}";
           dest.RowKey = $"{Guid.NewGuid()}";
         });
+      
+      CreateMap<AggregatePowerRequest, SiteRefreshAggregationRequest>()
+        .ForMember(dest => dest.SiteStartDate, opt => opt.Ignore())
+        .ForMember(dest => dest.TriggerType, opt => opt.Ignore());
 
       CreateMap<SiteEntity, SecretSiteInfo>();
       CreateMap<SiteEntity, SiteInfoResponse>();

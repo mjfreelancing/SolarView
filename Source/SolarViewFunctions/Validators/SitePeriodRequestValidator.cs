@@ -3,9 +3,9 @@ using SolarViewFunctions.Validation;
 
 namespace SolarViewFunctions.Validators
 {
-  public class HydratePowerRequestValidator : ValidatorBase<HydratePowerRequest>
+  public class SitePeriodRequestValidator : ValidatorBase<SitePeriodRequestBase>
   {
-    public HydratePowerRequestValidator()
+    public SitePeriodRequestValidator()
     {
       // The SiteId is being validated because it is in the route and validated separately
 

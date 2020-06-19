@@ -65,7 +65,7 @@ namespace SolarViewFunctions.Functions
 
         var historyGroups = historyItems
           .Where(item => item.Status != $"{PowerUpdatedStatus.Started}")
-          .GroupBy(item => item.Trigger);
+          .GroupBy(item => item.TriggerType);
 
         // temporary until razor can be used
         var content = new StringBuilder();

@@ -23,58 +23,59 @@ using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
 {
-  public class TriggerManualHydratePower : FunctionBase
+  public class TriggerManualAggregatePower : FunctionBase
   {
     private readonly IMapper _mapper;
     private readonly ISolarViewRepositoryFactory _repositoryFactory;
 
-    public TriggerManualHydratePower(ITracker tracker, IMapper mapper, ISolarViewRepositoryFactory repositoryFactory)
+    public TriggerManualAggregatePower(ITracker tracker, IMapper mapper, ISolarViewRepositoryFactory repositoryFactory)
       : base(tracker)
     {
       _mapper = mapper.WhenNotNull(nameof(mapper));
       _repositoryFactory = repositoryFactory.WhenNotNull(nameof(repositoryFactory));
     }
 
-    [FunctionName(nameof(TriggerManualHydratePower))]
+    [FunctionName(nameof(TriggerManualAggregatePower))]
     public async Task<HttpResponseMessage> Run(
-      [HttpTrigger(AuthorizationLevel.Function, "post", Route = "site/{siteId}/hydrate")] HttpRequestMessage request, string siteId,
+      [HttpTrigger(AuthorizationLevel.Function, "post", Route = "site/{siteId}/aggregate")]
+      HttpRequestMessage request, string siteId,
       [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable,
       [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
         ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments,
       [DurableClient] IDurableOrchestrationClient orchestrationClient)
     {
-      HydratePowerRequest hydrateRequest = null;
+      AggregatePowerRequest aggregateRequest = null;
 
       try
       {
-        var triggerDateTime = DateTime.UtcNow;
+        aggregateRequest = await request.Content.ReadAsAsync<AggregatePowerRequest>();
+        aggregateRequest.SiteId = siteId;
 
-        hydrateRequest = await request.Content.ReadAsAsync<HydratePowerRequest>();
-        hydrateRequest.SiteId = siteId;
+        Tracker.AppendDefaultProperties(aggregateRequest);
 
-        Tracker.AppendDefaultProperties(hydrateRequest);
-
-        Tracker.TrackEvent(nameof(TriggerManualHydratePower));
+        Tracker.TrackEvent(nameof(TriggerManualAggregatePower));
 
         var siteRepository = _repositoryFactory.Create<ISiteRepository>(sitesTable);
 
-        ValidateRequest(hydrateRequest);
+        ValidateRequest(aggregateRequest);
 
-        var siteInfo = await siteRepository.GetSiteAsync(hydrateRequest.SiteId);
+        var siteInfo = await siteRepository.GetSiteAsync(aggregateRequest.SiteId);
 
         if (siteInfo == null)
         {
           return new ForbiddenResponse();
         }
 
-        var triggeredPowerQuery = _mapper.Map<TriggeredPowerQuery>(hydrateRequest);
-        triggeredPowerQuery.TriggerDateTime = siteInfo.UtcToLocalTime(triggerDateTime).GetSolarDateTimeString();
-        triggeredPowerQuery.TriggerType = RefreshTriggerType.Manual;
+        var refreshRequest = _mapper.Map<SiteRefreshAggregationRequest>(aggregateRequest);
+        refreshRequest.SiteStartDate = siteInfo.StartDate;
+        refreshRequest.TriggerType = RefreshTriggerType.Manual;
 
-        var instanceId = await orchestrationClient.StartNewAsync(nameof(HydratePowerOrchestrator), triggeredPowerQuery).ConfigureAwait(false);
+        // sequentially performs monthly then yearly aggregation
+        var instanceId = await orchestrationClient.StartNewAsync(nameof(AggregateSitePowerData), refreshRequest).ConfigureAwait(false);
 
-        Tracker.TrackInfo($"Started {nameof(HydratePowerOrchestrator)} for a manual power hydration of SiteId {siteInfo.SiteId} at " +
-                          $"{siteInfo.UtcToLocalTime(triggerDateTime).GetSolarDateTimeString()} (local)");
+        Tracker.TrackInfo(
+          $"Manual power data aggregation for SiteId {siteId} has been scheduled for {refreshRequest.StartDate} to {refreshRequest.EndDate}",
+          new { Request = refreshRequest, InstanceId = instanceId });
 
         // sub task progress / output can be monitored by adding the following to the end of the
         // 'statusQueryGetUri' : &showHistoryOutput=true&showHistory=true
@@ -91,16 +92,16 @@ namespace SolarViewFunctions.Functions
       {
         var notification = new
         {
-          hydrateRequest?.SiteId,
+          aggregateRequest?.SiteId,
           Request = $"{request}",
-          RequestContent = hydrateRequest
+          RequestContent = aggregateRequest
         };
 
         Tracker.TrackException(exception, notification);
 
-        if (!hydrateRequest?.SiteId.IsNullOrEmpty() ?? false)
+        if (!aggregateRequest?.SiteId.IsNullOrEmpty() ?? false)
         {
-          await exceptionDocuments.AddNotificationAsync<TriggerManualHydratePower>(hydrateRequest.SiteId, exception, notification).ConfigureAwait(false);
+          await exceptionDocuments.AddNotificationAsync<TriggerManualHydratePower>(aggregateRequest.SiteId, exception, notification).ConfigureAwait(false);
         }
 
         return new InternalServerErrorResponse(exception);
