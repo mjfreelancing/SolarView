@@ -7,9 +7,9 @@
 
 <h1>Average Power Data</h1>
 
-<div>
+<div class="row mb-2">
 	<SfDateRangePicker Min="@_siteStartDate" Max="@MaxEndDate" @bind-StartDate="@StartDate" @bind-EndDate="@EndDate"
-										 ValueChanged="LoadDateRange" Placeholder="Choose a Range"></SfDateRangePicker>
+	                   ValueChanged="LoadDateRange" Placeholder="Add a new range"/>
 </div>
 
 @if (_chartData.IsNullOrEmpty())
@@ -92,6 +92,10 @@ else
 		_chartData.Add(chartData);
 
 		await ChartDataCache.Add(chartData);
+
+		// indicate a new range can now be added
+		StartDate = null;
+		EndDate = null;
 
 		StateHasChanged();
 	}
