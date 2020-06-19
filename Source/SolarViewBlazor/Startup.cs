@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -5,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SolarView.Client.Common.KeyVault;
 using SolarView.Client.Common.Services.SolarView;
+using SolarViewBlazor.Cache;
 using SolarViewBlazor.Configuration;
 using Syncfusion.Blazor;
 using Syncfusion.Licensing;
@@ -30,10 +32,17 @@ namespace SolarViewBlazor
       services.AddRazorPages();
       services.AddServerSideBlazor();
       services.AddSyncfusionBlazor();
+
+      // Keep an eye on this - when out of beta will be worth considering as it uses ASP.NET Data Protection
+      // https://www.nuget.org/packages/Microsoft.AspNetCore.ProtectedBrowserStorage
+      // https://docs.microsoft.com/en-us/aspnet/core/blazor/state-management
+      services.AddBlazoredLocalStorage();
+
       services.AddScoped<ISolarViewService, SolarViewService>();
       services.AddScoped<IKeyVaultConfiguration, KeyVaultConfiguration>();
       services.AddScoped<ISolarViewServiceConfiguration, SolarViewServiceConfiguration>();
       services.AddScoped<IKeyVaultCache, KeyVaultCache>();
+      services.AddScoped<IChartDataCache, ChartDataCache>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SolarViewFunctions", "Solar
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SolarViewBlazor", "SolarViewBlazor\SolarViewBlazor.csproj", "{DCBFB243-DC3F-41D9-8D5C-60E281A7D7ED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolarView.Client.Common", "SolarView.Client.Common\SolarView.Client.Common.csproj", "{A2CDFEA1-894F-4A96-8AF5-899D3960C3AD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SolarView.Client.Common", "SolarView.Client.Common\SolarView.Client.Common.csproj", "{A2CDFEA1-894F-4A96-8AF5-899D3960C3AD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolarView.Common", "SolarView.Common\SolarView.Common.csproj", "{431CDA2E-BA71-4A75-8BBC-96309E8D981A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SolarView.Common", "SolarView.Common\SolarView.Common.csproj", "{431CDA2E-BA71-4A75-8BBC-96309E8D981A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4CF8037F-56CE-468D-BB5F-25D64E8F63B2}"
 	ProjectSection(SolutionItems) = preProject

@@ -1,0 +1,54 @@
+﻿@using SolarView.Client.Common.Models
+@inject ILocalStorageService LocalStorage
+
+<div class="row">
+	<div class="col-md-12 col-sm-12">
+		<SfChart Title="@($"Period: {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}")">
+			<ChartArea>
+				<ChartAreaBorder Width="1" />
+			</ChartArea>
+			<ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
+												 IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift">
+				<ChartAxisMajorGridLines Width="0" />
+			</ChartPrimaryXAxis>
+			<ChartPrimaryYAxis LabelFormat="{value}W" Minimum="0" Maximum="@MaxValue" Interval="500">
+				<ChartAxisLineStyle Width="1" />
+			</ChartPrimaryYAxis>
+			<ChartTooltipSettings Enable="true" />
+			<ChartSeriesCollection>
+				@*red*@
+				<ChartSeries DataSource="@PowerData" Opacity="0.8" Fill="#d12e2e" Width="2"
+										 Name=@nameof(SolarView.Client.Common.Models.PowerData.Consumption) XName=@nameof(SolarView.Client.Common.Models.PowerData.Time)
+										 YName=@nameof(SolarView.Client.Common.Models.PowerData.Consumption) Type="ChartSeriesType.SplineArea">
+				</ChartSeries>
+
+				@*green*@
+				<ChartSeries DataSource="@PowerData" Opacity="0.8" Fill="#2bab4d" Width="2"
+										 Name=@nameof(SolarView.Client.Common.Models.PowerData.Production) XName=@nameof(SolarView.Client.Common.Models.PowerData.Time)
+										 YName=@nameof(SolarView.Client.Common.Models.PowerData.Production) Type="ChartSeriesType.SplineArea">
+				</ChartSeries>
+
+				@*blue*@
+				<ChartSeries DataSource="@PowerData" Opacity="0.6" Fill="#316bde" Width="2"
+										 Name=@nameof(SolarView.Client.Common.Models.PowerData.SelfConsumption) XName=@nameof(SolarView.Client.Common.Models.PowerData.Time)
+										 YName=@nameof(SolarView.Client.Common.Models.PowerData.SelfConsumption) Type="ChartSeriesType.SplineArea">
+				</ChartSeries>
+			</ChartSeriesCollection>
+		</SfChart>
+	</div>
+</div>
+
+
+@code {
+	[Parameter]
+	public DateTime StartDate { get; set; }
+
+	[Parameter]
+	public DateTime EndDate { get; set; }
+
+	[Parameter]
+	public IReadOnlyList<PowerData> PowerData { get; set; }
+
+	[Parameter]
+	public double MaxValue { get; set; } = 6500;
+}

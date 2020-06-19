@@ -1,0 +1,107 @@
+﻿@page "/compare"
+@using SolarView.Client.Common.Services.SolarView
+@using SolarViewBlazor.Cache
+@using SolarViewBlazor.Models
+@inject ISolarViewService SolarViewService
+@inject IChartDataCache ChartDataCache
+
+<h1>Average Power Data</h1>
+
+<div>
+	<SfDateRangePicker Min="@_siteStartDate" Max="@MaxEndDate" @bind-StartDate="@StartDate" @bind-EndDate="@EndDate"
+										 ValueChanged="LoadDateRange" Placeholder="Choose a Range"></SfDateRangePicker>
+</div>
+
+@if (_chartData.IsNullOrEmpty())
+{
+	<p><em>Select a date range...</em></p>
+}
+else
+{
+	<div class="row">
+		@foreach (var chart in _chartData)
+		{
+			var chartId = chart.Id;
+
+			<div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 col-12">
+				<PowerChart StartDate="@chart.StartDate" EndDate="@chart.EndDate" MaxValue="@MaxChartValue" PowerData="@chart.Data" />
+				<button @onclick="() => RemoveChart(chartId)">Remove</button>
+			</div>
+		}
+	</div>
+}
+
+@code {
+	private readonly DateTime _siteStartDate = new DateTime(2020, 5, 9);
+	private DateTime MaxEndDate => DateTime.Now.Date.AddDays(-1);                   // todo: make this site specific (local time)
+	private IList<ChartData> _chartData;
+
+	private DateTime? StartDate { get; set; }
+	private DateTime? EndDate { get; set; }
+
+	// todo: optimise this so it is not evaluated all the time
+	private double MaxChartValue
+	{
+		get
+		{
+			if (_chartData.IsNullOrEmpty())
+			{
+				return 0;
+			}
+
+			var maxValue = _chartData
+				.SelectMany(item => item.Data)
+				.SelectMany(item => new[] { item.Consumption, item.Purchased, item.SelfConsumption, item.FeedIn, item.Production })
+				.Max();
+
+			return (1 + Math.Floor(maxValue / 500d)) * 500d;
+		}
+	}
+
+	// Due to pre-rendering in Blazor Server you can't perform any JS interop until the OnAfterRender lifecycle method
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			var chartCount = await ChartDataCache.GetCount();
+
+			if (chartCount > 0)
+			{
+				_chartData = await ChartDataCache.GetData();
+				StateHasChanged();
+			}
+		}
+	}
+
+	private async Task LoadDateRange()
+	{
+		var startDate = StartDate.Value.AddHours(10);
+		var endDate = EndDate.Value.AddHours(10);
+
+		var powerData = (await SolarViewService.CollectData("1514817", startDate, endDate)).AsReadOnlyList();
+
+		var chartData = new ChartData
+		{
+			Id = $"{Guid.NewGuid()}",
+			StartDate = startDate,
+			EndDate = endDate,
+			Data = powerData
+		};
+
+		_chartData ??= new List<ChartData>();
+		_chartData.Add(chartData);
+
+		await ChartDataCache.Add(chartData);
+
+		StateHasChanged();
+	}
+
+	private async void RemoveChart(string chartId)
+	{
+		var chartData = _chartData.Single(item => item.Id == chartId);
+		_chartData.Remove(chartData);
+
+		await ChartDataCache.Remove(chartId);
+		StateHasChanged();
+	}
+}
