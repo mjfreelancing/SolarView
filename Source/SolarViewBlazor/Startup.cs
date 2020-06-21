@@ -66,6 +66,7 @@ namespace SolarViewBlazor
 
       services.AddSingleton<ISiteInfo, SiteInfo>();
       services.AddSingleton<IAppState, AppState>();
+      services.AddApplicationInsightsTelemetry(Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
