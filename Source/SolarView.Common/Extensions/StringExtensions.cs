@@ -1,6 +1,6 @@
 using System;
 
-namespace SolarViewFunctions.Extensions
+namespace SolarView.Common.Extensions
 {
   public static class StringExtensions
   {

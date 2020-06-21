@@ -2,6 +2,7 @@ using AllOverIt.Helpers;
 using AutoMapper;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using SolarView.Common.Extensions;
 using SolarView.Common.Models;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Factories;

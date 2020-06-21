@@ -21,7 +21,7 @@ else
 	@if (CurrentSite == null)
 	{
 		<SfTextBox @bind-Value="@SiteId" Placeholder='Enter your site Id' FloatLabelType='@FloatLabelType.Auto'></SfTextBox>
-		<button @onclick="@LoadSiteInfo">Load</button>
+		<button class="btn btn-primary mt-2" @onclick="@LoadSiteInfo">Load</button>
 	}
 	else
 	{
@@ -61,13 +61,17 @@ else
 					<td>Last Aggregation</td>
 					<td>@CurrentSite.LastAggregationDate</td>
 				</tr>
-				<tr>
-					<td>Last Summary Email</td>
-					<td>@CurrentSite.LastSummaryDate</td>
-				</tr>
+			<tr>
+				<td>Last Summary Email</td>
+				<td>@CurrentSite.LastSummaryDate</td>
+			</tr>
+			<tr>
+				<td colspan="2">
+					<button type="button" class="btn btn-primary" @onclick="RefreshSiteInfo">Refresh</button>
+				</td>
+			</tr>
 			</tbody>
 		</table>
-		<button type="button" class="btn btn-primary" @onclick="RefreshSiteInfo">Refresh</button>
 	}
 }
 

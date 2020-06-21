@@ -12,8 +12,8 @@
 else
 {
 	<div class="row mb-2">
-		<SfDateRangePicker Min="@_siteStartDate" Max="@MaxEndDate" @bind-StartDate="@StartDate" @bind-EndDate="@EndDate"
-											 ValueChanged="LoadDateRange" Placeholder="Add a new range" />
+		<SfDateRangePicker Min="@CurrentSite.StartDate.ParseSolarDate()" Max="@CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
+		                   @bind-StartDate="@StartDate" @bind-EndDate="@EndDate" ValueChanged="LoadDateRange" Placeholder="Add a new range" />
 	</div>
 
 	@if (_chartData.IsNullOrEmpty())
@@ -30,7 +30,7 @@ else
 				<div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-12">
 					<PowerChart StartDate="@chart.StartDate" EndDate="@chart.EndDate" MaxWatts="@MaxWattValue" MinCost="@MinCostValue" MaxCost="@MaxCostValue"
 											PowerData="@chart.Data" />
-					<button type="button" class="btn btn-primary" @onclick="() => RemoveChart(chartId)">Remove</button>
+					<button class="btn btn-primary mt-4" @onclick="() => RemoveChart(chartId)">Remove</button>
 				</div>
 			}
 		</div>
@@ -39,8 +39,7 @@ else
 
 @code {
 	private bool _isLoaded;
-	private readonly DateTime _siteStartDate = new DateTime(2020, 5, 9);
-	private DateTime MaxEndDate => DateTime.Now.Date.AddDays(-1);                   // todo: make this site specific (local time)
+	private ISiteInfo CurrentSite => AppState.CurrentSite;
 	private IList<ChartData> _chartData;
 
 	private double MaxWattValue { get; set; }
@@ -55,17 +54,17 @@ else
 	{
 		if (firstRender)
 		{
-			if (AppState.CurrentSite == null)
+			if (CurrentSite == null)
 			{
 				throw new InvalidOperationException("Expected a current site to be loaded");
 			}
 
-			var chartCount = await ChartDataCache.GetCount(AppState.CurrentSite.SiteId);
+			var chartCount = await ChartDataCache.GetCount(CurrentSite.SiteId);
 
 			if (chartCount > 0)
 			{
-				_chartData = await ChartDataCache.GetData(AppState.CurrentSite.SiteId);
-				NotifyChartsModified();
+				_chartData = await ChartDataCache.GetData(CurrentSite.SiteId);
+				UpdateChartLimits();
 			}
 
 			_isLoaded = true;
@@ -78,7 +77,7 @@ else
 		var startDate = StartDate.Value.AddHours(10);
 		var endDate = EndDate.Value.AddHours(10);
 
-		var powerData = (await SolarViewService.CollectData(AppState.CurrentSite.SiteId, startDate, endDate)).AsReadOnlyList();
+		var powerData = (await SolarViewService.CollectData(CurrentSite.SiteId, startDate, endDate)).AsReadOnlyList();
 
 		var chartData = new ChartData
 		{
@@ -91,13 +90,13 @@ else
 		_chartData ??= new List<ChartData>();
 		_chartData.Add(chartData);
 
-		await ChartDataCache.Add(AppState.CurrentSite.SiteId, chartData);
+		await ChartDataCache.Add(CurrentSite.SiteId, chartData);
 
 		// indicate a new range can now be added
 		StartDate = null;
 		EndDate = null;
 
-		NotifyChartsModified();
+		UpdateChartLimits();
 	}
 
 	private async void RemoveChart(string chartId)
@@ -105,8 +104,8 @@ else
 		var chartData = _chartData.Single(item => item.Id == chartId);
 		_chartData.Remove(chartData);
 
-		await ChartDataCache.Remove(AppState.CurrentSite.SiteId, chartId);
-		NotifyChartsModified();
+		await ChartDataCache.Remove(CurrentSite.SiteId, chartId);
+		UpdateChartLimits();
 	}
 
 	private void RecalculateChartLimits()
@@ -133,7 +132,7 @@ else
 			// todo: write a helper method for these calcs that takes the sign into account
 			if (minCost > 0.0d)
 			{
-				MinCostValue = (1 + Math.Floor(minCost / 0.2d)) * 0.2d;     // intervals of 0.2 on chart
+				MinCostValue = Math.Floor(minCost / 0.2d) * 0.2d;     // intervals of 0.2 on chart
 			}
 			else
 			{
@@ -145,7 +144,7 @@ else
 		}
 	}
 
-	private void NotifyChartsModified()
+	private void UpdateChartLimits()
 	{
 		RecalculateChartLimits();
 		StateHasChanged();

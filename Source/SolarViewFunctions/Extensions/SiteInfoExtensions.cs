@@ -1,4 +1,5 @@
 using AllOverIt.Extensions;
+using SolarView.Common.Extensions;
 using SolarView.Common.Models;
 using System;
 

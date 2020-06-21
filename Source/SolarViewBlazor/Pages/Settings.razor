@@ -51,8 +51,8 @@
 
 	<tr>
 		<td colspan="2">
-			<button type="button" class="btn btn-primary" @onclick="ClearLocalStorage">Clear Cache</button>
-			<p><em>NOTE: </em>This will clear everything, including any current Site information.</p>
+			<button class="btn btn-primary" @onclick="ClearLocalStorage">Clear Cache</button>
+			<p class="mt-2"><em>NOTE: </em>This will clear everything, including any current Site information.</p>
 		</td>
 	</tr>
 	</tbody>
@@ -75,10 +75,10 @@
 
 	private async Task ClearLocalStorage()
 	{
-		AppState.CurrentSite = null;
-
 		await LocalStorage.ClearAsync();
 		CachedChartItemCount = 0;
+
+		AppState.CurrentSite = null;
 
 		StateHasChanged();
 	}

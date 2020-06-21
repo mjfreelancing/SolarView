@@ -4,6 +4,7 @@ using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.WebJobs;
 using SendGrid.Helpers.Mail;
+using SolarView.Common.Extensions;
 using SolarView.Common.Models;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
