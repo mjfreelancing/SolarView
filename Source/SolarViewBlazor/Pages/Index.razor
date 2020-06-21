@@ -136,7 +136,7 @@ else
 
 	private async Task RefreshSiteInfo()
 	{
-		await LoadSiteInfo();
+		await LoadSiteInfo(CurrentSite.SiteId);
 		StateHasChanged();
 	}
 

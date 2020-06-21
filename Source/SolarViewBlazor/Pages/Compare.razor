@@ -55,6 +55,11 @@ else
 	{
 		if (firstRender)
 		{
+			if (AppState.CurrentSite == null)
+			{
+				throw new InvalidOperationException("Expected a current site to be loaded");
+			}
+
 			var chartCount = await ChartDataCache.GetCount(AppState.CurrentSite.SiteId);
 
 			if (chartCount > 0)

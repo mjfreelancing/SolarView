@@ -13,36 +13,48 @@
 		</tr>
 	</thead>
 	<tbody>
-		@*row 1*@
-		<tr>
-			<td>
-				<p>Cached Charts</p>
-			</td>
-			<td>
-				@switch (CachedChartItemCount)
-				{
-					case 0:
-						<p>There are no charts</p>
-						break;
+	<tr>
+		<td>User Name</td>
+		<td>
+			<AuthorizeView>
+				<Authorized>
+					@context.User.Identity.Name
+				</Authorized>
+				<NotAuthorized>
+					<a href="AzureAD/Account/SignIn">Log in</a>
+				</NotAuthorized>
+			</AuthorizeView>
+		</td>
+	</tr>
 
-					case 1:
-						<p>@CachedChartItemCount chart</p>
-						break;
+	<tr>
+		<td>
+			<p>Cached Charts</p>
+		</td>
+		<td>
+			@switch (CachedChartItemCount)
+			{
+				case 0:
+					<p>There are no charts</p>
+					break;
 
-					default:
-						<p>@CachedChartItemCount charts</p>
-						break;
-				}
-			</td>
-		</tr>
+				case 1:
+					<p>@CachedChartItemCount chart</p>
+					break;
 
-		@*row 2*@
-		<tr>
-			<td colspan="2">
-				<button type="button" class="btn btn-primary" @onclick="ClearLocalStorage">Clear Cache</button>
-				<p><em>NOTE: </em>This will clear everything, including any current Site information.</p>
-			</td>
-		</tr>
+				default:
+					<p>@CachedChartItemCount charts</p>
+					break;
+			}
+		</td>
+	</tr>
+
+	<tr>
+		<td colspan="2">
+			<button type="button" class="btn btn-primary" @onclick="ClearLocalStorage">Clear Cache</button>
+			<p><em>NOTE: </em>This will clear everything, including any current Site information.</p>
+		</td>
+	</tr>
 	</tbody>
 </table>
 
