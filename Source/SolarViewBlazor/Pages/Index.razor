@@ -1,6 +1,9 @@
 ﻿@page "/"
+@using SolarView.Client.Common.Services.Site
 @inject ISolarViewService SolarViewService
+@inject ISiteService SiteService
 @inject IAppState AppState
+@inject ILocalStorageService LocalStorage
 
 <h1>SolarView</h1>
 
@@ -15,7 +18,7 @@
 }
 else
 {
-	@if (AppState.SiteId.IsNullOrEmpty())
+	@if (CurrentSite == null)
 	{
 		<SfTextBox @bind-Value="@SiteId" Placeholder='Enter your site Id' FloatLabelType='@FloatLabelType.Auto'></SfTextBox>
 		<button @onclick="@LoadSiteInfo">Load</button>
@@ -30,58 +33,83 @@ else
 				</tr>
 			</thead>
 			<tbody>
-			<tr>
-				<td>Site Id</td>
-				<td>@SiteId</td>
-			</tr>
-			<tr>
-				<td>Start Date</td>
-				<td>@AppState.StartDate</td>
-			</tr>
-			<tr>
-				<td>Contact</td>
-				<td>@AppState.ContactName</td>
-			</tr>
-			<tr>
-				<td>Email</td>
-				<td>@AppState.ContactEmail</td>
-			</tr>
-			<tr>
-				<td>TimeZone</td>
-				<td>@AppState.TimeZoneId</td>
-			</tr>
-			<tr>
-				<td>Last Refresh</td>
-				<td>@AppState.LastRefreshDateTime</td>
-			</tr>
-			<tr>
-				<td>Last Aggregation</td>
-				<td>@AppState.LastAggregationDate</td>
-			</tr>
-			<tr>
-				<td>Last Summary Email</td>
-				<td>@AppState.LastSummaryDate</td>
-			</tr>
+				<tr>
+					<td>Site Id</td>
+					<td>@CurrentSite.SiteId</td>
+				</tr>
+				<tr>
+					<td>Start Date</td>
+					<td>@CurrentSite.StartDate</td>
+				</tr>
+				<tr>
+					<td>Contact</td>
+					<td>@CurrentSite.ContactName</td>
+				</tr>
+				<tr>
+					<td>Email</td>
+					<td>@CurrentSite.ContactEmail</td>
+				</tr>
+				<tr>
+					<td>TimeZone</td>
+					<td>@CurrentSite.TimeZoneId</td>
+				</tr>
+				<tr>
+					<td>Last Refresh</td>
+					<td>@CurrentSite.LastRefreshDateTime</td>
+				</tr>
+				<tr>
+					<td>Last Aggregation</td>
+					<td>@CurrentSite.LastAggregationDate</td>
+				</tr>
+				<tr>
+					<td>Last Summary Email</td>
+					<td>@CurrentSite.LastSummaryDate</td>
+				</tr>
 			</tbody>
 		</table>
 		<button type="button" class="btn btn-primary" @onclick="RefreshSiteInfo">Refresh</button>
 	}
 }
 
+@*UnknownSiteDialogIsVisible*@
+<SfDialog @bind-Visible="@UnknownSiteDialogIsVisible" Width="330px" ShowCloseIcon="false" IsModal="true">
+	<DialogTemplates>
+		<Content>Details for the requested Site could not be found</Content>
+	</DialogTemplates>
+	<DialogButtons>
+		<DialogButton OnClick="() => UnknownSiteDialogIsVisible = false">
+			<DialogButtonModel Content="OK" IsPrimary="true"></DialogButtonModel>
+		</DialogButton>
+	</DialogButtons>
+</SfDialog>
+
 @*<SurveyPrompt Title="How is Blazor working for you?" />*@
 
 @code {
-	private bool _isLoaded;
+	// bindings
+	private bool UnknownSiteDialogIsVisible { get; set; }
 	private string SiteId { get; set; }
+
+	private bool _isLoaded;
+	private ISiteInfo CurrentSite => AppState.CurrentSite;
 
 	// Due to pre-rendering in Blazor Server you can't perform any JS interop until the OnAfterRender lifecycle method
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		if (firstRender)
 		{
-			// only loads if the SiteId has changed
-			await AppState.LoadLastKnownSite();
-			SiteId = AppState.SiteId;
+			// first time the page has been loaded this session
+			if (CurrentSite == null)
+			{
+				var siteInfo = await SiteService.GetCurrentSite();
+
+				// will be null if this is the very first visit
+				if (siteInfo != null)
+				{
+					// reloading in case site data has been refreshed since the site was last visited
+					await LoadSiteInfo(siteInfo.SiteId);
+				}
+			}
 
 			_isLoaded = true;
 			StateHasChanged();
@@ -90,12 +118,38 @@ else
 
 	private async Task LoadSiteInfo()
 	{
-		await AppState.SetSiteAsync(SiteId);
+		// todo: better to disable the button until text is entered
+		if (!SiteId.IsNullOrEmpty())
+		{
+			await LoadSiteInfo(SiteId);
+			SiteId = null;    // not needed anymore, may as well release it
+		}
+	}
+
+	private async Task LoadSiteInfo(string siteId)
+	{
+		var siteInfo = await SolarViewService.GetSiteDetails(siteId);
+
+		TryUpdateSite(siteInfo);
+		StateHasChanged();
 	}
 
 	private async Task RefreshSiteInfo()
 	{
 		await LoadSiteInfo();
 		StateHasChanged();
+	}
+
+	private void TryUpdateSite(ISiteInfo siteInfo)
+	{
+		if (siteInfo != null)
+		{
+			AppState.CurrentSite = siteInfo;   // will update local storage if required
+		}
+		else
+		{
+			// notify user the site does not exist
+			UnknownSiteDialogIsVisible = true;
+		}
 	}
 }

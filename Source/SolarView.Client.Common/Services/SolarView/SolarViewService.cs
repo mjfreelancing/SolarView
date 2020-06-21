@@ -8,6 +8,7 @@ using SolarView.Common.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace SolarView.Client.Common.Services.SolarView
@@ -33,7 +34,20 @@ namespace SolarView.Client.Common.Services.SolarView
           x_functions_key = _functionsKey
         });
 
-      return await url.GetJsonAsync<SiteInfo>();
+      try
+      {
+        return await url.GetJsonAsync<SiteInfo>();
+      }
+      catch (FlurlHttpException exception)
+      {
+        if (exception.Call.HttpStatus.HasValue && exception.Call.HttpStatus == HttpStatusCode.Forbidden)
+        {
+          // unknown site Id
+          return null;
+        }
+
+        throw;
+      }
     }
 
     public async Task<IEnumerable<PowerData>> CollectData(string siteId, DateTime startDate, DateTime endDate)

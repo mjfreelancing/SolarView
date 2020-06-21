@@ -55,12 +55,11 @@ else
 	{
 		if (firstRender)
 		{
-
-			var chartCount = await ChartDataCache.GetCount(AppState.SiteId);
+			var chartCount = await ChartDataCache.GetCount(AppState.CurrentSite.SiteId);
 
 			if (chartCount > 0)
 			{
-				_chartData = await ChartDataCache.GetData(AppState.SiteId);
+				_chartData = await ChartDataCache.GetData(AppState.CurrentSite.SiteId);
 				NotifyChartsModified();
 			}
 
@@ -74,7 +73,7 @@ else
 		var startDate = StartDate.Value.AddHours(10);
 		var endDate = EndDate.Value.AddHours(10);
 
-		var powerData = (await SolarViewService.CollectData(AppState.SiteId, startDate, endDate)).AsReadOnlyList();
+		var powerData = (await SolarViewService.CollectData(AppState.CurrentSite.SiteId, startDate, endDate)).AsReadOnlyList();
 
 		var chartData = new ChartData
 		{
@@ -87,7 +86,7 @@ else
 		_chartData ??= new List<ChartData>();
 		_chartData.Add(chartData);
 
-		await ChartDataCache.Add(AppState.SiteId, chartData);
+		await ChartDataCache.Add(AppState.CurrentSite.SiteId, chartData);
 
 		// indicate a new range can now be added
 		StartDate = null;
@@ -101,7 +100,7 @@ else
 		var chartData = _chartData.Single(item => item.Id == chartId);
 		_chartData.Remove(chartData);
 
-		await ChartDataCache.Remove(AppState.SiteId, chartId);
+		await ChartDataCache.Remove(AppState.CurrentSite.SiteId, chartId);
 		NotifyChartsModified();
 	}
 

@@ -13,25 +13,34 @@
 		</tr>
 	</thead>
 	<tbody>
+		@*row 1*@
 		<tr>
 			<td>
-				<button type="button" class="btn btn-primary" @onclick="ClearLocalStorage">Clear Cache</button>
+				<p>Cached Charts</p>
 			</td>
 			<td>
 				@switch (CachedChartItemCount)
 				{
 					case 0:
-						<p>The cache is empty.</p>
+						<p>There are no charts</p>
 						break;
 
 					case 1:
-						<p>@CachedChartItemCount item is in the cache.</p>
+						<p>@CachedChartItemCount chart</p>
 						break;
 
 					default:
-						<p>@CachedChartItemCount items are in the cache.</p>
+						<p>@CachedChartItemCount charts</p>
 						break;
 				}
+			</td>
+		</tr>
+
+		@*row 2*@
+		<tr>
+			<td colspan="2">
+				<button type="button" class="btn btn-primary" @onclick="ClearLocalStorage">Clear Cache</button>
+				<p><em>NOTE: </em>This will clear everything, including any current Site information.</p>
 			</td>
 		</tr>
 	</tbody>
@@ -44,13 +53,18 @@
 	{
 		if (firstRender)
 		{
-			CachedChartItemCount = await ChartDataCache.GetCount(AppState.SiteId);
-			StateHasChanged();
+			if (AppState.CurrentSite != null)
+			{
+				CachedChartItemCount = await ChartDataCache.GetCount(AppState.CurrentSite.SiteId);
+				StateHasChanged();
+			}
 		}
 	}
 
 	private async Task ClearLocalStorage()
 	{
+		AppState.CurrentSite = null;
+
 		await LocalStorage.ClearAsync();
 		CachedChartItemCount = 0;
 

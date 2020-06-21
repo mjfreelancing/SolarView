@@ -5,10 +5,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SolarView.Client.Common.KeyVault;
+using SolarView.Client.Common.Models;
+using SolarView.Client.Common.Services.Site;
 using SolarView.Client.Common.Services.SolarView;
+using SolarView.Common.Models;
 using SolarViewBlazor.Cache;
 using SolarViewBlazor.Configuration;
-using SolarViewBlazor.Models;
+using SolarViewBlazor.Services;
 using Syncfusion.Blazor;
 using Syncfusion.Licensing;
 
@@ -44,7 +47,10 @@ namespace SolarViewBlazor
       services.AddScoped<ISolarViewServiceConfiguration, SolarViewServiceConfiguration>();
       services.AddScoped<IKeyVaultCache, KeyVaultCache>();
       services.AddScoped<IChartDataCache, ChartDataCache>();
-      services.AddScoped<IAppState, AppState>();
+      services.AddScoped<ISiteService, SiteService>();
+
+      services.AddSingleton<ISiteInfo, SiteInfo>();
+      services.AddSingleton<IAppState, AppState>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
