@@ -7,7 +7,7 @@ namespace SolarViewFunctions.Repository.PowerMonthly
 {
   public interface IPowerMonthlyRepository : ISolarViewRepository
   {
-    IAsyncEnumerable<MeterPowerMonth> GetMeterData(string siteId, int year, int month, MeterType meterType);
-    Task UpsertMonthlyPowerAsync(IEnumerable<MeterPowerMonth> entities);
+    IAsyncEnumerable<MeterPowerMonthEntity> GetMeterData(string siteId, int year, int month, MeterType meterType);
+    Task UpsertMonthlyPowerAsync(IEnumerable<MeterPowerMonthEntity> entities);
   }
 }

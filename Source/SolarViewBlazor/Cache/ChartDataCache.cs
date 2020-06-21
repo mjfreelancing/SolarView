@@ -9,8 +9,8 @@ namespace SolarViewBlazor.Cache
 {
   public class ChartDataCache : IChartDataCache
   {
-    private const string IndexIdKey = "ChartIndexIds";
-    private const string ChartPrefixKey = "ChartId";
+    private const string IndexIdKey = "ChartIdx";
+    private const string ChartPrefixKey = "Chart";
     private static readonly IList<string> EmptyChartIds = new List<string>();
     private readonly ILocalStorageService _localStorage;
     private IList<string> _chartIds;    // don't use this explicitly - use GetChartIds()
@@ -20,18 +20,18 @@ namespace SolarViewBlazor.Cache
       _localStorage = localStorage.WhenNotNull(nameof(localStorage));
     }
 
-    public async Task<int> GetCount()
+    public async Task<int> GetCount(string siteId)
     {
-      var chartIds = await GetChartIds();
+      var chartIds = await GetChartIds(siteId);
 
       return chartIds.Count;
     }
 
-    public async Task<IList<ChartData>> GetData()
+    public async Task<IList<ChartData>> GetData(string siteId)
     {
-      var chartIds = await GetChartIds().ConfigureAwait(false);
+      var chartIds = await GetChartIds(siteId).ConfigureAwait(false);
 
-      var chartTasks = chartIds.Select(chartId => _localStorage.GetItemAsync<ChartData>(GetChartIndexKey(chartId)));
+      var chartTasks = chartIds.Select(chartId => _localStorage.GetItemAsync<ChartData>(GetChartIndexKey(siteId, chartId)));
 
       var results = await Task.WhenAll(chartTasks).ConfigureAwait(false);
 
@@ -39,41 +39,53 @@ namespace SolarViewBlazor.Cache
       return results.ToList();
     }
 
-    public async Task Add(ChartData chartData)
+    public async Task Add(string siteId, ChartData chartData)
     {
-      await _localStorage.SetItemAsync(GetChartIndexKey(chartData.Id), chartData);
+      var siteChartIndexKey = GetChartIndexKey(siteId, chartData.Id);
+      await _localStorage.SetItemAsync(siteChartIndexKey, chartData);
 
-      var chartIds = await GetChartIds().ConfigureAwait(false);
+      var chartIds = await GetChartIds(siteId).ConfigureAwait(false);
 
       chartIds.Add(chartData.Id);
-      await _localStorage.SetItemAsync(IndexIdKey, chartIds).ConfigureAwait(false);
+
+      var siteIdIndexKey = GetSiteIdIndexKey(siteId);
+      await _localStorage.SetItemAsync(siteIdIndexKey, chartIds).ConfigureAwait(false);
     }
 
-    public async Task Remove(string chartId)
+    public async Task Remove(string siteId, string chartId)
     {
-      await _localStorage.RemoveItemAsync(GetChartIndexKey(chartId));
+      var siteChartIndexKey = GetChartIndexKey(siteId, chartId);
+      await _localStorage.RemoveItemAsync(siteChartIndexKey);
 
-      var chartIds = await GetChartIds().ConfigureAwait(false);
-
+      var chartIds = await GetChartIds(siteId).ConfigureAwait(false);
       chartIds.Remove(chartId);
-      await _localStorage.SetItemAsync(IndexIdKey, chartIds).ConfigureAwait(false);
+
+      var siteIdIndexKey = GetSiteIdIndexKey(siteId);
+      await _localStorage.SetItemAsync(siteIdIndexKey, chartIds).ConfigureAwait(false);
     }
 
-    private async Task<IList<string>> GetChartIds()
+    private async Task<IList<string>> GetChartIds(string siteId)
     {
-      if (!await _localStorage.ContainKeyAsync(IndexIdKey).ConfigureAwait(false))
+      var siteIdIndexKey = GetSiteIdIndexKey(siteId);
+
+      if (!await _localStorage.ContainKeyAsync(siteIdIndexKey).ConfigureAwait(false))
       {
         return EmptyChartIds;
       }
 
-      _chartIds ??= await _localStorage.GetItemAsync<IList<string>>(IndexIdKey);
+      _chartIds ??= await _localStorage.GetItemAsync<IList<string>>(siteIdIndexKey);
 
       return _chartIds;
     }
 
-    private static string GetChartIndexKey(string chartId)
+    private static string GetChartIndexKey(string siteId, string chartId)
     {
-      return $"{ChartPrefixKey}:{chartId}";
+      return $"{ChartPrefixKey}:{siteId}:{chartId}";
+    }
+
+    private static string GetSiteIdIndexKey(string siteId)
+    {
+      return $"{IndexIdKey}:{siteId}";
     }
   }
 }

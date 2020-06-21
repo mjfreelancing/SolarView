@@ -8,6 +8,7 @@ using SolarView.Client.Common.KeyVault;
 using SolarView.Client.Common.Services.SolarView;
 using SolarViewBlazor.Cache;
 using SolarViewBlazor.Configuration;
+using SolarViewBlazor.Models;
 using Syncfusion.Blazor;
 using Syncfusion.Licensing;
 
@@ -43,6 +44,7 @@ namespace SolarViewBlazor
       services.AddScoped<ISolarViewServiceConfiguration, SolarViewServiceConfiguration>();
       services.AddScoped<IKeyVaultCache, KeyVaultCache>();
       services.AddScoped<IChartDataCache, ChartDataCache>();
+      services.AddScoped<IAppState, AppState>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -1,28 +1,41 @@
 ﻿@page "/settings"
-@using SolarViewBlazor.Models
-@using SolarViewBlazor.Cache
 @inject ILocalStorageService LocalStorage
 @inject IChartDataCache ChartDataCache
+@inject IAppState AppState
 
 <h3>Settings</h3>
 
-<div class="row">
-	<div class="col-4">
-		<div class="btn btn-primary">
-			<button @onclick="ClearLocalStorage">Clear Cache</button>
-		</div>
-	</div>
-	<div class="col-8">
-		@if (CachedChartItemCount == 1)
-		{
-			<p>@CachedChartItemCount item is in the cache.</p>
-		}
-		else
-		{
-			<p>@CachedChartItemCount items are in the cache.</p>
-		}
-	</div>
-</div>
+<table class="table">
+	<thead>
+		<tr>
+			<th class="w-25" />
+			<th class="w-75" />
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<button type="button" class="btn btn-primary" @onclick="ClearLocalStorage">Clear Cache</button>
+			</td>
+			<td>
+				@switch (CachedChartItemCount)
+				{
+					case 0:
+						<p>The cache is empty.</p>
+						break;
+
+					case 1:
+						<p>@CachedChartItemCount item is in the cache.</p>
+						break;
+
+					default:
+						<p>@CachedChartItemCount items are in the cache.</p>
+						break;
+				}
+			</td>
+		</tr>
+	</tbody>
+</table>
 
 @code {
 	private int CachedChartItemCount { get; set; }
@@ -31,7 +44,7 @@
 	{
 		if (firstRender)
 		{
-			CachedChartItemCount = await ChartDataCache.GetCount();
+			CachedChartItemCount = await ChartDataCache.GetCount(AppState.SiteId);
 			StateHasChanged();
 		}
 	}

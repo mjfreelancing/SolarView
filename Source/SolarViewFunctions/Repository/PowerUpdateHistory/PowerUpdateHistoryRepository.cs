@@ -8,16 +8,16 @@ using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Repository.PowerUpdateHistory
 {
-  public class PowerUpdateHistoryRepository : CloudTableRepository<PowerUpdate>, IPowerUpdateHistoryRepository
+  public class PowerUpdateHistoryRepository : CloudTableRepository<PowerUpdateEntity>, IPowerUpdateHistoryRepository
   {
     public PowerUpdateHistoryRepository(CloudTable table)
       : base(table)
     {
     }
 
-    public async Task<IEnumerable<PowerUpdate>> GetPowerUpdatesAsyncEnumerable(string siteId, DateTime startDate, DateTime endDate)
+    public async Task<IEnumerable<PowerUpdateEntity>> GetPowerUpdatesAsyncEnumerable(string siteId, DateTime startDate, DateTime endDate)
     {
-      var tasks = new List<Task<IEnumerable<PowerUpdate>>>();
+      var tasks = new List<Task<IEnumerable<PowerUpdateEntity>>>();
 
       for (var date = startDate; date <= endDate; date = date.AddDays(1))
       {
@@ -32,7 +32,7 @@ namespace SolarViewFunctions.Repository.PowerUpdateHistory
       return updates.SelectMany(item => item);
     }
 
-    public Task<TableResult> UpsertPowerUpdateAsync(PowerUpdate entity)
+    public Task<TableResult> UpsertPowerUpdateAsync(PowerUpdateEntity entity)
     {
       return InsertOrReplaceAsync(entity);
     }

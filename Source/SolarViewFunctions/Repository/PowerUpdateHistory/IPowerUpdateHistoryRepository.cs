@@ -8,7 +8,7 @@ namespace SolarViewFunctions.Repository.PowerUpdateHistory
 {
   public interface IPowerUpdateHistoryRepository : ISolarViewRepository
   {
-    Task<IEnumerable<PowerUpdate>> GetPowerUpdatesAsyncEnumerable(string siteId, DateTime startDate, DateTime endDate);
-    Task<TableResult> UpsertPowerUpdateAsync(PowerUpdate entity);
+    Task<IEnumerable<PowerUpdateEntity>> GetPowerUpdatesAsyncEnumerable(string siteId, DateTime startDate, DateTime endDate);
+    Task<TableResult> UpsertPowerUpdateAsync(PowerUpdateEntity entity);
   }
 }

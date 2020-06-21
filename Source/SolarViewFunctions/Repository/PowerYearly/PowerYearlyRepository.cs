@@ -6,21 +6,21 @@ using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Repository.PowerYearly
 {
-  public class PowerYearlyRepository : CloudTableRepository<MeterPowerYear>, IPowerYearlyRepository
+  public class PowerYearlyRepository : CloudTableRepository<MeterPowerYearEntity>, IPowerYearlyRepository
   {
     public PowerYearlyRepository(CloudTable table)
       : base(table)
     {
     }
 
-    public IAsyncEnumerable<MeterPowerYear> GetMeterData(string siteId, int year, MeterType meterType)
+    public IAsyncEnumerable<MeterPowerYearEntity> GetMeterData(string siteId, int year, MeterType meterType)
     {
       var partitionKey = $"{siteId}_{year}_{meterType}";
 
       return GetAllAsyncEnumerable(partitionKey);
     }
 
-    public Task UpsertYearlyPowerAsync(IEnumerable<MeterPowerYear> entities)
+    public Task UpsertYearlyPowerAsync(IEnumerable<MeterPowerYearEntity> entities)
     {
       return BatchInsertOrReplaceAsync(entities);
     }

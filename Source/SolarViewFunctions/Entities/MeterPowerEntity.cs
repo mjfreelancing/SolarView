@@ -4,7 +4,7 @@ using System;
 
 namespace SolarViewFunctions.Entities
 {
-  public class MeterPower : TableEntity
+  public class MeterPowerEntity : TableEntity
   {
     public string Site { get; set; }
     public string Date { get; set; }
@@ -13,11 +13,11 @@ namespace SolarViewFunctions.Entities
     public string MeterType { get; set; }
     public double Watts { get; set; }
 
-    public MeterPower()
+    public MeterPowerEntity()
     {
     }
 
-    public MeterPower(string site, DateTime timestamp, MeterType meterType, double watts)
+    public MeterPowerEntity(string site, DateTime timestamp, MeterType meterType, double watts)
     {
       Site = site;
       Date = $"{timestamp:yyyyMMdd}";

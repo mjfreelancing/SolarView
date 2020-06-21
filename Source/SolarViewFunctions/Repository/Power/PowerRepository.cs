@@ -7,21 +7,21 @@ using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Repository.Power
 {
-  public class PowerRepository : CloudTableRepository<MeterPower>, IPowerRepository
+  public class PowerRepository : CloudTableRepository<MeterPowerEntity>, IPowerRepository
   {
     public PowerRepository(CloudTable table)
       : base(table)
     {
     }
 
-    public IAsyncEnumerable<MeterPower> GetMeterPowerAsyncEnumerable(string siteId, DateTime date, MeterType meterType)
+    public IAsyncEnumerable<MeterPowerEntity> GetMeterPowerAsyncEnumerable(string siteId, DateTime date, MeterType meterType)
     {
       var partitionKey = $"{siteId}_{date:yyyyMMdd}_{meterType}";
 
       return GetAllAsyncEnumerable(partitionKey);
     }
 
-    public Task UpsertPowerAsync(IEnumerable<MeterPower> entities)
+    public Task UpsertPowerAsync(IEnumerable<MeterPowerEntity> entities)
     {
       return BatchInsertOrReplaceAsync(entities);
     }

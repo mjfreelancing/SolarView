@@ -6,9 +6,9 @@ namespace SolarViewBlazor.Cache
 {
   public interface IChartDataCache
   {
-    Task<int> GetCount();
-    Task<IList<ChartData>> GetData();
-    Task Add(ChartData chartData);
-    Task Remove(string chartId);
+    Task<int> GetCount(string siteId);
+    Task<IList<ChartData>> GetData(string siteId);
+    Task Add(string siteId, ChartData chartData);
+    Task Remove(string siteId, string chartId);
   }
 }

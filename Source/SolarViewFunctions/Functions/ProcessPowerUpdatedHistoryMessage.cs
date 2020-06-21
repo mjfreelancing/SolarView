@@ -47,7 +47,7 @@ namespace SolarViewFunctions.Functions
         Tracker.TrackInfo($"Updating {nameof(Constants.Table.PowerUpdateHistory)} table for SiteId {request.SiteId} with status " +
                           $"{request.Status} for date range {request.StartDateTime} to {request.EndDateTime}");
 
-        var entity = _mapper.Map<PowerUpdate>(request);
+        var entity = _mapper.Map<PowerUpdateEntity>(request);
 
         var historyRepository = _repositoryFactory.Create<IPowerUpdateHistoryRepository>(historyTable);
         await historyRepository.UpsertPowerUpdateAsync(entity).ConfigureAwait(false);

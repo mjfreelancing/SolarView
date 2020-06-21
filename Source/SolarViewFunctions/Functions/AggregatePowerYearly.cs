@@ -107,7 +107,7 @@ namespace SolarViewFunctions.Functions
       var aggregatedEntities = timeWatts.Select(kvp =>
         {
           var (time, watts) = kvp;
-          return new MeterPowerYear(siteId, startDate, endDate, time, meterType, watts);
+          return new MeterPowerYearEntity(siteId, startDate, endDate, time, meterType, watts);
         });
 
       await powerYearlyRepository.UpsertYearlyPowerAsync(aggregatedEntities).ConfigureAwait(false);

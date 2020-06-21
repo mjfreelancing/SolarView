@@ -31,7 +31,7 @@ namespace SolarViewFunctions.Mapping
 
       CreateMap<TriggeredPowerQuery, PowerQuery>();
 
-      CreateMap<PowerUpdatedMessage, PowerUpdate>()
+      CreateMap<PowerUpdatedMessage, PowerUpdateEntity>()
         .ForMember(dest => dest.Status, opt => opt.MapFrom(src => $"{src.Status}"))
         .ForMember(dest => dest.PartitionKey, opt => opt.Ignore())
         .ForMember(dest => dest.RowKey, opt => opt.Ignore())

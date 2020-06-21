@@ -1,11 +1,101 @@
 ﻿@page "/"
+@inject ISolarViewService SolarViewService
+@inject IAppState AppState
 
 <h1>SolarView</h1>
 
-<p>SolarView provides the following features:</p>
+@*<p>SolarView provides the following features:</p>
 
-<ul>Visualize the performance of your solar system as an average 24-hour period</ul>
-<ul>Compare the performance against multiple date ranges</ul>
+	<ul>Visualize the performance of your solar system as an average 24-hour period</ul>
+	<ul>Compare the performance against multiple date ranges</ul>*@
 
+@if (!_isLoaded)
+{
+	<em>Loading...</em>
+}
+else
+{
+	@if (AppState.SiteId.IsNullOrEmpty())
+	{
+		<SfTextBox @bind-Value="@SiteId" Placeholder='Enter your site Id' FloatLabelType='@FloatLabelType.Auto'></SfTextBox>
+		<button @onclick="@LoadSiteInfo">Load</button>
+	}
+	else
+	{
+		<table class="table">
+			<thead>
+				<tr>
+					<th class="w-25" />
+					<th class="w-75" />
+				</tr>
+			</thead>
+			<tbody>
+			<tr>
+				<td>Site Id</td>
+				<td>@SiteId</td>
+			</tr>
+			<tr>
+				<td>Start Date</td>
+				<td>@AppState.StartDate</td>
+			</tr>
+			<tr>
+				<td>Contact</td>
+				<td>@AppState.ContactName</td>
+			</tr>
+			<tr>
+				<td>Email</td>
+				<td>@AppState.ContactEmail</td>
+			</tr>
+			<tr>
+				<td>TimeZone</td>
+				<td>@AppState.TimeZoneId</td>
+			</tr>
+			<tr>
+				<td>Last Refresh</td>
+				<td>@AppState.LastRefreshDateTime</td>
+			</tr>
+			<tr>
+				<td>Last Aggregation</td>
+				<td>@AppState.LastAggregationDate</td>
+			</tr>
+			<tr>
+				<td>Last Summary Email</td>
+				<td>@AppState.LastSummaryDate</td>
+			</tr>
+			</tbody>
+		</table>
+		<button type="button" class="btn btn-primary" @onclick="RefreshSiteInfo">Refresh</button>
+	}
+}
 
 @*<SurveyPrompt Title="How is Blazor working for you?" />*@
+
+@code {
+	private bool _isLoaded;
+	private string SiteId { get; set; }
+
+	// Due to pre-rendering in Blazor Server you can't perform any JS interop until the OnAfterRender lifecycle method
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			// only loads if the SiteId has changed
+			await AppState.LoadLastKnownSite();
+			SiteId = AppState.SiteId;
+
+			_isLoaded = true;
+			StateHasChanged();
+		}
+	}
+
+	private async Task LoadSiteInfo()
+	{
+		await AppState.SetSiteAsync(SiteId);
+	}
+
+	private async Task RefreshSiteInfo()
+	{
+		await LoadSiteInfo();
+		StateHasChanged();
+	}
+}

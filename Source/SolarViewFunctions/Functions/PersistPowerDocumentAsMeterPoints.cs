@@ -37,7 +37,7 @@ namespace SolarViewFunctions.Functions
       var entities = powerDocument.Meters
         .SelectMany(
           meter => meter.Points,
-          (meter, point) => new MeterPower(powerDocument.SiteId, point.Timestamp, meter.MeterType, point.Watts))
+          (meter, point) => new MeterPowerEntity(powerDocument.SiteId, point.Timestamp, meter.MeterType, point.Watts))
         .AsReadOnlyList();
 
       Tracker.TrackInfo($"Persisting {entities.Count} meter points from document {powerDocument.Id}");

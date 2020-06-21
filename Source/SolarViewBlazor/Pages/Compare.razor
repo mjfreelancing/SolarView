@@ -1,75 +1,71 @@
 ﻿@page "/compare"
-@using SolarView.Client.Common.Services.SolarView
-@using SolarViewBlazor.Cache
-@using SolarViewBlazor.Models
 @inject ISolarViewService SolarViewService
 @inject IChartDataCache ChartDataCache
+@inject IAppState AppState
 
 <h1>Average Power Data</h1>
 
-<div class="row mb-2">
-	<SfDateRangePicker Min="@_siteStartDate" Max="@MaxEndDate" @bind-StartDate="@StartDate" @bind-EndDate="@EndDate"
-	                   ValueChanged="LoadDateRange" Placeholder="Add a new range"/>
-</div>
-
-@if (_chartData.IsNullOrEmpty())
+@if (!_isLoaded)
 {
-	<p><em>Select a date range...</em></p>
+	<em>Loading...</em>
 }
 else
 {
-	<div class="row">
-		@foreach (var chart in _chartData)
-		{
-			var chartId = chart.Id;
-
-			<div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 col-12">
-				<PowerChart StartDate="@chart.StartDate" EndDate="@chart.EndDate" MaxValue="@MaxChartValue" PowerData="@chart.Data" />
-				<button @onclick="() => RemoveChart(chartId)">Remove</button>
-			</div>
-		}
+	<div class="row mb-2">
+		<SfDateRangePicker Min="@_siteStartDate" Max="@MaxEndDate" @bind-StartDate="@StartDate" @bind-EndDate="@EndDate"
+											 ValueChanged="LoadDateRange" Placeholder="Add a new range" />
 	</div>
+
+	@if (_chartData.IsNullOrEmpty())
+	{
+		<p><em>Select a date range...</em></p>
+	}
+	else
+	{
+		<div class="row">
+			@foreach (var chart in _chartData)
+			{
+				var chartId = chart.Id;
+
+				<div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-12">
+					<PowerChart StartDate="@chart.StartDate" EndDate="@chart.EndDate" MaxWatts="@MaxWattValue" MinCost="@MinCostValue" MaxCost="@MaxCostValue"
+											PowerData="@chart.Data" />
+					<button type="button" class="btn btn-primary" @onclick="() => RemoveChart(chartId)">Remove</button>
+				</div>
+			}
+		</div>
+	}
 }
 
 @code {
+	private bool _isLoaded;
 	private readonly DateTime _siteStartDate = new DateTime(2020, 5, 9);
 	private DateTime MaxEndDate => DateTime.Now.Date.AddDays(-1);                   // todo: make this site specific (local time)
 	private IList<ChartData> _chartData;
 
+	private double MaxWattValue { get; set; }
+	private double MinCostValue { get; set; }
+	private double MaxCostValue { get; set; }
+
 	private DateTime? StartDate { get; set; }
 	private DateTime? EndDate { get; set; }
-
-	// todo: optimise this so it is not evaluated all the time
-	private double MaxChartValue
-	{
-		get
-		{
-			if (_chartData.IsNullOrEmpty())
-			{
-				return 0;
-			}
-
-			var maxValue = _chartData
-				.SelectMany(item => item.Data)
-				.SelectMany(item => new[] { item.Consumption, item.Purchased, item.SelfConsumption, item.FeedIn, item.Production })
-				.Max();
-
-			return (1 + Math.Floor(maxValue / 500d)) * 500d;
-		}
-	}
 
 	// Due to pre-rendering in Blazor Server you can't perform any JS interop until the OnAfterRender lifecycle method
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		if (firstRender)
 		{
-			var chartCount = await ChartDataCache.GetCount();
+
+			var chartCount = await ChartDataCache.GetCount(AppState.SiteId);
 
 			if (chartCount > 0)
 			{
-				_chartData = await ChartDataCache.GetData();
-				StateHasChanged();
+				_chartData = await ChartDataCache.GetData(AppState.SiteId);
+				NotifyChartsModified();
 			}
+
+			_isLoaded = true;
+			StateHasChanged();
 		}
 	}
 
@@ -78,7 +74,7 @@ else
 		var startDate = StartDate.Value.AddHours(10);
 		var endDate = EndDate.Value.AddHours(10);
 
-		var powerData = (await SolarViewService.CollectData("1514817", startDate, endDate)).AsReadOnlyList();
+		var powerData = (await SolarViewService.CollectData(AppState.SiteId, startDate, endDate)).AsReadOnlyList();
 
 		var chartData = new ChartData
 		{
@@ -91,13 +87,13 @@ else
 		_chartData ??= new List<ChartData>();
 		_chartData.Add(chartData);
 
-		await ChartDataCache.Add(chartData);
+		await ChartDataCache.Add(AppState.SiteId, chartData);
 
 		// indicate a new range can now be added
 		StartDate = null;
 		EndDate = null;
 
-		StateHasChanged();
+		NotifyChartsModified();
 	}
 
 	private async void RemoveChart(string chartId)
@@ -105,7 +101,49 @@ else
 		var chartData = _chartData.Single(item => item.Id == chartId);
 		_chartData.Remove(chartData);
 
-		await ChartDataCache.Remove(chartId);
+		await ChartDataCache.Remove(AppState.SiteId, chartId);
+		NotifyChartsModified();
+	}
+
+	private void RecalculateChartLimits()
+	{
+		if (_chartData.IsNullOrEmpty())
+		{
+			MaxWattValue = 0;
+			MinCostValue = 0;
+			MaxCostValue = 0;
+		}
+		else
+		{
+			var flattenedData = _chartData.SelectMany(item => item.Data).AsReadOnlyList();
+
+			var maxWatts = flattenedData
+				.SelectMany(item => new[] { item.Consumption, item.Purchased, item.SelfConsumption, item.FeedIn, item.Production })
+				.Max();
+
+			var minCost = flattenedData.Min(item => item.AdjustedCost);
+			var maxCost = flattenedData.Max(item => item.NoSolarCost);
+
+			MaxWattValue = (1 + Math.Floor(maxWatts / 500d)) * 500d;    // intervals of 500 on chart
+
+			// todo: write a helper method for these calcs that takes the sign into account
+			if (minCost > 0.0d)
+			{
+				MinCostValue = (1 + Math.Floor(minCost / 0.2d)) * 0.2d;     // intervals of 0.2 on chart
+			}
+			else
+			{
+				MinCostValue = -(1 + Math.Floor(-minCost / 0.2d)) * 0.2d;     // intervals of 0.2 on chart
+			}
+
+
+			MaxCostValue = (1 + Math.Floor(maxCost / 0.2d)) * 0.2d;     // intervals of 0.2 on chart
+		}
+	}
+
+	private void NotifyChartsModified()
+	{
+		RecalculateChartLimits();
 		StateHasChanged();
 	}
 }

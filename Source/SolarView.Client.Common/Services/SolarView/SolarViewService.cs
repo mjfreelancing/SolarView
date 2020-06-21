@@ -23,6 +23,19 @@ namespace SolarView.Client.Common.Services.SolarView
       _functionsUrl = serviceConfiguration.FunctionsUrl;
     }
 
+    public async Task<ISiteInfo> GetSiteDetails(string siteId)
+    {
+      var url = new Url(_functionsUrl)
+        .AppendPathSegments("site", siteId)
+        .WithHeaders(new
+        {
+          content_type = "application/json",
+          x_functions_key = _functionsKey
+        });
+
+      return await url.GetJsonAsync<SiteInfo>();
+    }
+
     public async Task<IEnumerable<PowerData>> CollectData(string siteId, DateTime startDate, DateTime endDate)
     {
       var requests =

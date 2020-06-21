@@ -5,7 +5,7 @@ using System;
 
 namespace SolarViewFunctions.Entities
 {
-  public class MeterPowerYear : TableEntity
+  public class MeterPowerYearEntity : TableEntity
   {
     public string Site { get; set; }
     public int Year { get; set; }
@@ -16,12 +16,12 @@ namespace SolarViewFunctions.Entities
     public string MeterType { get; set; }
     public double Watts { get; set; }
 
-    public MeterPowerYear()
+    public MeterPowerYearEntity()
     {
     }
 
     // startDate/endDate indicates when the data has been aggregated until (for partial month)
-    public MeterPowerYear(string site, DateTime startDate, DateTime endDate, string time, MeterType meterType, double watts)
+    public MeterPowerYearEntity(string site, DateTime startDate, DateTime endDate, string time, MeterType meterType, double watts)
     {
       Site = site;
       Year = startDate.Year;
