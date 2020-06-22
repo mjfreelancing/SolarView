@@ -9,10 +9,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SolarView.Client.Common.KeyVault;
-using SolarView.Client.Common.Models;
 using SolarView.Client.Common.Services.Site;
 using SolarView.Client.Common.Services.SolarView;
-using SolarView.Common.Models;
 using SolarViewBlazor.Cache;
 using SolarViewBlazor.Configuration;
 using SolarViewBlazor.Services;
@@ -57,16 +55,15 @@ namespace SolarViewBlazor
       // https://docs.microsoft.com/en-us/aspnet/core/blazor/state-management
       services.AddBlazoredLocalStorage();
 
+      //services.AddApplicationInsightsTelemetry(Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
+
       services.AddScoped<ISolarViewService, SolarViewService>();
       services.AddScoped<IKeyVaultConfiguration, KeyVaultConfiguration>();
       services.AddScoped<ISolarViewServiceConfiguration, SolarViewServiceConfiguration>();
       services.AddScoped<IKeyVaultCache, KeyVaultCache>();
       services.AddScoped<IChartDataCache, ChartDataCache>();
       services.AddScoped<ISiteService, SiteService>();
-
-      services.AddSingleton<ISiteInfo, SiteInfo>();
-      services.AddSingleton<IAppState, AppState>();
-      services.AddApplicationInsightsTelemetry(Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
+      services.AddScoped<IAppState, AppState>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

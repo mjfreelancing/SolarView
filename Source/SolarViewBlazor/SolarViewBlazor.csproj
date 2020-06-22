@@ -2,26 +2,22 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <UserSecretsId>365d4f07-0d16-4a66-9ff6-ce4d206609e0</UserSecretsId>
-    <ApplicationInsightsResourceId>/subscriptions/ea4b3be0-8b4d-43ca-a267-8f676e2c95bb/resourceGroups/solarviewblazorrg/providers/microsoft.insights/components/SolarViewBlazor</ApplicationInsightsResourceId>
+    <UserSecretsId>aspnet-SolarViewBlazor-03EE0259-D2CB-408D-8A56-3A9A894A3AFB</UserSecretsId>
+    <WebProject_DirectoryAccessLevelKey>0</WebProject_DirectoryAccessLevelKey>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="AllOverIt" Version="1.0.0" />
-    <PackageReference Include="Azure.Identity" Version="1.1.1" />
-    <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.0.3" />
     <PackageReference Include="Blazored.LocalStorage" Version="2.1.6" />
-    <PackageReference Include="Flurl.Http" Version="2.4.2" />
-    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.14.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.AzureAD.UI" Version="3.1.5" />
     <PackageReference Include="Microsoft.AspNetCore.AzureKeyVault.HostingStartup" Version="2.0.4" />
-    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.5.0" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.15.0" />
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.4.0" />
     <PackageReference Include="Syncfusion.Blazor" Version="18.1.0.58" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SolarView.Client.Common\SolarView.Client.Common.csproj" />
+    <ProjectReference Include="..\SolarView.Common\SolarView.Common.csproj" />
   </ItemGroup>
 
 </Project>
