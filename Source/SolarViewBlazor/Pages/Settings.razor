@@ -13,48 +13,56 @@
 		</tr>
 	</thead>
 	<tbody>
-	<tr>
-		<td>User Name</td>
-		<td>
-			<AuthorizeView>
-				<Authorized>
-					@context.User.Identity.Name
-				</Authorized>
-				<NotAuthorized>
-					<a href="AzureAD/Account/SignIn">Log in</a>
-				</NotAuthorized>
-			</AuthorizeView>
-		</td>
-	</tr>
+		<tr>
+			<td>User Name</td>
+			<td>
+				<AuthorizeView>
+					<Authorized>
+						@context.User.Identity.Name
+					</Authorized>
+					<NotAuthorized>
+						<a href="AzureAD/Account/SignIn">Log in</a>
+					</NotAuthorized>
+				</AuthorizeView>
+			</td>
+		</tr>
 
-	<tr>
-		<td>
-			<p>Cached Charts</p>
-		</td>
-		<td>
+		<tr>
+			<td>Site Id</td>
+			@if (AppState.CurrentSite == null)
+			{
+				<td><a href="">You need to provide a Site Id</a></td>
+			}
+			else
+			{
+				<td>@AppState.CurrentSite.SiteId</td>
+			}
+		</tr>
+
+		<tr>
+			<td>Cached Charts</td>
 			@switch (CachedChartItemCount)
 			{
 				case 0:
-					<p>There are no charts</p>
+					<td>There are no charts</td>
 					break;
 
 				case 1:
-					<p>@CachedChartItemCount chart</p>
+					<td>@CachedChartItemCount chart</td>
 					break;
 
 				default:
-					<p>@CachedChartItemCount charts</p>
+					<td>@CachedChartItemCount charts</td>
 					break;
 			}
-		</td>
-	</tr>
+		</tr>
 
-	<tr>
-		<td colspan="2">
-			<button class="btn btn-primary" @onclick="ClearLocalStorage">Clear Cache</button>
-			<p class="mt-2"><em>NOTE: </em>This will clear everything, including any current Site information.</p>
-		</td>
-	</tr>
+		<tr>
+			<td colspan="2">
+				<button class="btn btn-primary" @onclick="ClearLocalStorage">Clear Cache</button>
+				<p class="mt-2"><em>NOTE: </em>This will clear everything, including any current Site information.</p>
+			</td>
+		</tr>
 	</tbody>
 </table>
 
