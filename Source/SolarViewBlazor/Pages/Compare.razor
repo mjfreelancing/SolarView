@@ -7,150 +7,149 @@
 
 @if (!_isLoaded)
 {
-	<em>Loading...</em>
+  <em>Loading...</em>
 }
 else
 {
-	@if (AppState.CurrentSite == null)
-	{
-		<p class="mt-4 mb-4">No data to display.</p>
-		<a href="">You need to provide a Site Id</a>
-	}
-	else
-	{
-		<div class="row mb-2">
-			<SfDateRangePicker Min="@AppState.CurrentSite.StartDate.ParseSolarDate()"
-												 Max="@AppState.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
-												 @bind-StartDate="@StartDate" @bind-EndDate="@EndDate" ValueChanged="LoadDateRange" Placeholder="Add a new range" />
-		</div>
+  @if (AppState.CurrentSite == null)
+  {
+    <p class="mt-4 mb-4">No data to display.</p>
+    <a href="">You need to provide a Site Id</a>
+  }
+  else
+  {
+    <div class="row mb-2">
+      <SfDateRangePicker Min="@AppState.CurrentSite.StartDate.ParseSolarDate()"
+                         Max="@AppState.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
+                         @bind-StartDate="@StartDate" @bind-EndDate="@EndDate" ValueChanged="LoadDateRange" Placeholder="Add a new range" />
+    </div>
 
-		@if (!_chartData.IsNullOrEmpty())
-		{
-			<div class="row">
-				@foreach (var chart in _chartData)
-				{
-					var chartId = chart.Id;
+    @if (!_chartData.IsNullOrEmpty())
+    {
+      <div class="row">
+        @foreach (var chart in _chartData)
+        {
+          var chartId = chart.Id;
 
-					<div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-12">
-						<PowerChart StartDate="@chart.StartDate" EndDate="@chart.EndDate" MaxWatts="@MaxWattValue" MinCost="@MinCostValue" MaxCost="@MaxCostValue"
-												PowerData="@chart.Data" />
-						<button class="btn btn-primary mt-4" @onclick="() => RemoveChart(chartId)">Remove</button>
-					</div>
-				}
-			</div>
-		}
-	}
+          <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-12">
+            <PowerChart StartDate="@chart.StartDate" EndDate="@chart.EndDate" MaxWatts="@MaxWattValue" MinCost="@MinCostValue" MaxCost="@MaxCostValue"
+                        PowerData="@chart.Data" />
+            <button class="btn btn-primary mt-4" @onclick="() => RemoveChart(chartId)">Remove</button>
+          </div>
+        }
+      </div>
+    }
+  }
 
 }
 
 @code {
-	private bool _isLoaded;
-	private IList<ChartData> _chartData;
+  private bool _isLoaded;
+  private IList<ChartData> _chartData;
 
-	private double MaxWattValue { get; set; }
-	private double MinCostValue { get; set; }
-	private double MaxCostValue { get; set; }
+  private double MaxWattValue { get; set; }
+  private double MinCostValue { get; set; }
+  private double MaxCostValue { get; set; }
 
-	private DateTime? StartDate { get; set; }
-	private DateTime? EndDate { get; set; }
+  private DateTime? StartDate { get; set; }
+  private DateTime? EndDate { get; set; }
 
-	// Due to pre-rendering in Blazor Server you can't perform any JS interop until the OnAfterRender lifecycle method
-	protected override async Task OnAfterRenderAsync(bool firstRender)
-	{
-		if (firstRender)
-		{
-			if (AppState.CurrentSite != null)
-			{
-				var chartCount = await ChartDataCache.GetCount(AppState.CurrentSite.SiteId);
+  // Due to pre-rendering in Blazor Server you can't perform any JS interop until the OnAfterRender lifecycle method
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (firstRender)
+    {
+      if (AppState.CurrentSite != null)
+      {
+        var chartCount = await ChartDataCache.GetCount(AppState.CurrentSite.SiteId);
 
-				if (chartCount > 0)
-				{
-					_chartData = await ChartDataCache.GetData(AppState.CurrentSite.SiteId);
-					UpdateChartLimits();
-				}
-			}
+        if (chartCount > 0)
+        {
+          _chartData = await ChartDataCache.GetData(AppState.CurrentSite.SiteId);
+          UpdateChartLimits();
+        }
+      }
 
-			_isLoaded = true;
-		}
+      _isLoaded = true;
+      StateHasChanged();
+    }
+  }
 
-		StateHasChanged();
-	}
+  private async Task LoadDateRange()
+  {
+    var startDate = StartDate.Value.AddHours(10);
+    var endDate = EndDate.Value.AddHours(10);
 
-	private async Task LoadDateRange()
-	{
-		var startDate = StartDate.Value.AddHours(10);
-		var endDate = EndDate.Value.AddHours(10);
+    var powerData = (await SolarViewService.CollectData(AppState.CurrentSite.SiteId, startDate, endDate)).AsReadOnlyList();
 
-		var powerData = (await SolarViewService.CollectData(AppState.CurrentSite.SiteId, startDate, endDate)).AsReadOnlyList();
+    var chartData = new ChartData
+    {
+      Id = $"{Guid.NewGuid()}",
+      StartDate = startDate,
+      EndDate = endDate,
+      Data = powerData
+    };
 
-		var chartData = new ChartData
-		{
-			Id = $"{Guid.NewGuid()}",
-			StartDate = startDate,
-			EndDate = endDate,
-			Data = powerData
-		};
+    _chartData ??= new List<ChartData>();
+    _chartData.Add(chartData);
 
-		_chartData ??= new List<ChartData>();
-		_chartData.Add(chartData);
+    await ChartDataCache.Add(AppState.CurrentSite.SiteId, chartData);
 
-		await ChartDataCache.Add(AppState.CurrentSite.SiteId, chartData);
+    // indicate a new range can now be added
+    StartDate = null;
+    EndDate = null;
 
-		// indicate a new range can now be added
-		StartDate = null;
-		EndDate = null;
+    UpdateChartLimits();
+  }
 
-		UpdateChartLimits();
-	}
+  private async void RemoveChart(string chartId)
+  {
+    var chartData = _chartData.Single(item => item.Id == chartId);
+    _chartData.Remove(chartData);
 
-	private async void RemoveChart(string chartId)
-	{
-		var chartData = _chartData.Single(item => item.Id == chartId);
-		_chartData.Remove(chartData);
+    await ChartDataCache.Remove(AppState.CurrentSite.SiteId, chartId);
+    UpdateChartLimits();
+  }
 
-		await ChartDataCache.Remove(AppState.CurrentSite.SiteId, chartId);
-		UpdateChartLimits();
-	}
+  private void RecalculateChartLimits()
+  {
+    if (_chartData.IsNullOrEmpty())
+    {
+      MaxWattValue = 0;
+      MinCostValue = 0;
+      MaxCostValue = 0;
+    }
+    else
+    {
+      var flattenedData = _chartData.SelectMany(item => item.Data).AsReadOnlyList();
 
-	private void RecalculateChartLimits()
-	{
-		if (_chartData.IsNullOrEmpty())
-		{
-			MaxWattValue = 0;
-			MinCostValue = 0;
-			MaxCostValue = 0;
-		}
-		else
-		{
-			var flattenedData = _chartData.SelectMany(item => item.Data).AsReadOnlyList();
+      var maxWatts = flattenedData
+        .SelectMany(item => new[] { item.Consumption, item.Purchased, item.SelfConsumption, item.FeedIn, item.Production })
+        .Max();
 
-			var maxWatts = flattenedData
-				.SelectMany(item => new[] { item.Consumption, item.Purchased, item.SelfConsumption, item.FeedIn, item.Production })
-				.Max();
+      var minCost = flattenedData.Min(item => item.AdjustedCost);
+      var maxCost = flattenedData.Max(item => item.NoSolarCost);
 
-			var minCost = flattenedData.Min(item => item.AdjustedCost);
-			var maxCost = flattenedData.Max(item => item.NoSolarCost);
+      MaxWattValue = (1 + Math.Floor(maxWatts / 500d)) * 500d;    // intervals of 500 on chart
 
-			MaxWattValue = (1 + Math.Floor(maxWatts / 500d)) * 500d;    // intervals of 500 on chart
-
-			// todo: write a helper method for these calcs that takes the sign into account
-			if (minCost > 0.0d)
-			{
-				MinCostValue = Math.Floor(minCost / 0.2d) * 0.2d;     // intervals of 0.2 on chart
-			}
-			else
-			{
-				MinCostValue = -(1 + Math.Floor(-minCost / 0.2d)) * 0.2d;     // intervals of 0.2 on chart
-			}
+      // todo: write a helper method for these calcs that takes the sign into account
+      if (minCost > 0.0d)
+      {
+        MinCostValue = Math.Floor(minCost / 0.2d) * 0.2d;     // intervals of 0.2 on chart
+      }
+      else
+      {
+        MinCostValue = -(1 + Math.Floor(-minCost / 0.2d)) * 0.2d;     // intervals of 0.2 on chart
+      }
 
 
-			MaxCostValue = (1 + Math.Floor(maxCost / 0.2d)) * 0.2d;     // intervals of 0.2 on chart
-		}
-	}
+      MaxCostValue = (1 + Math.Floor(maxCost / 0.2d)) * 0.2d;     // intervals of 0.2 on chart
+    }
+  }
 
-	private void UpdateChartLimits()
-	{
-		RecalculateChartLimits();
-		StateHasChanged();
-	}
+  private void UpdateChartLimits()
+  {
+    RecalculateChartLimits();
+    StateHasChanged();
+  }
 }

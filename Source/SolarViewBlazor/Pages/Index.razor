@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using SolarView.Client.Common.Services.Site
+@using System.Security.Claims
 @inject ISolarViewService SolarViewService
 @inject ISiteService SiteService
 @inject IAppState AppState
@@ -85,6 +86,11 @@ else
 @*<SurveyPrompt Title="How is Blazor working for you?" />*@
 
 @code {
+  // provided by AuthorizeRouteView in App.razor
+  // See also: https://docs.microsoft.com/en-us/aspnet/core/blazor/security/?view=aspnetcore-3.1#procedural-logic
+  //[CascadingParameter]
+  //private Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
   // bindings
   private bool UnknownSiteDialogIsVisible { get; set; }
   private string SiteId { get; set; }
@@ -96,6 +102,10 @@ else
   {
     if (firstRender)
     {
+      //var user = (await AuthenticationStateTask).User;
+      //var userName = user.Claims.Single(item => item.Type == ClaimTypes.Name);
+
+
       // first time the page has been loaded this session
       if (AppState.CurrentSite == null)
       {
@@ -110,9 +120,8 @@ else
       }
 
       _isLoaded = true;
+      StateHasChanged();
     }
-
-    StateHasChanged();
   }
 
   private async Task LoadSiteInfo()

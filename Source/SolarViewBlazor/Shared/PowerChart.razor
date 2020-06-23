@@ -1,7 +1,4 @@
-﻿@using SolarView.Client.Common.Models
-@inject ILocalStorageService LocalStorage
-
-<div class="row">
+﻿<div class="row">
   <div class="col-md-12 col-sm-12">
     <SfChart Title="@($"Period: {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}")">
 
@@ -13,12 +10,11 @@
 
       <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
                          IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift">
-        <ChartAxisMajorGridLines Width="0" />
+        @*<ChartAxisMajorGridLines Width="0" />*@
       </ChartPrimaryXAxis>
 
-      <ChartPrimaryYAxis LabelFormat="{value}W" Minimum="0" Maximum="@MaxWatts" Interval="500">
-        @*<ChartAxisLineStyle Width="1"/>*@
-      </ChartPrimaryYAxis>
+      <ChartPrimaryYAxis LabelFormat="{value}W" Minimum="0" Maximum="@MaxWatts" Interval="500"/>
+      
 
       <ChartRows>
         <ChartRow Height="50%"></ChartRow>
@@ -62,7 +58,6 @@
     </SfChart>
   </div>
 </div>
-
 
 @code {
   [Parameter]
