@@ -11,7 +11,7 @@
 <table class="table table-bordered">
   <tbody>
     <tr>
-      <td>User Name</td>
+      <td>User Identity</td>
       <td>@UserPrincipleName</td>
     </tr>
 
@@ -47,20 +47,24 @@
   </tbody>
 </table>
 
-<table class="table table-borderless">
-  <tbody>
-    <tr>
-      <td>
-        @if (AppState.CurrentSite != null)
-        {
-          <button class="btn btn-primary" @onclick="ClearLocalStorage">Clear Cache</button>
-        }
+@if (AppState.CurrentSite != null)
+{
+  <button class="btn btn-outline-primary btn-width-medium" @onclick="ClearLocalStorage">Clear Cache</button>
+}
 
-        <a class="btn btn-primary" href="@SignOutUrl">Sign Out</a>
-      </td>
-    </tr>
-  </tbody>
-</table>
+@*forceLoad is required to bypass client-side routing*@
+<button class="btn btn-outline-primary btn-width-medium" @onclick="() => NavigationManager.NavigateTo(SignOutUrl, true)">Sign Out</button>
+
+
+@*<div class="btn-group" role="group" aria-label="Reset Actions">
+  @if (AppState.CurrentSite != null)
+  {
+    <button class="btn btn-primary btn-width-medium" @onclick="ClearLocalStorage">Clear Cache</button>
+  }
+  
+  <button class="btn btn-primary btn-width-medium" @onclick="() => NavigationManager.NavigateTo(SignOutUrl, true)">Sign Out</button>
+</div>*@
+
 
 @code {
   // provided by AuthorizeRouteView in App.razor

@@ -17,17 +17,17 @@ else
   @if (AppState.CurrentSite == null)
   {
     <SfTextBox @bind-Value="@SiteId" Placeholder='Enter your site Id' FloatLabelType='@FloatLabelType.Auto'></SfTextBox>
-    <button class="btn btn-primary mt-2" @onclick="@LoadSiteInfo">Load</button>
+    <button class="btn btn-primary btn-width-medium mt-2" @onclick="@LoadSiteInfo">Load</button>
   }
   else
   {
     <table class="table">
-      <thead>
+      @*<thead>
         <tr>
           <th class="w-25" />
           <th class="w-75" />
         </tr>
-      </thead>
+      </thead>*@
       <tbody>
         <tr>
           <td>Site Id</td>
@@ -63,7 +63,7 @@ else
         </tr>
         <tr>
           <td colspan="2">
-            <button type="button" class="btn btn-primary" @onclick="RefreshSiteInfo">Refresh</button>
+            <button class="btn btn-outline-primary btn-width-medium" @onclick="RefreshSiteInfo">Refresh</button>
           </td>
         </tr>
       </tbody>
