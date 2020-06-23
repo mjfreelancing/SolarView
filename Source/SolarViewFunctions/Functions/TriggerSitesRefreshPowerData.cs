@@ -72,7 +72,7 @@ namespace SolarViewFunctions.Functions
           request = new SiteRefreshPowerRequest
           {
             SiteId = siteInfo.SiteId,
-            StartDateTime = lastRefreshDateTime.GetSolarDateTimeString(),
+            StartDateTime = lastRefreshDateTime.Date.GetSolarDateTimeString(),    // must always refresh from the start of the day or the docs will be incomplete
             EndDateTime = siteLocalTime.TrimToHour().GetSolarDateTimeString()
           };
 
