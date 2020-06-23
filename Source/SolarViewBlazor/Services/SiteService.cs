@@ -10,6 +10,7 @@ namespace SolarViewBlazor.Services
 {
   public class SiteService : ISiteService, IDisposable
   {
+    private const string SiteInfoKey = nameof(SiteInfo);
     private readonly ILocalStorageService _localStorage;
     private readonly IAppState _appState;
 
@@ -23,9 +24,9 @@ namespace SolarViewBlazor.Services
 
     public async Task<ISiteInfo> GetCurrentSite()
     {
-      if (await _localStorage.ContainKeyAsync(nameof(SiteInfo)))
+      if (await _localStorage.ContainKeyAsync(SiteInfoKey))
       {
-        return await _localStorage.GetItemAsync<SiteInfo>(nameof(SiteInfo));
+        return await _localStorage.GetItemAsync<SiteInfo>(SiteInfoKey);
       }
 
       return null;
@@ -40,7 +41,7 @@ namespace SolarViewBlazor.Services
     {
       if (siteInfo == null)
       {
-        await _localStorage.RemoveItemAsync(nameof(SiteInfo));
+        await _localStorage.RemoveItemAsync(SiteInfoKey);
       }
       else
       {
@@ -50,7 +51,7 @@ namespace SolarViewBlazor.Services
         }
 
         // note: cannot just pass 'siteInfo' - will not be serialized correctly
-        await _localStorage.SetItemAsync(nameof(SiteInfo), siteInfo as SiteInfo);
+        await _localStorage.SetItemAsync(SiteInfoKey, siteInfo as SiteInfo);
       }
     }
   }

@@ -1,6 +1,6 @@
 ﻿@page "/"
+@attribute [Authorize]
 @using SolarView.Client.Common.Services.Site
-@using System.Security.Claims
 @inject ISolarViewService SolarViewService
 @inject ISiteService SiteService
 @inject IAppState AppState
@@ -57,21 +57,20 @@ else
           <td>Last Aggregation</td>
           <td>@AppState.CurrentSite.LastAggregationDate</td>
         </tr>
-      <tr>
-        <td>Last Summary Email</td>
-        <td>@AppState.CurrentSite.LastSummaryDate</td>
-      </tr>
-      <tr>
-        <td colspan="2">
-          <button type="button" class="btn btn-primary" @onclick="RefreshSiteInfo">Refresh</button>
-        </td>
-      </tr>
+        <tr>
+          <td>Last Summary Email</td>
+          <td>@AppState.CurrentSite.LastSummaryDate</td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <button type="button" class="btn btn-primary" @onclick="RefreshSiteInfo">Refresh</button>
+          </td>
+        </tr>
       </tbody>
     </table>
   }
 }
 
-@*UnknownSiteDialogIsVisible*@
 <SfDialog @bind-Visible="@UnknownSiteDialogIsVisible" Width="330px" ShowCloseIcon="false" IsModal="true">
   <DialogTemplates>
     <Content>Details for the requested Site could not be found</Content>
@@ -86,29 +85,20 @@ else
 @*<SurveyPrompt Title="How is Blazor working for you?" />*@
 
 @code {
-  // provided by AuthorizeRouteView in App.razor
-  // See also: https://docs.microsoft.com/en-us/aspnet/core/blazor/security/?view=aspnetcore-3.1#procedural-logic
-  //[CascadingParameter]
-  //private Task<AuthenticationState> AuthenticationStateTask { get; set; }
-
   // bindings
   private bool UnknownSiteDialogIsVisible { get; set; }
   private string SiteId { get; set; }
 
   private bool _isLoaded;
 
-  // Due to pre-rendering in Blazor Server you can't perform any JS interop until the OnAfterRender lifecycle method
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
     if (firstRender)
     {
-      //var user = (await AuthenticationStateTask).User;
-      //var userName = user.Claims.Single(item => item.Type == ClaimTypes.Name);
-
-
       // first time the page has been loaded this session
       if (AppState.CurrentSite == null)
       {
+        // obtained from local storage so needs to be performed in OnAfterRenderAsync()
         var siteInfo = await SiteService.GetCurrentSite();
 
         // will be null if this is the very first visit

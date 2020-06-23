@@ -1,32 +1,18 @@
 ﻿@page "/settings"
+@attribute [Authorize]
 @using System.Security.Claims
+@inject NavigationManager NavigationManager
 @inject ILocalStorageService LocalStorage
 @inject IChartDataCache ChartDataCache
 @inject IAppState AppState
 
 <h3>Settings</h3>
 
-<table class="table">
-  <thead>
-    <tr>
-      <th class="w-25" />
-      <th class="w-75" />
-    </tr>
-  </thead>
+<table class="table table-bordered">
   <tbody>
     <tr>
       <td>User Name</td>
       <td>@UserPrincipleName</td>
-      @*<td>
-        <AuthorizeView>
-          <Authorized>
-            @context.User.Identity.Name
-          </Authorized>
-          <NotAuthorized>
-            <a href="AzureAD/Account/SignIn">Log in</a>
-          </NotAuthorized>
-        </AuthorizeView>
-      </td>*@
     </tr>
 
     <tr>
@@ -58,23 +44,21 @@
           break;
       }
     </tr>
+  </tbody>
+</table>
 
-    @if (AppState.CurrentSite != null)
-    {
-      <tr>
-        <td><button class="btn btn-primary w-50" @onclick="ClearLocalStorage">Clear Cache</button></td>
-        <td>Detach from the current site and clear the cache</td>
-      </tr>
-    }
-
+<table class="table table-borderless">
+  <tbody>
     <tr>
-      <td><a class="btn btn-primary w-50" href="AzureAD/Account/SignOut">Sign Out</a></td>
-      <td></td>
+      <td>
+        @if (AppState.CurrentSite != null)
+        {
+          <button class="btn btn-primary" @onclick="ClearLocalStorage">Clear Cache</button>
+        }
+
+        <a class="btn btn-primary" href="@SignOutUrl">Sign Out</a>
+      </td>
     </tr>
-
-    @*shows another line*@
-    <tr><td /></tr>
-
   </tbody>
 </table>
 
@@ -88,12 +72,14 @@
   private int CachedChartItemCount { get; set; }
   private string UserPrincipleName { get; set; }
 
+  private const string SignOutUrl = "AzureAD/Account/SignOut";
+
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
     if (firstRender)
     {
       var user = (await AuthenticationStateTask).User;
-      UserPrincipleName = user.Claims.Single(item => item.Type == ClaimTypes.Upn).Value;
+      UserPrincipleName = user.Claims.SingleOrDefault(item => item.Type == ClaimTypes.Upn)?.Value;
 
       if (AppState.CurrentSite != null)
       {
@@ -106,9 +92,9 @@
   private async Task ClearLocalStorage()
   {
     await LocalStorage.ClearAsync();
-    CachedChartItemCount = 0;
 
     AppState.CurrentSite = null;
+    CachedChartItemCount = 0;
 
     StateHasChanged();
   }
