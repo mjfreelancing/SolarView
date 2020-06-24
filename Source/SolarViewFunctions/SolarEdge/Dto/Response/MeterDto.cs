@@ -2,9 +2,9 @@
 
 namespace SolarViewFunctions.SolarEdge.Dto.Response
 {
-  public class Meter
+  public class MeterDto
   {
     public string Type { get; set; }
-    public IEnumerable<MeterValue> Values { get; set; }
+    public IEnumerable<MeterValueDto> Values { get; set; }
   }
 }

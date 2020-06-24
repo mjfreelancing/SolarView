@@ -64,13 +64,22 @@ namespace SolarViewFunctions.Functions
               nameof(HydratePowerPeriodSubOrchestrator),
               GetDefaultRetryOptions(exception =>
               {
-                // don't bother retrying if unable to get the solar data
-                if (exception.UnwrapFunctionException() is SolarEdgeResponseException solarEdgeResponse)
+                var unwrappedException = exception.UnwrapFunctionException();
+
+                if (unwrappedException is SolarEdgeResponseException solarEdgeResponse)
                 {
-                  return solarEdgeResponse.StatusCode != HttpStatusCode.Forbidden && 
-                         solarEdgeResponse.StatusCode != HttpStatusCode.TooManyRequests;
+                  // don't bother retrying if unable to get the solar data for these status codes
+                  var abortProcessing = solarEdgeResponse.StatusCode == HttpStatusCode.Forbidden ||
+                                        solarEdgeResponse.StatusCode == HttpStatusCode.TooManyRequests;
+
+                  Tracker.TrackWarn($"Error while obtaining solar data, aborting = {abortProcessing}", unwrappedException);
+
+                  return !abortProcessing;
                 }
 
+                Tracker.TrackWarn("Error while obtaining solar data, will retry", unwrappedException);
+
+                // try again
                 return true;
               }),
               dateRangeRequest);
@@ -85,7 +94,7 @@ namespace SolarViewFunctions.Functions
 
         return await NotifyPowerUpdated(context, PowerUpdatedStatus.Completed, triggeredPowerQuery);
       }
-      catch (Exception exception)
+      catch (Exception exception)   // could be SolarEdgeResponseException
       {
         var trackedException = exception.UnwrapFunctionException();
 

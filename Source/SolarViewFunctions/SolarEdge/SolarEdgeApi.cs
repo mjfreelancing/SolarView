@@ -13,7 +13,7 @@ namespace SolarViewFunctions.SolarEdge
 {
   public class SolarEdgeApi
   {
-    public static async Task<SolarDataResponse> GetSolarDataAsync(IDurableOrchestrationContext context, string solarEdgeUri, string apiKey,
+    public static async Task<SolarDataResult> GetSolarDataAsync(IDurableOrchestrationContext context, string solarEdgeUri, string apiKey,
       PowerQuery powerQuery, ITracker tracker)
     {
       var solarEdgeRequest = CreateSolarEdgeRequest(solarEdgeUri, apiKey, powerQuery);
@@ -41,14 +41,14 @@ namespace SolarViewFunctions.SolarEdge
           }
         );
         
-        return SolarDataResponse.Error(response.StatusCode);
+        return SolarDataResult.Error(response.StatusCode);
       }
 
       tracker.TrackInfo($"SolarEdge response status = {response.StatusCode}");
 
-      var solarData = JsonConvert.DeserializeObject<SolarData>(response.Content);
+      var solarData = JsonConvert.DeserializeObject<SolarDataDto>(response.Content);
 
-      return new SolarDataResponse(solarData);
+      return new SolarDataResult(solarData);
     }
 
     private static DurableHttpRequest CreateSolarEdgeRequest(string solarEdgeUri, string apiKey, PowerQuery powerQuery)

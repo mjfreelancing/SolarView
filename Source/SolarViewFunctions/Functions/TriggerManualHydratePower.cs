@@ -6,6 +6,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Newtonsoft.Json;
+using SolarView.Common.Extensions;
 using SolarViewFunctions.Dto.Request;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Exceptions;
@@ -67,9 +68,17 @@ namespace SolarViewFunctions.Functions
           return new ForbiddenResponse();
         }
 
+        var triggerLocalTime = siteInfo.UtcToLocalTime(triggerDateTime);
+
         var triggeredPowerQuery = _mapper.Map<TriggeredPowerQuery>(hydrateRequest);
-        triggeredPowerQuery.TriggerDateTime = siteInfo.UtcToLocalTime(triggerDateTime).GetSolarDateTimeString();
+        triggeredPowerQuery.TriggerDateTime = triggerLocalTime.GetSolarDateTimeString();
         triggeredPowerQuery.TriggerType = RefreshTriggerType.Manual;
+
+        // cap the end date/time to the hour of the current time (will be inline with time triggered refreshes)
+        if (triggeredPowerQuery.EndDateTime.ParseSolarDateTime() > triggerLocalTime)
+        {
+          triggeredPowerQuery.EndDateTime = triggerLocalTime.TrimToHour().GetSolarDateTimeString();
+        }
 
         var instanceId = await orchestrationClient.StartNewAsync(nameof(HydratePowerOrchestrator), triggeredPowerQuery).ConfigureAwait(false);
 

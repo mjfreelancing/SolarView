@@ -1,8 +1,8 @@
 ﻿namespace SolarViewFunctions.SolarEdge.Dto.Response
 {
-  public class MeterValue
+  public class MeterValueDto
   {
     public string Date { get; set; }
-    public double Value { get; set; }
+    public double? Value { get; set; }
   }
 }

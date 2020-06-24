@@ -72,7 +72,7 @@ namespace SolarViewFunctions.Functions
           request = new SiteRefreshPowerRequest
           {
             SiteId = siteInfo.SiteId,
-            StartDateTime = lastRefreshDateTime.Date.GetSolarDateTimeString(),    // must always refresh from the start of the day or the docs will be incomplete
+            StartDateTime = lastRefreshDateTime.GetSolarDateTimeString(),
             EndDateTime = siteLocalTime.TrimToHour().GetSolarDateTimeString()
           };
 
@@ -82,6 +82,7 @@ namespace SolarViewFunctions.Functions
             $"Sending a {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, from {request.StartDateTime} to {request.EndDateTime}",
             new {siteInfo.SiteId});
 
+          // using a message queue only from a design perspective (there could be thousands of sites)
           await refreshQueue.SendAsync(message).ConfigureAwait(false);
         }
       }

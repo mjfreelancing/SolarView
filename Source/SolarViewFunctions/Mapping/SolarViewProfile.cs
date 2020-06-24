@@ -5,6 +5,8 @@ using SolarViewFunctions.Dto.Response;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
+using SolarViewFunctions.Models.SolarEdgeData;
+using SolarViewFunctions.SolarEdge.Dto.Response;
 using System;
 
 namespace SolarViewFunctions.Mapping
@@ -51,6 +53,16 @@ namespace SolarViewFunctions.Mapping
 
       CreateMap<SiteEntity, SecretSiteInfo>();
       CreateMap<SiteEntity, SiteInfoResponse>();
+
+      // SolarEdge raw DTO data to SolarView models (nullable to non-nullable meter values)
+      CreateMap<SolarDataDto, SolarData>()
+        .ForMember(dest => dest.MeterValues, opt => opt.MapFrom(src => src.PowerDetails));
+
+      CreateMap<PowerDetailsDto, MeterValues>();
+      CreateMap<MeterDto, Meter>();
+
+      CreateMap<MeterValueDto, MeterValue>()
+        .ForMember(dest => dest.Value, opt => opt.NullSubstitute(0.0d));
     }
   }
 }
