@@ -10,8 +10,7 @@
     <!--  prevent flickering if coming back to this page after the data has been loaded for the session -->
     @if (SiteViewModel.CurrentSite == null)
     {
-      <!-- todo: create another component that can be re-used -->
-      <em>Loading...</em>
+      <LoadingView/>
     }
   </Loading>
   <Loaded>

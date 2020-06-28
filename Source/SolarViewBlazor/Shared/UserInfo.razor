@@ -5,13 +5,13 @@
 <table class="table table-settings-info">
   <tbody>
     <tr class="row">
-      <td class="col-sm-6 col-md-3">User Identity</td>
+      <th scope="row" class="col-sm-6 col-md-3">User Identity</th>
       <td class="col-sm-6 col-md-9">@_userPrincipleName</td>
     </tr>
     <tr class="row">
       <td colspan="2" class="col-12">
-        @*forceLoad is required to bypass client-side routing*@
-        <button class="btn btn-outline-primary btn-width-medium" @onclick="() => NavigationManager.NavigateTo(SignOutUrl, true)">Sign Out</button>
+        <!-- forceLoad is required to bypass client-side routing -->
+        <button class="btn btn-outline-primary btn-width-medium mt-2" @onclick="() => NavigationManager.NavigateTo(SignOutUrl, true)">Sign Out</button>
       </td>
     </tr>
   </tbody>

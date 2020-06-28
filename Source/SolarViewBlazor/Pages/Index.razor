@@ -9,8 +9,7 @@
     <!--  prevent flickering if coming back to this page after the data has been loaded for the session -->
     @if (SiteViewModel.CurrentSite == null)
     {
-      <!-- todo: create another component that can be re-used -->
-      <em>Loading...</em>
+      <LoadingView/>
     }
   </Loading>
   <SiteNotAvailable>
@@ -21,19 +20,19 @@
     <table class="table">
       <tbody>
         <tr class="row">
-          <td class="col-sm-6 col-md-3">Site Id</td>
+          <th scope="row" class="col-sm-6 col-md-3">Site Id</th>
           <td class="col-sm-6 col-md-9">@CurrentSite.SiteId</td>
         </tr>
         <tr class="row">
-          <td class="col-sm-6 col-md-3">Last Refresh</td>
+          <th scope="row" class="col-sm-6 col-md-3">Last Refresh</th>
           <td class="col-sm-6 col-md-9">@CurrentSite.LastRefreshDateTime</td>
         </tr>
         <tr class="row">
-          <td class="col-sm-6 col-md-3">Last Aggregation</td>
+          <th scope="row" class="col-sm-6 col-md-3">Last Aggregation</th>
           <td class="col-sm-6 col-md-9">@CurrentSite.LastAggregationDate</td>
         </tr>
         <tr class="row">
-          <td class="col-sm-6 col-md-3">Last Summary Email</td>
+          <th scope="row" class="col-sm-6 col-md-3">Last Summary Email</th>
           <td class="col-sm-6 col-md-9">@CurrentSite.LastSummaryDate</td>
         </tr>
         <tr class="row">
