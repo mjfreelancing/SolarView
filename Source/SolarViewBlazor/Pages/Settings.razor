@@ -37,9 +37,7 @@
   [Inject] ILocalStorageService LocalStorage { get; set; }
   [Inject] private NavigationManager NavigationManager { get; set; }
 
-  // bindings
   private bool _isLoaded;
-
   private ISiteInfo CurrentSite => SiteViewModel.CurrentSite;
 
   protected override void OnInitialized()

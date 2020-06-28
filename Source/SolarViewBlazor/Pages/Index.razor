@@ -60,10 +60,8 @@
   [Inject] private ISiteViewModel SiteViewModel { get; set; }
   [Inject] IEventAggregator EventAggregator { get; set; }
 
-  // bindings
   private bool _showUnknownSiteDialog;
   private string _siteId;
-
   private ISiteInfo CurrentSite => SiteViewModel.CurrentSite;
 
   protected override void OnInitialized()

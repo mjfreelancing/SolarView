@@ -1,7 +1,5 @@
 ﻿@page "/compare"
 @attribute [Authorize]
-@inject ISolarViewService SolarViewService
-@inject IChartDataCache ChartDataCache
 
 <h1>Average Power Data</h1>
 
@@ -46,6 +44,8 @@
 
 @code {
   [Inject] private ISiteViewModel SiteViewModel { get; set; }
+  [Inject] private ISolarViewService SolarViewService { get; set; }
+  [Inject] private IChartDataCache ChartDataCache { get; set; }
 
   private bool _isLoaded;
   private IList<ChartData> _chartData;

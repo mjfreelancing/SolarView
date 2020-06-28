@@ -20,7 +20,6 @@
   [Parameter] public RenderFragment SiteNotAvailable { get; set; }
 
   [Inject] private ISiteViewModel SiteViewModel { get; set; }
-  //[Inject] IEventAggregator EventAggregator { get; set; }
 
   private bool _isLoaded;
   private ISiteInfo CurrentSite => SiteViewModel.CurrentSite;
@@ -34,8 +33,6 @@
       {
         // loads from local storage - refreshes the data if previously cached
         await SiteViewModel.LoadCurrentSite(true);
-
-        //EventAggregator.Publish(new SiteChanged(SiteViewModel.CurrentSite));
       }
 
       _isLoaded = true;
