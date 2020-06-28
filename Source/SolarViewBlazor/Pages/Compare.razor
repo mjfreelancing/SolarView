@@ -19,7 +19,8 @@
         <div class="row mb-2">
           <SfDateRangePicker Min="@SiteViewModel.CurrentSite.StartDate.ParseSolarDate()"
                              Max="@SiteViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
-                             @bind-StartDate="@StartDate" @bind-EndDate="@EndDate" ValueChanged="LoadDateRange" Placeholder="Add a new range"/>
+                             Format="yyyy-MM-dd" Enabled="@_chartsLoaded" StrictMode="true"
+                             @bind-StartDate="@StartDate" @bind-EndDate="@EndDate" ValueChanged="LoadDateRange" Placeholder="Add a new range" />
         </div>
 
         @if (!_chartData.IsNullOrEmpty())
@@ -31,7 +32,7 @@
 
               <div class="col-sm-12 col-xl-6">
                 <PowerChart StartDate="@chart.StartDate" EndDate="@chart.EndDate" MaxWatts="@MaxWattValue" MinCost="@MinCostValue" MaxCost="@MaxCostValue"
-                            PowerData="@chart.Data"/>
+                            PowerData="@chart.Data" />
                 <button class="btn btn-outline-primary btn-width-medium mt-2" @onclick="() => RemoveChart(chartId)">Remove</button>
               </div>
             }
@@ -48,6 +49,7 @@
   [Inject] private IChartDataCache ChartDataCache { get; set; }
 
   private bool _isLoaded;
+  private bool _chartsLoaded;
   private IList<ChartData> _chartData;
 
   private double MaxWattValue { get; set; }
@@ -74,35 +76,45 @@
       }
 
       _isLoaded = true;
+      _chartsLoaded = true;
       StateHasChanged();
     }
   }
 
   private async Task LoadDateRange()
   {
-    var startDate = StartDate.Value.AddHours(10);
-    var endDate = EndDate.Value.AddHours(10);
-
-    var powerData = (await SolarViewService.CollectData(SiteViewModel.CurrentSite.SiteId, startDate, endDate)).AsReadOnlyList();
-
-    var chartData = new ChartData
+    try
     {
-      Id = $"{Guid.NewGuid()}",
-      StartDate = startDate,
-      EndDate = endDate,
-      Data = powerData
-    };
+      _chartsLoaded = false;
 
-    _chartData ??= new List<ChartData>();
-    _chartData.Add(chartData);
+      var startDate = StartDate.Value;
+      var endDate = EndDate.Value;
 
-    await ChartDataCache.Add(SiteViewModel.CurrentSite.SiteId, chartData);
+      var powerData = (await SolarViewService.CollectData(SiteViewModel.CurrentSite.SiteId, startDate, endDate)).AsReadOnlyList();
 
-    // indicate a new range can now be added
-    StartDate = null;
-    EndDate = null;
+      var chartData = new ChartData
+      {
+        Id = $"{Guid.NewGuid()}",
+        StartDate = startDate,
+        EndDate = endDate,
+        Data = powerData
+      };
 
-    UpdateChartLimits();
+      _chartData ??= new List<ChartData>();
+      _chartData.Add(chartData);
+
+      await ChartDataCache.Add(SiteViewModel.CurrentSite.SiteId, chartData);
+
+      // indicate a new range can now be added
+      StartDate = null;
+      EndDate = null;
+
+      UpdateChartLimits();
+    }
+    finally
+    {
+      _chartsLoaded = true;
+    }
   }
 
   private async void RemoveChart(string chartId)
