@@ -2,49 +2,47 @@
 @attribute [Authorize]
 @inject ISolarViewService SolarViewService
 @inject IChartDataCache ChartDataCache
-@inject IAppState AppState
 
 <h1>Average Power Data</h1>
 
-@if (!_isLoaded)
-{
-  <em>Loading...</em>
-}
-else
-{
-  @if (AppState.CurrentSite == null)
-  {
-    <p class="mt-4 mb-4">No data to display.</p>
-    <a href="">You need to provide a Site Id</a>
-  }
-  else
-  {
-    <div class="row mb-2">
-      <SfDateRangePicker Min="@AppState.CurrentSite.StartDate.ParseSolarDate()"
-                         Max="@AppState.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
-                         @bind-StartDate="@StartDate" @bind-EndDate="@EndDate" ValueChanged="LoadDateRange" Placeholder="Add a new range" />
-    </div>
-
-    @if (!_chartData.IsNullOrEmpty())
+<LoadedView IsLoaded="@_isLoaded">
+  <Loading/>
+  <Loaded>
+    @if (SiteViewModel.CurrentSite == null)
     {
-<div class="row">
-  @foreach (var chart in _chartData)
-  {
-    var chartId = chart.Id;
-
-  <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-12">
-    <PowerChart StartDate="@chart.StartDate" EndDate="@chart.EndDate" MaxWatts="@MaxWattValue" MinCost="@MinCostValue" MaxCost="@MaxCostValue"
-                PowerData="@chart.Data" />
-    <button class="btn btn-outline-primary btn-width-medium mt-4" @onclick="() => RemoveChart(chartId)">Remove</button>
-  </div>
-  }
-</div>
+      <p class="mt-4 mb-4">No data to display.</p>
+      <a href="">You need to provide a Site Id</a>
     }
-  }
+    else
+    {
+      <div class="row mb-2">
+        <SfDateRangePicker Min="@SiteViewModel.CurrentSite.StartDate.ParseSolarDate()"
+                           Max="@SiteViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
+                           @bind-StartDate="@StartDate" @bind-EndDate="@EndDate" ValueChanged="LoadDateRange" Placeholder="Add a new range"/>
+      </div>
 
-}
+      @if (!_chartData.IsNullOrEmpty())
+      {
+        <div class="row">
+          @foreach (var chart in _chartData)
+          {
+            var chartId = chart.Id;
+
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-12">
+              <PowerChart StartDate="@chart.StartDate" EndDate="@chart.EndDate" MaxWatts="@MaxWattValue" MinCost="@MinCostValue" MaxCost="@MaxCostValue"
+                          PowerData="@chart.Data"/>
+              <button class="btn btn-outline-primary btn-width-medium mt-4" @onclick="() => RemoveChart(chartId)">Remove</button>
+            </div>
+          }
+        </div>
+      }
+    }
+  </Loaded>
+</LoadedView>
 
 @code {
+  [Inject] private ISiteViewModel SiteViewModel { get; set; }
+
   private bool _isLoaded;
   private IList<ChartData> _chartData;
 
@@ -60,13 +58,13 @@ else
   {
     if (firstRender)
     {
-      if (AppState.CurrentSite != null)
+      if (SiteViewModel.CurrentSite != null)
       {
-        var chartCount = await ChartDataCache.GetCount(AppState.CurrentSite.SiteId);
+        var chartCount = await ChartDataCache.GetCount(SiteViewModel.CurrentSite.SiteId);
 
         if (chartCount > 0)
         {
-          _chartData = await ChartDataCache.GetData(AppState.CurrentSite.SiteId);
+          _chartData = await ChartDataCache.GetData(SiteViewModel.CurrentSite.SiteId);
           UpdateChartLimits();
         }
       }
@@ -81,7 +79,7 @@ else
     var startDate = StartDate.Value.AddHours(10);
     var endDate = EndDate.Value.AddHours(10);
 
-    var powerData = (await SolarViewService.CollectData(AppState.CurrentSite.SiteId, startDate, endDate)).AsReadOnlyList();
+    var powerData = (await SolarViewService.CollectData(SiteViewModel.CurrentSite.SiteId, startDate, endDate)).AsReadOnlyList();
 
     var chartData = new ChartData
     {
@@ -94,7 +92,7 @@ else
     _chartData ??= new List<ChartData>();
     _chartData.Add(chartData);
 
-    await ChartDataCache.Add(AppState.CurrentSite.SiteId, chartData);
+    await ChartDataCache.Add(SiteViewModel.CurrentSite.SiteId, chartData);
 
     // indicate a new range can now be added
     StartDate = null;
@@ -108,7 +106,7 @@ else
     var chartData = _chartData.Single(item => item.Id == chartId);
     _chartData.Remove(chartData);
 
-    await ChartDataCache.Remove(AppState.CurrentSite.SiteId, chartId);
+    await ChartDataCache.Remove(SiteViewModel.CurrentSite.SiteId, chartId);
     UpdateChartLimits();
   }
 

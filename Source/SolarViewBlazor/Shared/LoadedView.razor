@@ -1,0 +1,27 @@
+﻿@if (!IsLoaded)
+{
+  @Loading
+}
+else
+{
+  @Loaded
+}
+
+@code {
+  [Parameter] public bool IsLoaded { get; set; }
+  [Parameter] public RenderFragment Loading { get; set; }
+  [Parameter] public RenderFragment Loaded { get; set; }
+
+  protected override void OnParametersSet()
+  {
+    if (Loading == null)
+    {
+      throw new InvalidOperationException($"The {nameof(LoadedView)} component requires a value for the {nameof(Loading)} parameter");
+    }
+
+    if (Loaded == null)
+    {
+      throw new InvalidOperationException($"The {nameof(LoadedView)} component requires a value for the {nameof(Loaded)} parameter");
+    }
+  }
+}

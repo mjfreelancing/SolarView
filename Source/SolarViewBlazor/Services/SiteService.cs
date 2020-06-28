@@ -8,18 +8,14 @@ using System.Threading.Tasks;
 
 namespace SolarViewBlazor.Services
 {
-  public class SiteService : ISiteService, IDisposable
+  public class SiteService : ISiteService
   {
     private const string SiteInfoKey = nameof(SiteInfo);
     private readonly ILocalStorageService _localStorage;
-    private readonly IAppState _appState;
 
-    public SiteService(ILocalStorageService localStorage, IAppState appState)
+    public SiteService(ILocalStorageService localStorage)
     {
       _localStorage = localStorage.WhenNotNull(nameof(localStorage));
-      _appState = appState.WhenNotNull(nameof(appState));
-
-      _appState.OnSiteChanged += OnSiteChanged;
     }
 
     public async Task<ISiteInfo> GetCurrentSite()
@@ -32,12 +28,7 @@ namespace SolarViewBlazor.Services
       return null;
     }
 
-    public void Dispose()
-    {
-      _appState.OnSiteChanged -= OnSiteChanged;
-    }
-
-    private async void OnSiteChanged(ISiteInfo siteInfo)
+    public async Task SetCurrentSite(ISiteInfo siteInfo)
     {
       if (siteInfo == null)
       {

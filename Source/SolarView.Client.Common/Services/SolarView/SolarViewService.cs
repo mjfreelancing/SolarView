@@ -71,15 +71,21 @@ namespace SolarView.Client.Common.Services.SolarView
             })
         };
 
-      var allDataTasks = requests.Select(request => new
+      var requestTasks = requests.Select(request => new
       {
         request.MeterType,
         DataTask = request.Url.GetJsonAsync<IEnumerable<MeterData>>()
       }).AsReadOnlyList();
 
-      await Task.WhenAll(allDataTasks.Select(item => item.DataTask)).ConfigureAwait(false);
+      var dataTasks = requestTasks.Select(item => item.DataTask);
+      await Task.WhenAll(dataTasks).ConfigureAwait(false);
 
-      var allData = allDataTasks.Select(item => new{item.MeterType, Data = item.DataTask.Result});
+      var allData = requestTasks
+        .Select(item => new
+        {
+          item.MeterType,
+          Data = item.DataTask.Result
+        });
 
       var meterData =
         from dataItem in allData

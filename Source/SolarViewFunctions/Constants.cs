@@ -30,8 +30,6 @@
     public static class Cosmos
     {
       public const string SolarDatabase = "solar";
-      public const string PowerCollection = "power";
-      public const string PowerLeases = "power-leases";
       public const string ExceptionCollection = "exception";
       public const string ExceptionLeases = "exception-leases";
     }

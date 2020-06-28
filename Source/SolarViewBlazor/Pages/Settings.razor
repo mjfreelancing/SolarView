@@ -1,105 +1,86 @@
 ﻿@page "/settings"
+
 @attribute [Authorize]
-@using System.Security.Claims
-@inject NavigationManager NavigationManager
-@inject ILocalStorageService LocalStorage
-@inject IChartDataCache ChartDataCache
-@inject IAppState AppState
+@implements IDisposable
 
-<h3>Settings</h3>
+<h1>Settings</h1>
 
-<table class="table table-bordered">
-  <tbody>
-    <tr>
-      <td>User Identity</td>
-      <td>@UserPrincipleName</td>
-    </tr>
+<LoadedView IsLoaded="@_isLoaded">
+  <Loading>
+    <!--  prevent flickering if coming back to this page after the data has been loaded for the session -->
+    @if (SiteViewModel.CurrentSite == null)
+    {
+      <!-- todo: create another component that can be re-used -->
+      <em>Loading...</em>
+    }
+  </Loading>
+  <Loaded>
+    <div class="mb-4">
+      <div class="content border border-primary settings-card mt-4">
+        <UserInfo/>
+      </div>
 
-    <tr>
-      <td>Site Id</td>
-      @if (AppState.CurrentSite == null)
+      @if (CurrentSite != null)
       {
-        <td><a href="">You need to provide a Site Id</a></td>
+        <div class="content border border-primary settings-card mt-4">
+          <SiteInfo Site="@CurrentSite"/>
+        </div>
+
+        <button class="btn btn-outline-primary btn-width-medium mt-4 mr-2" @onclick="ClearLocalStorage">Clear Cache</button>
       }
-      else
-      {
-        <td>@AppState.CurrentSite.SiteId</td>
-      }
-    </tr>
-
-    <tr>
-      <td>Cached Charts</td>
-      @switch (CachedChartItemCount)
-      {
-        case 0:
-          <td>There are no charts</td>
-          break;
-
-        case 1:
-          <td>@CachedChartItemCount chart</td>
-          break;
-
-        default:
-          <td>@CachedChartItemCount charts</td>
-          break;
-      }
-    </tr>
-  </tbody>
-</table>
-
-@if (AppState.CurrentSite != null)
-{
-  <button class="btn btn-outline-primary btn-width-medium" @onclick="ClearLocalStorage">Clear Cache</button>
-}
-
-@*forceLoad is required to bypass client-side routing*@
-<button class="btn btn-outline-primary btn-width-medium" @onclick="() => NavigationManager.NavigateTo(SignOutUrl, true)">Sign Out</button>
-
-
-@*<div class="btn-group" role="group" aria-label="Reset Actions">
-  @if (AppState.CurrentSite != null)
-  {
-    <button class="btn btn-primary btn-width-medium" @onclick="ClearLocalStorage">Clear Cache</button>
-  }
-  
-  <button class="btn btn-primary btn-width-medium" @onclick="() => NavigationManager.NavigateTo(SignOutUrl, true)">Sign Out</button>
-</div>*@
-
+    </div>
+  </Loaded>
+</LoadedView>
 
 @code {
-  // provided by AuthorizeRouteView in App.razor
-  // See also: https://docs.microsoft.com/en-us/aspnet/core/blazor/security/?view=aspnetcore-3.1#procedural-logic
-  [CascadingParameter]
-  private Task<AuthenticationState> AuthenticationStateTask { get; set; }
+  [Inject] private ISiteViewModel SiteViewModel { get; set; }
+  [Inject] IEventAggregator EventAggregator { get; set; }
+  [Inject] ILocalStorageService LocalStorage { get; set; }
+  [Inject] private NavigationManager NavigationManager { get; set; }
 
   // bindings
-  private int CachedChartItemCount { get; set; }
-  private string UserPrincipleName { get; set; }
+  private bool _isLoaded;
 
-  private const string SignOutUrl = "AzureAD/Account/SignOut";
+  private ISiteInfo CurrentSite => SiteViewModel.CurrentSite;
+
+  protected override void OnInitialized()
+  {
+    EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
+  }
+
+  public void Dispose()
+  {
+    EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+  }
+
+  private void HandleSiteChanged(SiteChanged message)
+  {
+    StateHasChanged();
+  }
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
     if (firstRender)
     {
-      var user = (await AuthenticationStateTask).User;
-      UserPrincipleName = user.Claims.SingleOrDefault(item => item.Type == ClaimTypes.Upn)?.Value;
-
-      if (AppState.CurrentSite != null)
+      // will be null on first load or during a page refresh
+      if (CurrentSite == null)
       {
-        CachedChartItemCount = await ChartDataCache.GetCount(AppState.CurrentSite.SiteId);
-        StateHasChanged();
+        // loads from local storage - refreshes the data if previously cached
+        // also publishes a SiteChanged event
+        await SiteViewModel.LoadCurrentSite(true);
       }
+
+      _isLoaded = true;
+      StateHasChanged();
     }
   }
 
   private async Task ClearLocalStorage()
   {
     await LocalStorage.ClearAsync();
-
-    AppState.CurrentSite = null;
-    CachedChartItemCount = 0;
-
-    StateHasChanged();
+    await SiteViewModel.ForgetSite();
+    
+    // go back to the home page so the user can connect to a new site
+    NavigationManager.NavigateTo("/");
   }
 }

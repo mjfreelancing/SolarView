@@ -1,0 +1,35 @@
+﻿@using System.Security.Claims
+
+<h3>User</h3>
+
+<table class="table table-settings-info">
+  <tbody>
+    <tr class="row">
+      <td class="col-sm-6 col-md-3">User Identity</td>
+      <td class="col-sm-6 col-md-9">@_userPrincipleName</td>
+    </tr>
+    <tr class="row">
+      <td colspan="2" class="col-12">
+        @*forceLoad is required to bypass client-side routing*@
+        <button class="btn btn-outline-primary btn-width-medium" @onclick="() => NavigationManager.NavigateTo(SignOutUrl, true)">Sign Out</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+@code {
+  private const string SignOutUrl = "AzureAD/Account/SignOut";
+
+  [CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+  [Inject] private NavigationManager NavigationManager { get; set; }
+
+  private string _userPrincipleName;
+
+  protected override async Task OnInitializedAsync()
+  {
+    var user = (await AuthenticationStateTask).User;
+    _userPrincipleName = user.Claims.SingleOrDefault(item => item.Type == ClaimTypes.Upn)?.Value;
+  }
+}

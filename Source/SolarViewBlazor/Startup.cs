@@ -13,7 +13,9 @@ using SolarView.Client.Common.Services.Site;
 using SolarView.Client.Common.Services.SolarView;
 using SolarViewBlazor.Cache;
 using SolarViewBlazor.Configuration;
+using SolarViewBlazor.Events;
 using SolarViewBlazor.Services;
+using SolarViewBlazor.ViewModels;
 using Syncfusion.Blazor;
 using Syncfusion.Licensing;
 
@@ -63,7 +65,10 @@ namespace SolarViewBlazor
       services.AddScoped<IKeyVaultCache, KeyVaultCache>();
       services.AddScoped<IChartDataCache, ChartDataCache>();
       services.AddScoped<ISiteService, SiteService>();
-      services.AddScoped<IAppState, AppState>();
+      //services.AddScoped<IAppState, AppState>();
+      services.AddScoped<ISiteViewModel, SiteViewModel>();
+
+      services.AddScoped<IEventAggregator, EventAggregator>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

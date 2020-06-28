@@ -1,5 +1,4 @@
 ﻿@implements IDisposable
-@inject IAppState AppState
 
 <div class="top-row pl-4 navbar navbar-dark">
   <a class="navbar-brand" href="">SolarView</a>
@@ -18,7 +17,7 @@
           </NavLink>
         </li>
 
-        @if (AppState.CurrentSite != null)
+        @if (_currentSite != null)
         {
           <li class="nav-item px-3">
             <NavLink class="nav-link" href="compare">
@@ -53,22 +52,25 @@
 </div>
 
 @code {
+  [Inject] IEventAggregator EventAggregator { get; set; }
+
+  private ISiteInfo _currentSite;
   private bool _collapseNavMenu = true;
-
   private string NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
-
-  public void Dispose()
-  {
-    AppState.OnSiteChanged -= OnSiteChanged;
-  }
 
   protected override void OnInitialized()
   {
-    AppState.OnSiteChanged += OnSiteChanged;
+    EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
   }
 
-  private void OnSiteChanged(ISiteInfo siteInfo)
+  public void Dispose()
   {
+    EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+  }
+
+  private void HandleSiteChanged(SiteChanged message)
+  {
+    _currentSite = message.SiteInfo;
     StateHasChanged();
   }
 

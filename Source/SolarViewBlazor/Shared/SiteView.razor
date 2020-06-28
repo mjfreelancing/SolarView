@@ -1,0 +1,63 @@
+﻿<LoadedView IsLoaded="@_isLoaded">
+  <Loading>
+    @Loading
+  </Loading>
+  <Loaded>
+    @if (CurrentSite != null)
+    {
+      @SiteAvailable
+    }
+    else
+    {
+      @SiteNotAvailable
+    }
+  </Loaded>
+</LoadedView>
+
+@code {
+  [Parameter] public RenderFragment Loading { get; set; }
+  [Parameter] public RenderFragment SiteAvailable { get; set; }
+  [Parameter] public RenderFragment SiteNotAvailable { get; set; }
+
+  [Inject] private ISiteViewModel SiteViewModel { get; set; }
+  //[Inject] IEventAggregator EventAggregator { get; set; }
+
+  private bool _isLoaded;
+  private ISiteInfo CurrentSite => SiteViewModel.CurrentSite;
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (firstRender)
+    {
+      // will be null on first load or during a page refresh
+      if (CurrentSite == null)
+      {
+        // loads from local storage - refreshes the data if previously cached
+        await SiteViewModel.LoadCurrentSite(true);
+
+        //EventAggregator.Publish(new SiteChanged(SiteViewModel.CurrentSite));
+      }
+
+      _isLoaded = true;
+      StateHasChanged();
+    }
+  }
+
+  protected override void OnParametersSet()
+  {
+    if (Loading == null)
+    {
+      throw new InvalidOperationException($"The {nameof(SiteView)} component requires a value for the {nameof(Loading)} parameter");
+    }
+
+    if (SiteAvailable == null)
+    {
+      throw new InvalidOperationException($"The {nameof(SiteView)} component requires a value for the {nameof(SiteAvailable)} parameter");
+    }
+
+    if (SiteNotAvailable == null)
+    {
+      throw new InvalidOperationException($"The {nameof(SiteView)} component requires a value for the {nameof(SiteNotAvailable)} parameter");
+    }
+  }
+}
