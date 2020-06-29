@@ -64,14 +64,16 @@
   private string _siteId;
   private ISiteInfo CurrentSite => SiteViewModel.CurrentSite;
 
-  protected override void OnInitialized()
-  {
-    EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
-  }
-
   public void Dispose()
   {
     EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+  }
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+
+    EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
   }
 
   private void HandleSiteChanged(SiteChanged message)

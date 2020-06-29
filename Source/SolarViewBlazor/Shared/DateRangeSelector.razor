@@ -1,0 +1,139 @@
+﻿@using DateRange = SolarView.Common.Models.DateRange
+
+<SfAccordion ExpandMode="ExpandMode.Single">
+  <AccordionItems>
+    <AccordionItem Expanded="false">
+      <HeaderTemplate>Add a new chart</HeaderTemplate>
+      <ContentTemplate>
+        <div class="drs-option">
+          @foreach (var option in _options)
+          {
+            <div class="p-1 col-12 col-sm-6">
+              <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@option.Selected"
+                             OnClick="@(() => UpdateStyles(option))" />
+            </div>
+          }
+
+          <div class="col-12 mt-2 mb-2" style="display: @_dateRangePickerDisplay">
+            <SfDateRangePicker Min="@MinDate" Max="@MaxDate" Format="yyyy-MM-dd"
+                               Enabled="@(!_applyDateRangeDisabled)" StrictMode="true" Placeholder="Add a new range"
+                               @bind-StartDate="@StartDate" @bind-EndDate="@EndDate" ValueChanged="ApplyCustomDateRange" />
+          </div>
+        </div>
+        <div>
+          <button class="btn btn-outline-primary btn-width-medium mt-2" style="display: @_applyButtonDisplay"
+                  disabled="@_applyDateRangeDisabled" @onclick="DateRangeSelected">Apply</button>
+        </div>
+      </ContentTemplate>
+    </AccordionItem>
+  </AccordionItems>
+</SfAccordion>
+
+@code {
+  [Parameter] public Func<DateRange, Task> OnApplyDateRange { get; set; }
+  [Parameter] public DateTime Today { get; set; }
+  [Parameter] public DateTime MinDate { get; set; }
+  [Parameter] public DateTime MaxDate { get; set; }
+
+  private string _dateRangePickerDisplay = "none";
+  private bool _applyDateRangeDisabled;
+  private string _applyButtonDisplay = "inline";
+  private IReadOnlyList<DateRangeSelectOption> _options;
+  private DateTime? StartDate;
+  private DateTime? EndDate;
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+
+    InitialiseOptions();
+  }
+
+  private void InitialiseOptions()
+  {
+    var monthStart = new DateTime(MaxDate.Year, MaxDate.Month, 1);
+
+    _options = new List<DateRangeSelectOption>
+    {
+      new DateRangeSelectOption
+      {
+        Caption = $"Last refresh ({MaxDate:yyyy-MM-dd})",
+        DateRange = new DateRange(MaxDate, MaxDate)
+      },
+      new DateRangeSelectOption
+      {
+        Caption = $"Since {MinDate:yyyy-MM-dd}",
+        DateRange = new DateRange(MinDate, MaxDate)
+      },
+      new DateRangeSelectOption
+      {
+        Caption = "This Month",
+        Selected = true,
+        DateRange = new DateRange(monthStart, MaxDate)
+      },
+      new DateRangeSelectOption
+      {
+        Caption = "Last Month",
+        DateRange = new DateRange(monthStart.AddMonths(-1), monthStart.AddMonths(-1).GetEndOfMonth())
+      },
+      new DateRangeSelectOption
+      {
+        Caption = "Past 3 Months",
+        DateRange = new DateRange(MaxDate.AddMonths(-3), MaxDate)
+      },
+      new DateRangeSelectOption
+      {
+        Caption = "Past 6 Months",
+        DateRange = new DateRange(MaxDate.AddMonths(-6), MaxDate)
+      },
+      new DateRangeSelectOption
+      {
+        Caption = "Past Year",
+        DateRange = new DateRange(MaxDate.AddYears(-1), MaxDate)
+      },
+      new DateRangeSelectOption
+      {
+        Caption = "Custom",
+        IsCustom = true
+      }
+    };
+  }
+
+  private void UpdateStyles(DateRangeSelectOption option)
+  {
+    _dateRangePickerDisplay = option.IsCustom ? "inline" : "none";
+    _applyButtonDisplay = option.IsCustom ? "none" : "inline";
+  }
+
+  private async Task ApplyCustomDateRange()
+  {
+    try
+    {
+      _applyDateRangeDisabled = true;
+
+      var dateRange = new DateRange(StartDate.Value, EndDate.Value);
+
+      await OnApplyDateRange.Invoke(dateRange);
+    }
+    finally
+    {
+      _applyDateRangeDisabled = false;
+    }
+  }
+
+  private async Task DateRangeSelected()
+  {
+    try
+    {
+      _applyDateRangeDisabled = true;
+
+      var selection = _options.Single(item => item.Selected);
+
+      await OnApplyDateRange.Invoke(selection.DateRange);
+    }
+    finally
+    {
+      _applyDateRangeDisabled = false;
+    }
+  }
+}

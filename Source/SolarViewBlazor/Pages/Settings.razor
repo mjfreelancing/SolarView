@@ -40,23 +40,22 @@
   private bool _isLoaded;
   private ISiteInfo CurrentSite => SiteViewModel.CurrentSite;
 
-  protected override void OnInitialized()
-  {
-    EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
-  }
-
   public void Dispose()
   {
     EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
   }
 
-  private void HandleSiteChanged(SiteChanged message)
+  protected override void OnInitialized()
   {
-    StateHasChanged();
+    base.OnInitialized();
+
+    EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
   }
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
+    await base.OnAfterRenderAsync(firstRender);
+
     if (firstRender)
     {
       // will be null on first load or during a page refresh
@@ -72,11 +71,16 @@
     }
   }
 
+  private void HandleSiteChanged(SiteChanged message)
+  {
+    StateHasChanged();
+  }
+
   private async Task ClearLocalStorage()
   {
     await LocalStorage.ClearAsync();
     await SiteViewModel.ForgetSite();
-    
+
     // go back to the home page so the user can connect to a new site
     NavigationManager.NavigateTo("/");
   }

@@ -43,14 +43,16 @@
   private bool _collapseNavMenu = true;
   private string NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
 
-  protected override void OnInitialized()
-  {
-    EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
-  }
-
   public void Dispose()
   {
     EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+  }
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+
+    EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
   }
 
   private void HandleSiteChanged(SiteChanged message)

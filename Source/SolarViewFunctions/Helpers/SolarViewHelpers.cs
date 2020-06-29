@@ -1,4 +1,5 @@
-using SolarViewFunctions.Models;
+using SolarView.Common.Extensions;
+using SolarView.Common.Models;
 using System;
 using System.Collections.Generic;
 
@@ -12,7 +13,7 @@ namespace SolarViewFunctions.Helpers
 
       do
       {
-        var endRequestDate = GetEndOfMonth(startRequestDate);
+        var endRequestDate = startRequestDate.GetEndOfMonth();
 
         if (endRequestDate > endDateTime)
         {
@@ -24,13 +25,6 @@ namespace SolarViewFunctions.Helpers
         startRequestDate = endRequestDate.AddDays(1).Date;
 
       } while (startRequestDate < endDateTime);
-    }
-
-    private static DateTime GetEndOfMonth(DateTime dateTime)
-    {
-      return new DateTime(
-        dateTime.Year, dateTime.Month,
-        DateTime.DaysInMonth(dateTime.Year, dateTime.Month), 23, 59, 59);
     }
   }
 }

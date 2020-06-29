@@ -14,7 +14,14 @@
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
 }
 
-/*.table-bordered td,
-.table-bordered th {
-  border: 0;
-}*/
+/* date range selector */
+.drs-option {
+  max-width: 34em;
+  display: flex;
+  flex-wrap: wrap;
+  height: 12em;
+}
+
+.drs-option > * {
+  width: 48%
+}

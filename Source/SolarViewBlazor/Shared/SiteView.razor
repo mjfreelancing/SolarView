@@ -26,6 +26,8 @@
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
+    await base.OnAfterRenderAsync(firstRender);
+
     if (firstRender)
     {
       // will be null on first load or during a page refresh
@@ -42,6 +44,8 @@
 
   protected override void OnParametersSet()
   {
+    base.OnParametersSet();
+
     if (Loading == null)
     {
       throw new InvalidOperationException($"The {nameof(SiteView)} component requires a value for the {nameof(Loading)} parameter");

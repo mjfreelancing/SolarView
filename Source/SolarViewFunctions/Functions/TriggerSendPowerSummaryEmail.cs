@@ -3,6 +3,7 @@ using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.ServiceBus.Core;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.ServiceBus;
+using SolarView.Common.Extensions;
 using SolarView.Common.Models;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;

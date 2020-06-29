@@ -1,6 +1,6 @@
 using System;
 
-namespace SolarViewFunctions.Models
+namespace SolarView.Common.Models
 {
   public class DateRange
   {

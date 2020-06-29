@@ -30,11 +30,5 @@ namespace SolarViewFunctions.Extensions
         ? siteInfo.StartDate.ParseSolarDate()
         : siteInfo.LastSummaryDate.ParseSolarDate();
     }
-
-    public static DateTime UtcToLocalTime(this ISiteInfo siteInfo, DateTime utcTime)
-    {
-      var tzi = TimeZoneInfo.FindSystemTimeZoneById(siteInfo.TimeZoneId);
-      return TimeZoneInfo.ConvertTimeFromUtc(utcTime, tzi);
-    }
   }
 }

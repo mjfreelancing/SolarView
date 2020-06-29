@@ -29,6 +29,8 @@
 
   protected override async Task OnInitializedAsync()
   {
+    await base.OnInitializedAsync();
+
     var user = (await AuthenticationStateTask).User;
     _userPrincipleName = user.Claims.SingleOrDefault(item => item.Type == ClaimTypes.Upn)?.Value;
   }
