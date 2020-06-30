@@ -1,8 +1,7 @@
 ﻿@page "/compare"
-@using DateRange = SolarView.Common.Models.DateRange
-@using AllOverIt.Helpers
 @attribute [Authorize]
 @implements IDisposable
+@using DateRange = SolarView.Common.Models.DateRange
 
 <h1>Average Power Data</h1>
 
@@ -36,7 +35,7 @@
     </div>
   </SiteAvailable>
   <SiteNotAvailable>
-    <p class="mt-4 mb-4">No data to display.</p>
+    <p class="mt-4 mb-4">You should not have landed here, There's no data to display.</p>
     <a href="">You need to provide a Site Id</a>
   </SiteNotAvailable>
 </SiteView>
