@@ -9,16 +9,21 @@
           <div class="cds-options">
             @foreach (var option in _options)
             {
+              // DateRange is null for the custom option
+              var disabled = option.DateRange != null &&
+                             option.DateRange.StartDateTime < MinDate;
+
               <div class="p-1 col-12 col-sm-6">
-                <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@option.Selected"
+                <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@option.Selected" Disabled="@disabled"
                                OnClick="@(() => UpdateStyles(option))" />
               </div>
             }
           </div>
           <div class="col-12 p-0 mt-2" style="display: @_dateRangePickerDisplay">
             <SfDateRangePicker Min="@MinDate" Max="@MaxDate" Format="yyyy-MM-dd"
+                               @bind-StartDate="@StartDate" @bind-EndDate="@EndDate"
                                Enabled="@(!_applyDateRangeDisabled)" StrictMode="true" Placeholder="Add a new range"
-                               @bind-StartDate="@StartDate" @bind-EndDate="@EndDate" ValueChanged="ApplyCustomDateRange" />
+                               ValueChanged="ApplyCustomDateRange" />
 
           </div>
           <button class="btn btn-outline-primary btn-width-medium mt-2" style="display: @_applyButtonDisplay"
@@ -54,6 +59,7 @@
   private IReadOnlyList<DateRangeSelectOption> InitialiseOptions()
   {
     var monthStart = new DateTime(MaxDate.Year, MaxDate.Month, 1);
+    var lastMonth = monthStart.AddMonths(-1);
 
     return new List<DateRangeSelectOption>
     {
@@ -75,8 +81,9 @@
       },
       new DateRangeSelectOption
       {
+        // allowing partial 'last month'
         Caption = "Last Month",
-        DateRange = new DateRange(monthStart.AddMonths(-1), monthStart.AddMonths(-1).GetEndOfMonth())
+        DateRange = new DateRange(lastMonth.IsSameMonthYear(MinDate) ? MinDate : lastMonth, monthStart.AddMonths(-1).GetEndOfMonth())
       },
       new DateRangeSelectOption
       {
@@ -109,6 +116,11 @@
 
   private async Task ApplyCustomDateRange()
   {
+    if(!StartDate.HasValue || !EndDate.HasValue)
+    {
+      return;
+    }
+
     try
     {
       _applyDateRangeDisabled = true;
@@ -129,12 +141,21 @@
     {
       _applyDateRangeDisabled = true;
 
-      var selection = _options.Single(item => item.Selected);
+      var dateRange = _options.Single(item => item.Selected).DateRange;
 
-      await OnApplyDateRange.Invoke(selection.DateRange);
+      if (dateRange.StartDateTime < MinDate)
+      {
+        dateRange = new DateRange(MinDate, dateRange.EndDateTime);
+      }
+
+      await OnApplyDateRange.Invoke(dateRange);
     }
     finally
     {
+      // clear any manually entered dates
+      StartDate = default;
+      EndDate = default;
+
       _applyDateRangeDisabled = false;
     }
   }
