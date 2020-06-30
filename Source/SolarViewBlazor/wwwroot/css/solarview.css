@@ -15,11 +15,14 @@
 }
 
 /* date range selector */
-.drs-option {
-  max-width: 34em;
+.drs-container {
+  max-width: 30em;
+}
+
+.drs-options {
   display: flex;
   flex-wrap: wrap;
-  height: 12em;
+  max-height: 20em;
 }
 
 .drs-option > * {

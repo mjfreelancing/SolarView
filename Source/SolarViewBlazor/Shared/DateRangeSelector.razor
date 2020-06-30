@@ -5,24 +5,26 @@
     <AccordionItem Expanded="false">
       <HeaderTemplate>Add a new chart</HeaderTemplate>
       <ContentTemplate>
-        <div class="drs-option">
-          @foreach (var option in _options)
-          {
-            <div class="p-1 col-12 col-sm-6">
-              <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@option.Selected"
-                             OnClick="@(() => UpdateStyles(option))" />
-            </div>
-          }
-
-          <div class="col-12 mt-2 mb-2" style="display: @_dateRangePickerDisplay">
+        <div class="drs-container mb-2">
+          <div class="drs-options">
+            @foreach (var option in _options)
+            {
+              <div class="p-1 col-12 col-sm-6">
+                <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@option.Selected"
+                               OnClick="@(() => UpdateStyles(option))" />
+              </div>
+            }
+          </div>
+          <div class="col-12 p-0 mt-2" style="display: @_dateRangePickerDisplay">
             <SfDateRangePicker Min="@MinDate" Max="@MaxDate" Format="yyyy-MM-dd"
                                Enabled="@(!_applyDateRangeDisabled)" StrictMode="true" Placeholder="Add a new range"
                                @bind-StartDate="@StartDate" @bind-EndDate="@EndDate" ValueChanged="ApplyCustomDateRange" />
+
           </div>
-        </div>
-        <div>
           <button class="btn btn-outline-primary btn-width-medium mt-2" style="display: @_applyButtonDisplay"
-                  disabled="@_applyDateRangeDisabled" @onclick="DateRangeSelected">Apply</button>
+                  disabled="@_applyDateRangeDisabled" @onclick="DateRangeSelected">
+            Apply
+          </button>
         </div>
       </ContentTemplate>
     </AccordionItem>
@@ -31,13 +33,12 @@
 
 @code {
   [Parameter] public Func<DateRange, Task> OnApplyDateRange { get; set; }
-  [Parameter] public DateTime Today { get; set; }
   [Parameter] public DateTime MinDate { get; set; }
   [Parameter] public DateTime MaxDate { get; set; }
 
   private string _dateRangePickerDisplay = "none";
   private bool _applyDateRangeDisabled;
-  private string _applyButtonDisplay = "inline";
+  private string _applyButtonDisplay = "inline-block";
   private IReadOnlyList<DateRangeSelectOption> _options;
   private DateTime? StartDate;
   private DateTime? EndDate;
@@ -54,7 +55,7 @@
     var monthStart = new DateTime(MaxDate.Year, MaxDate.Month, 1);
 
     _options = new List<DateRangeSelectOption>
-    {
+{
       new DateRangeSelectOption
       {
         Caption = $"Last refresh ({MaxDate:yyyy-MM-dd})",
@@ -101,8 +102,8 @@
 
   private void UpdateStyles(DateRangeSelectOption option)
   {
-    _dateRangePickerDisplay = option.IsCustom ? "inline" : "none";
-    _applyButtonDisplay = option.IsCustom ? "none" : "inline";
+    _dateRangePickerDisplay = option.IsCustom ? "inline-block" : "none";
+    _applyButtonDisplay = option.IsCustom ? "none" : "inline-block";
   }
 
   private async Task ApplyCustomDateRange()
