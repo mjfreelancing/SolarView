@@ -5,15 +5,15 @@
     <AccordionItem Expanded="false">
       <HeaderTemplate>Add a new chart</HeaderTemplate>
       <ContentTemplate>
-        <div class="cds-container mb-2">
-          <div class="cds-options">
+        <div class="chart-date-selector mb-2">
+          <div class="chart-date-options">
             @foreach (var option in _options)
             {
               // DateRange is null for the custom option
               var disabled = option.DateRange != null &&
                              option.DateRange.StartDateTime < MinDate;
 
-              <div class="p-1 col-12 col-sm-6">
+              <div class="p-1">
                 <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@option.Selected" Disabled="@disabled"
                                OnClick="@(() => UpdateStyles(option))" />
               </div>
@@ -70,11 +70,6 @@
       },
       new DateRangeSelectOption
       {
-        Caption = $"Since {MinDate:yyyy-MM-dd}",
-        DateRange = new DateRange(MinDate, MaxDate)
-      },
-      new DateRangeSelectOption
-      {
         Caption = "This Month",
         Selected = true,
         DateRange = new DateRange(monthStart, MaxDate)
@@ -99,6 +94,11 @@
       {
         Caption = "Past Year",
         DateRange = new DateRange(MaxDate.AddYears(-1), MaxDate)
+      },
+      new DateRangeSelectOption
+      {
+        Caption = $"Since {MinDate:yyyy-MM-dd}",
+        DateRange = new DateRange(MinDate, MaxDate)
       },
       new DateRangeSelectOption
       {

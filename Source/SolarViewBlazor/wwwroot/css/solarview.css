@@ -14,17 +14,11 @@
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
 }
 
-/* chart date selector */
-.cds-container {
+.chart-date-selector {
   width: 30em;
 }
 
-.cds-options {
-  display: flex;
-  flex-wrap: wrap;
-  max-height: 20em;
-}
-
-.cds-options > * {
-  width: 50%
+.chart-date-options {
+  column-count: 2;
+  column-width: 14em;
 }
