@@ -21,7 +21,7 @@
     {
       <div class="mb-4">
         <div class="row mb-2">
-          <DateRangeSelector MinDate="@SiteViewModel.CurrentSite.StartDate.ParseSolarDate()"
+          <ChartDateSelector MinDate="@SiteViewModel.CurrentSite.StartDate.ParseSolarDate()"
                              MaxDate="@SiteViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
                              OnApplyDateRange="@(async dateRange => await ApplyDateRange(dateRange))" />
         </div>

@@ -14,17 +14,17 @@
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
 }
 
-/* date range selector */
-.drs-container {
-  max-width: 30em;
+/* chart date selector */
+.cds-container {
+  width: 30em;
 }
 
-.drs-options {
+.cds-options {
   display: flex;
   flex-wrap: wrap;
   max-height: 20em;
 }
 
-.drs-option > * {
+.cds-options > * {
   width: 48%
 }

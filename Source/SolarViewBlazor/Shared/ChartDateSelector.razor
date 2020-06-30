@@ -5,8 +5,8 @@
     <AccordionItem Expanded="false">
       <HeaderTemplate>Add a new chart</HeaderTemplate>
       <ContentTemplate>
-        <div class="drs-container mb-2">
-          <div class="drs-options">
+        <div class="cds-container mb-2">
+          <div class="cds-options">
             @foreach (var option in _options)
             {
               <div class="p-1 col-12 col-sm-6">
@@ -47,15 +47,16 @@
   {
     base.OnParametersSet();
 
-    InitialiseOptions();
+    // ensure this is only performed the first time
+    _options ??= InitialiseOptions();
   }
 
-  private void InitialiseOptions()
+  private IReadOnlyList<DateRangeSelectOption> InitialiseOptions()
   {
     var monthStart = new DateTime(MaxDate.Year, MaxDate.Month, 1);
 
-    _options = new List<DateRangeSelectOption>
-{
+    return new List<DateRangeSelectOption>
+    {
       new DateRangeSelectOption
       {
         Caption = $"Last refresh ({MaxDate:yyyy-MM-dd})",
