@@ -1,64 +1,70 @@
 ﻿@page "/compare"
 @using DateRange = SolarView.Common.Models.DateRange
+@using AllOverIt.Helpers
 @attribute [Authorize]
+@implements IDisposable
 
 <h1>Average Power Data</h1>
 
-<LoadedView IsLoaded="@_isLoaded">
+<SiteView>
   <Loading>
     <LoadingView />
   </Loading>
-  <Loaded>
-
-    <!-- todo: use SiteView component -->
-
-    @if (SiteViewModel.CurrentSite == null)
-    {
-      <p class="mt-4 mb-4">No data to display.</p>
-      <a href="">You need to provide a Site Id</a>
-    }
-    else
-    {
-      <div class="mb-4">
-        <div class="row mb-2">
-          <ChartDateSelector MinDate="@SiteViewModel.CurrentSite.StartDate.ParseSolarDate()"
-                             MaxDate="@SiteViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
-                             OnApplyDateRange="@(async dateRange => await ApplyDateRange(dateRange))" />
-        </div>
-
-        @if (!_chartData.IsNullOrEmpty())
-        {
-          <div class="row mt-4">
-            @foreach (var chart in _chartData)
-            {
-              var chartId = chart.Id;
-
-              <div class="col-sm-12 col-xl-6">
-                <PowerChart StartDate="@chart.StartDate" EndDate="@chart.EndDate" MaxWatts="@MaxWattValue" MinCost="@MinCostValue" MaxCost="@MaxCostValue"
-                            PowerData="@chart.Data" />
-                <button class="btn btn-outline-primary btn-width-medium mt-2" @onclick="() => RemoveChart(chartId)">Remove</button>
-              </div>
-            }
-          </div>
-        }
+  <SiteAvailable>
+    <div class="mb-4">
+      <div class="row mb-2">
+        <ChartDateSelector MinDate="@SiteViewModel.CurrentSite.StartDate.ParseSolarDate()"
+                           MaxDate="@SiteViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
+                           OnApplyDateRange="@(async dateRange => await ApplyDateRange(dateRange))" />
       </div>
-    }
-  </Loaded>
-</LoadedView>
+
+      @if (!_chartData.IsNullOrEmpty())
+      {
+        <div class="row mt-4">
+          @foreach (var chart in _chartData)
+          {
+            var chartId = chart.Id;
+
+            <div class="col-sm-12 col-xl-6">
+              <PowerChart StartDate="@chart.StartDate" EndDate="@chart.EndDate" MaxWatts="@MaxWattValue" MinCost="@MinCostValue" MaxCost="@MaxCostValue"
+                          PowerData="@chart.Data" />
+              <button class="btn btn-outline-primary btn-width-medium mt-2" @onclick="() => RemoveChart(chartId)">Remove</button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </SiteAvailable>
+  <SiteNotAvailable>
+    <p class="mt-4 mb-4">No data to display.</p>
+    <a href="">You need to provide a Site Id</a>
+  </SiteNotAvailable>
+</SiteView>
 
 @code {
   [Inject] private ISiteViewModel SiteViewModel { get; set; }
+  [Inject] IEventAggregator EventAggregator { get; set; }
   [Inject] private ISolarViewService SolarViewService { get; set; }
   [Inject] private IChartDataCache ChartDataCache { get; set; }
 
-  private bool _isLoaded;
   private IList<ChartData> _chartData;
 
   private double MaxWattValue { get; set; }
   private double MinCostValue { get; set; }
   private double MaxCostValue { get; set; }
 
-  // Due to pre-rendering in Blazor Server you can't perform any JS interop until the OnAfterRender lifecycle method
+  public void Dispose()
+  {
+    EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+  }
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+
+    EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
+  }
+
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
     await base.OnAfterRenderAsync(firstRender);
@@ -67,17 +73,33 @@
     {
       if (SiteViewModel.CurrentSite != null)
       {
-        var chartCount = await ChartDataCache.GetCount(SiteViewModel.CurrentSite.SiteId);
-
-        if (chartCount > 0)
-        {
-          _chartData = await ChartDataCache.GetData(SiteViewModel.CurrentSite.SiteId);
-          UpdateChartLimits();
-        }
+        await LoadCharts();
       }
 
-      _isLoaded = true;
       StateHasChanged();
+    }
+  }
+
+  private async Task HandleSiteChanged(SiteChanged message)
+  {
+    if (SiteViewModel.CurrentSite != null)
+    {
+      await LoadCharts();
+    }
+
+    StateHasChanged();
+  }
+
+  private async Task LoadCharts()
+  {
+    _ = SiteViewModel.CurrentSite.WhenNotNull(nameof(SiteViewModel.CurrentSite));
+
+    var chartCount = await ChartDataCache.GetCount(SiteViewModel.CurrentSite.SiteId);
+
+    if (chartCount > 0)
+    {
+      _chartData = await ChartDataCache.GetData(SiteViewModel.CurrentSite.SiteId);
+      UpdateChartLimits();
     }
   }
 

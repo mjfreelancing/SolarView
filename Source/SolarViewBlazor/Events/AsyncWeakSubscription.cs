@@ -1,16 +1,17 @@
 ﻿using AllOverIt.Helpers;
 using System;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace SolarViewBlazor.Events
 {
-  public class WeakSubscription : ISubscription
+  public class AsyncWeakSubscription : IAsyncSubscription
   {
     private readonly WeakReference _weakReference;
     private readonly MethodInfo _handlerMethod;
     private readonly Type _handlerType;
 
-    public WeakSubscription(Delegate handler)
+    public AsyncWeakSubscription(Delegate handler)
     {
       _ = handler.WhenNotNull(nameof(handler));
 
@@ -19,28 +20,29 @@ namespace SolarViewBlazor.Events
       _handlerType = handler.GetType();
     }
 
-    public Action<TMessage> GetHandler<TMessage>()
+    public Func<TMessage, Task> GetHandler<TMessage>()
     {
       if (_handlerMethod.IsStatic)
       {
-        return (Action<TMessage>)_handlerMethod.CreateDelegate(_handlerType, null);
+        return (Func<TMessage, Task>)_handlerMethod.CreateDelegate(_handlerType, null);
       }
 
       var target = _weakReference.Target;
 
       if (target != null)
       {
-        return (Action<TMessage>)_handlerMethod.CreateDelegate(_handlerType, target);
+        return (Func<TMessage, Task>)_handlerMethod.CreateDelegate(_handlerType, target);
       }
 
       // the weak reference has gone
-      return null;
+      return _ => Task.CompletedTask;
     }
 
-    public void Handle<TMessage>(TMessage message)
+    public Task HandleAsync<TMessage>(TMessage message)
     {
       // the handler could be null if the weak reference has been garbage collected
-      GetHandler<TMessage>()?.Invoke(message);
+      // (GetHandler returns a completed task if this is the case)
+      return GetHandler<TMessage>().Invoke(message);
     }
   }
 }

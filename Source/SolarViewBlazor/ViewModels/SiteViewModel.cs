@@ -79,7 +79,7 @@ namespace SolarViewBlazor.ViewModels
     private async Task CurrentSiteChanged()
     {
       await _siteService.SetCurrentSite(CurrentSite);
-      _eventAggregator.Publish(new SiteChanged(CurrentSite));
+      await _eventAggregator.PublishAsync(new SiteChanged(CurrentSite));
     }
   }
 }
