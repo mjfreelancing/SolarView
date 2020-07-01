@@ -1,5 +1,6 @@
 using AllOverIt.Extensions;
 using AllOverIt.Helpers;
+using HtmlBuilders;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.WebJobs;
@@ -16,8 +17,8 @@ using SolarViewFunctions.Repository.Site;
 using SolarViewFunctions.SendGrid;
 using SolarViewFunctions.Tracking;
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
@@ -64,35 +65,11 @@ namespace SolarViewFunctions.Functions
         var historyItems = await updateHistoryRepository.GetPowerUpdatesAsyncEnumerable(request.SiteId,
           request.StartDate.ParseSolarDate(), request.EndDate.ParseSolarDate());
 
-        var historyGroups = historyItems
-          .Where(item => item.Status != $"{PowerUpdatedStatus.Started}")
-          .GroupBy(item => item.TriggerType);
-
-        // temporary until razor can be used
-        var content = new StringBuilder();
-        content.AppendLine($"Power Update Summary for SiteId {request.SiteId} as of {request.EndDate}");
-        content.AppendLine();
-
-        foreach (var kvp in historyGroups)
-        {
-          var trigger = kvp.Key;
-          var items = kvp.OrderBy(item => item.TriggerDateTime).AsReadOnlyList();
-
-          content.AppendLine($"Trigger: {trigger}");
-
-          foreach (var item in items)
-          {
-            var line = $"(Triggered {item.TriggerDateTime}) for {item.StartDateTime} - {item.EndDateTime}, Status = {item.Status}";
-            content.AppendLine(line);
-          }
-
-          content.AppendLine();
-        }
+        var emailContent = BuildHtml(historyItems);
 
         Tracker.TrackInfo($"Sending summary email for SiteId {siteInfo.SiteId}");
 
-        //text/html
-        var email = _emailCreator.CreateMessage(siteInfo, "Power Update Summary", "text/plain", $"{content}");
+        var email = _emailCreator.CreateMessage(siteInfo, "Power Update Summary", "text/html", $"{emailContent}");
         await sendGridCollector.AddAsync(email).ConfigureAwait(false);
         await sendGridCollector.FlushAsync().ConfigureAwait(false);
 
@@ -116,6 +93,98 @@ namespace SolarViewFunctions.Functions
           await sendGridCollector.FlushAsync().ConfigureAwait(false);
         }
       }
+    }
+
+    private static string BuildHtml(IEnumerable<PowerUpdateEntity> historyItems)
+    {
+      var historyGroups = historyItems
+        .Where(item => item.Status != $"{PowerUpdatedStatus.Started}")
+        .GroupBy(item => item.TriggerType);
+
+      var tables = new List<HtmlTag>();
+
+      foreach (var kvp in historyGroups)
+      {
+        var trigger = kvp.Key;
+        var items = kvp.OrderBy(item => item.TriggerDateTime).AsReadOnlyList();
+
+        var table = CreateTable(trigger, items);
+
+        var div = HtmlTags.Div
+          .Style("margin-bottom", "24")
+          .Append(table);
+
+        tables.Add(div);
+      }
+
+      var body = HtmlTags.Body
+        .Style("width", "640")
+        .Style("margin-left", "auto")
+        .Style("margin-right", "auto")
+        .Append(tables);
+
+      return HtmlTags.Html
+        .Append(body)
+        .ToHtmlString();
+    }
+
+    private static HtmlTag CreateTable(string trigger, IEnumerable<PowerUpdateEntity> items)
+    {
+      var table = HtmlTags.Table
+        .Style("width", "640")
+        .Style("border-collapse", "collapse")
+        .Attribute("cellpadding", "4")
+        .Attribute("cellspacing", "4")
+        .Attribute("border", "1");
+
+      var tableHeader = HtmlTags.Th
+        .Attribute("colspan", "4")
+        .Style("text-align", "center")
+        .Style("background-color", "#404040")
+        .Style("color", "white")
+        .Style("padding", "8")
+        .Style("margin-bottom", "4")
+        .Append(HtmlTags.Strong.Append($"Trigger: {trigger}"));
+
+      table = table.Append(tableHeader);
+
+      table = table.Append(CreateColumnHeaders());
+
+      foreach (var item in items)
+      {
+        var col1 = HtmlTags.Td.Append(item.TriggerDateTime);
+        var col2 = HtmlTags.Td.Append(item.StartDateTime);
+        var col3 = HtmlTags.Td.Append(item.EndDateTime);
+        var col4 = HtmlTags.Td.Append(item.Status);
+
+        var row = HtmlTags.Tr.Style("text-align", "center");
+
+        if (item.Status == $"{PowerUpdatedStatus.Error}")
+        {
+          row = row.Style("background-color", "red").Style("color", "white");
+        }
+
+        row = row.Append(col1).Append(col2).Append(col3).Append(col4);
+        table = table.Append(row);
+      }
+
+      return table;
+    }
+
+    private static HtmlTag CreateColumnHeaders()
+    {
+      var col1 = HtmlTags.Td.Append(HtmlTags.Strong.Append("Triggered"));
+      var col2 = HtmlTags.Td.Append(HtmlTags.Strong.Append("Start Time"));
+      var col3 = HtmlTags.Td.Append(HtmlTags.Strong.Append("End Time"));
+      var col4 = HtmlTags.Td.Append(HtmlTags.Strong.Append("Status"));
+
+      return HtmlTags.Tr
+        .Style("text-align", "center")
+        .Style("background-color", "#457b9d").Style("color", "white")
+        .Append(col1)
+        .Append(col2)
+        .Append(col3)
+        .Append(col4);
     }
   }
 }
