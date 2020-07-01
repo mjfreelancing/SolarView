@@ -152,11 +152,6 @@ namespace SolarViewFunctions.Functions
 
       foreach (var item in items)
       {
-        var col1 = HtmlTags.Td.Append(item.TriggerDateTime);
-        var col2 = HtmlTags.Td.Append(item.StartDateTime);
-        var col3 = HtmlTags.Td.Append(item.EndDateTime);
-        var col4 = HtmlTags.Td.Append(item.Status);
-
         var row = HtmlTags.Tr.Style("text-align", "center");
 
         if (item.Status == $"{PowerUpdatedStatus.Error}")
@@ -164,7 +159,13 @@ namespace SolarViewFunctions.Functions
           row = row.Style("background-color", "red").Style("color", "white");
         }
 
-        row = row.Append(col1).Append(col2).Append(col3).Append(col4);
+        row = row.Append(
+          HtmlTags.Td.Append(item.TriggerDateTime),
+          HtmlTags.Td.Append(item.StartDateTime),
+          HtmlTags.Td.Append(item.EndDateTime),
+          HtmlTags.Td.Append(item.Status)
+        );
+
         table = table.Append(row);
       }
 
@@ -173,18 +174,15 @@ namespace SolarViewFunctions.Functions
 
     private static HtmlTag CreateColumnHeaders()
     {
-      var col1 = HtmlTags.Td.Append(HtmlTags.Strong.Append("Triggered"));
-      var col2 = HtmlTags.Td.Append(HtmlTags.Strong.Append("Start Time"));
-      var col3 = HtmlTags.Td.Append(HtmlTags.Strong.Append("End Time"));
-      var col4 = HtmlTags.Td.Append(HtmlTags.Strong.Append("Status"));
-
       return HtmlTags.Tr
         .Style("text-align", "center")
         .Style("background-color", "#457b9d").Style("color", "white")
-        .Append(col1)
-        .Append(col2)
-        .Append(col3)
-        .Append(col4);
+        .Append(
+          HtmlTags.Td.Append(HtmlTags.Strong.Append("Triggered")),
+          HtmlTags.Td.Append(HtmlTags.Strong.Append("Start Time")),
+          HtmlTags.Td.Append(HtmlTags.Strong.Append("End Time")),
+          HtmlTags.Td.Append(HtmlTags.Strong.Append("Status"))
+        );
     }
   }
 }
