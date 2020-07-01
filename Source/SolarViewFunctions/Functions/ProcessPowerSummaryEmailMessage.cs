@@ -137,14 +137,14 @@ namespace SolarViewFunctions.Functions
         .Attribute("cellspacing", "4")
         .Attribute("border", "1");
 
-      var tableHeader = HtmlTags.Th
-        .Attribute("colspan", "4")
-        .Style("text-align", "center")
-        .Style("background-color", "#404040")
-        .Style("color", "white")
-        .Style("padding", "8")
-        .Style("margin-bottom", "4")
-        .Append(HtmlTags.Strong.Append($"Trigger: {trigger}"));
+      var tableHeader = HtmlTags.Tr.Append(
+        HtmlTags.Th.Attribute("colspan", "4")
+          .Style("background-color", "#404040")
+          .Style("color", "white")
+          .Style("padding", "8")
+          .Style("margin-bottom", "4")
+          .Append($"Trigger: {trigger}")
+      );
 
       table = table.Append(tableHeader);
 
