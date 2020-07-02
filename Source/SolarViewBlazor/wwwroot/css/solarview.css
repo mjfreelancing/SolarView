@@ -18,6 +18,10 @@
   width: 30em;
 }
 
+.chart-date-range-picker {
+  width: 26em
+}
+
 .chart-date-options {
   column-count: 2;
   column-width: 14em;
