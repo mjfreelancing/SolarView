@@ -23,7 +23,7 @@
         var readOnlyData = chartData as IReadOnlyList<ChartData>;
 
         <div class="mb-2">
-          <SfAccordion ExpandMode="ExpandMode.Single">
+          <SfAccordion ExpandMode="ExpandMode.Multiple">
             <AccordionItems>
               <AccordionItem Expanded="false">
                 <HeaderTemplate>@descriptor.Description (@chartData.Count)</HeaderTemplate>
@@ -180,7 +180,7 @@
       _chartDescriptorData.Remove(chartDescriptor);
     }
 
-    // update the cache
+    // remove from the cache
     await ChartDataCache.Remove(SiteViewModel.CurrentSite.SiteId, chartId);
   }
 }
