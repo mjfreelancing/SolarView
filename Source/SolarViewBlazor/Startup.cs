@@ -65,9 +65,7 @@ namespace SolarViewBlazor
       services.AddScoped<IKeyVaultCache, KeyVaultCache>();
       services.AddScoped<IChartDataCache, ChartDataCache>();
       services.AddScoped<ISiteService, SiteService>();
-      //services.AddScoped<IAppState, AppState>();
       services.AddScoped<ISiteViewModel, SiteViewModel>();
-
       services.AddScoped<IEventAggregator, EventAggregator>();
     }
 

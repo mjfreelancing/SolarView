@@ -19,15 +19,16 @@
     {
       @foreach (var descriptor in _chartDescriptorData.Keys)
       {
-        var chartData = _chartDescriptorData[descriptor] as IReadOnlyList<ChartData>;
+        var chartData = _chartDescriptorData[descriptor];
+        var readOnlyData = chartData as IReadOnlyList<ChartData>;
 
         <div class="mb-2">
           <SfAccordion ExpandMode="ExpandMode.Single">
             <AccordionItems>
               <AccordionItem Expanded="false">
-                <HeaderTemplate>@descriptor.Description</HeaderTemplate>
+                <HeaderTemplate>@descriptor.Description (@chartData.Count)</HeaderTemplate>
                 <ContentTemplate>
-                  <ChartContainer ChartDescriptor="@descriptor" ChartData="@chartData" ChartDeleted="@OnChartDeleted" />
+                  <ChartContainer ChartDescriptor="@descriptor" ChartData="@readOnlyData" ChartDeleted="@OnChartDeleted" />
                 </ContentTemplate>
               </AccordionItem>
             </AccordionItems>
@@ -54,11 +55,11 @@
     {nameof(AverageWattsChartDescriptor), () => new AverageWattsChartDescriptor()}
   };
 
-  // a mapping of chart data associated with each chart type
+  // a mapping of each chart type (by descriptor) to the associated chart data (1..n)
   private readonly IDictionary<IChartDescriptor, IList<ChartData>> _chartDescriptorData = new Dictionary<IChartDescriptor, IList<ChartData>>();
 
-  // a mapping of chart data to the associated chart type (simplifies deletion of charts)
-  private readonly IDictionary<string, IChartDescriptor> _chartDataDescriptors = new Dictionary<string, IChartDescriptor>();
+  // a mapping of chart Id to the associated chart type (simplifies deletion of charts)
+  private readonly IDictionary<string, IChartDescriptor> _chartDescriptors = new Dictionary<string, IChartDescriptor>();
 
   public void Dispose()
   {
@@ -109,7 +110,7 @@
 
       foreach (var chartData in allChartData)
       {
-        AddChartReference(chartData);
+        AddChartDescriptor(chartData);
       }
 
       StateHasChanged();
@@ -132,44 +133,49 @@
       Power = powerData
     };
 
-    await ChartDataCache.Add(SiteViewModel.CurrentSite.SiteId, chartData);
+    // add to the list of charts to be rendered
+    AddChartDescriptor(chartData);
 
-    AddChartReference(chartData);
+    // Add the data to the cache
+    await ChartDataCache.Add(SiteViewModel.CurrentSite.SiteId, chartData);
 
     StateHasChanged();
   }
 
-  private void AddChartReference(ChartData chartData)
+  private void AddChartDescriptor(ChartData chartData)
   {
+    // find the required chart descriptor for the data to be visualized
     var chartDescriptor = _chartDescriptorData.Keys.SingleOrDefault(item => item.Id == chartData.DescriptorId);
 
     if (chartDescriptor == null)
     {
+      // get the factory responsible for creating an instance of the chart descriptor
       if (!_chartDescriptorFactory.TryGetValue(chartData.DescriptorId, out var descriptorFactory))
       {
         throw new InvalidOperationException($"Unknown descriptor Id '{chartData.DescriptorId}'");
       }
 
+      // instantiate and initialise the first instance
       chartDescriptor = descriptorFactory.Invoke();
-
       _chartDescriptorData.Add(chartDescriptor, new List<ChartData>());
     }
 
-    var chartReferences = _chartDescriptorData[chartDescriptor];
-    chartReferences.Add(chartData);
+    // track the data associated with the required chart descriptor
+    _chartDescriptorData[chartDescriptor].Add(chartData);
 
-    _chartDataDescriptors.Add(chartData.Id, chartDescriptor);
+    // map the chart Id to its' descriptor (to simplify deleting charts)
+    _chartDescriptors.Add(chartData.Id, chartDescriptor);
   }
 
   private async Task OnChartDeleted(string chartId)
   {
-    var chartDescriptor = _chartDataDescriptors[chartId];             // the chart descriptor associated with this chart
-    var chartReferences = _chartDescriptorData[chartDescriptor];      // ALL chart data associated with the same chart type
+    var chartDescriptor = _chartDescriptors[chartId];                 // the chart descriptor associated with this chart
+    var descriptorChartData = _chartDescriptorData[chartDescriptor];  // ALL chart data associated with the same chart type
 
-    var chartData = chartReferences.Single(item => item.Id == chartId);
-    chartReferences.Remove(chartData);
+    var chartData = descriptorChartData.Single(item => item.Id == chartId);
+    descriptorChartData.Remove(chartData);
 
-    if (chartReferences.Count == 0)
+    if (descriptorChartData.Count == 0)
     {
       _chartDescriptorData.Remove(chartDescriptor);
     }
