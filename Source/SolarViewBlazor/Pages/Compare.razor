@@ -15,11 +15,10 @@
                          MaxDate="@SiteViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
                          OnApplyDateRange="@(async dateRange => await ApplyDateRange(dateRange))" />
     </div>
-    @if (_chartDescriptorData != null)
+    @if (!_chartDescriptorData.IsNullOrEmpty())
     {
-      @foreach (var descriptor in _chartDescriptorData.Keys)
+      @foreach (var (descriptor, chartData) in _chartDescriptorData)
       {
-        var chartData = _chartDescriptorData[descriptor];
         var readOnlyData = chartData as IReadOnlyList<ChartData>;
 
         <div class="mb-2">

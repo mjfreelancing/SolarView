@@ -15,7 +15,7 @@
 }
 
 .chart-date-selector {
-  width: 30em;
+  max-width: 30em;
 }
 
 .chart-date-range-picker {
