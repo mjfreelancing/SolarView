@@ -1,0 +1,21 @@
+﻿<CascadingValue Value="this">
+
+  @foreach (var chart in Charts)
+  {
+    @*Cascading: ChartContainer*@
+    @chart.Instance
+  }
+
+</CascadingValue>
+
+@code {
+  [Inject] private ISiteViewModel SiteViewModel { get; set; }
+  [Inject] private IChartDataCache ChartDataCache { get; set; }
+
+  [Parameter] public IReadOnlyList<ChartReference> Charts { get; set; }
+
+  public Task DeleteChart(string chartId)
+  {
+    return ChartDataCache.Remove(SiteViewModel.CurrentSite.SiteId, chartId);
+  }
+}

@@ -3,36 +3,38 @@
 @implements IDisposable
 @using DateRange = SolarView.Common.Models.DateRange
 
-<h1>Average Power Data</h1>
+<h1>Power Comparisons</h1>
 
 <SiteView>
   <Loading>
     <LoadingView />
   </Loading>
   <SiteAvailable>
-    <div class="mb-4">
-      <div class="row mb-2">
-        <ChartDateSelector MinDate="@SiteViewModel.CurrentSite.StartDate.ParseSolarDate()"
-                           MaxDate="@SiteViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
-                           OnApplyDateRange="@(async dateRange => await ApplyDateRange(dateRange))" />
-      </div>
-
-      @if (!_chartData.IsNullOrEmpty())
+    <div class="mb-2">
+      <ChartDateSelector MinDate="@SiteViewModel.CurrentSite.StartDate.ParseSolarDate()"
+                         MaxDate="@SiteViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
+                         OnApplyDateRange="@(async dateRange => await ApplyDateRange(dateRange))" />
+    </div>
+    @if (_chartReferences != null)
+    {
+      @foreach (var descriptor in _chartReferences.Keys)
       {
-        <div class="row mt-4">
-          @foreach (var chart in _chartData)
-          {
-            var chartId = chart.Id;
+        var charts = _chartReferences[descriptor] as IReadOnlyList<ChartReference>;
 
-            <div class="col-sm-12 col-xl-6">
-              <PowerChart StartDate="@chart.StartDate" EndDate="@chart.EndDate" MaxWatts="@MaxWattValue" MinCost="@MinCostValue" MaxCost="@MaxCostValue"
-                          PowerData="@chart.Data" />
-              <button class="btn btn-outline-primary btn-width-medium mt-2" @onclick="() => RemoveChart(chartId)">Remove</button>
-            </div>
-          }
+        <div class="mb-2">
+          <SfAccordion ExpandMode="ExpandMode.Single">
+            <AccordionItems>
+              <AccordionItem Expanded="false">
+                <HeaderTemplate>@descriptor.Description</HeaderTemplate>
+                <ContentTemplate>
+                  <ChartContainer Charts="@charts" />
+                </ContentTemplate>
+              </AccordionItem>
+            </AccordionItems>
+          </SfAccordion>
         </div>
       }
-    </div>
+    }
   </SiteAvailable>
   <SiteNotAvailable>
     <p class="mt-4 mb-4">You should not have landed here, There's no data to display.</p>
@@ -46,11 +48,13 @@
   [Inject] private ISolarViewService SolarViewService { get; set; }
   [Inject] private IChartDataCache ChartDataCache { get; set; }
 
-  private IList<ChartData> _chartData;
+  // a registry of known charts that can be added
+  private readonly IDictionary<string, Func<IChartDescriptor>> _chartDescriptorFactory = new Dictionary<string, Func<IChartDescriptor>>
+  {
+    {nameof(AverageWattsChartDescriptor), () => new AverageWattsChartDescriptor()}
+  };
 
-  private double MaxWattValue { get; set; }
-  private double MinCostValue { get; set; }
-  private double MaxCostValue { get; set; }
+  private readonly IDictionary<IChartDescriptor, IList<ChartReference>> _chartReferences = new Dictionary<IChartDescriptor, IList<ChartReference>>();
 
   public void Dispose()
   {
@@ -97,60 +101,15 @@
 
     if (chartCount > 0)
     {
-      _chartData = await ChartDataCache.GetData(SiteViewModel.CurrentSite.SiteId);
-      UpdateChartLimits();
-    }
-  }
+      var allChartData = await ChartDataCache.GetData(SiteViewModel.CurrentSite.SiteId);
 
-  private async void RemoveChart(string chartId)
-  {
-    var chartData = _chartData.Single(item => item.Id == chartId);
-    _chartData.Remove(chartData);
-
-    await ChartDataCache.Remove(SiteViewModel.CurrentSite.SiteId, chartId);
-    UpdateChartLimits();
-  }
-
-  private void RecalculateChartLimits()
-  {
-    if (_chartData.IsNullOrEmpty())
-    {
-      MaxWattValue = 0;
-      MinCostValue = 0;
-      MaxCostValue = 0;
-    }
-    else
-    {
-      var flattenedData = _chartData.SelectMany(item => item.Data).AsReadOnlyList();
-
-      var maxWatts = flattenedData
-        .SelectMany(item => new[] { item.Consumption, item.Purchased, item.SelfConsumption, item.FeedIn, item.Production })
-        .Max();
-
-      var minCost = flattenedData.Min(item => item.AdjustedCost);
-      var maxCost = flattenedData.Max(item => item.NoSolarCost);
-
-      MaxWattValue = (1 + Math.Floor(maxWatts / 500d)) * 500d;    // intervals of 500 on chart
-
-      // todo: write a helper method for these calcs that takes the sign into account
-      if (minCost > 0.0d)
+      foreach (var chartData in allChartData)
       {
-        MinCostValue = Math.Floor(minCost / 0.2d) * 0.2d;     // intervals of 0.2 on chart
-      }
-      else
-      {
-        MinCostValue = -(1 + Math.Floor(-minCost / 0.2d)) * 0.2d;     // intervals of 0.2 on chart
+        AddChartReference(chartData);
       }
 
-
-      MaxCostValue = (1 + Math.Floor(maxCost / 0.2d)) * 0.2d;     // intervals of 0.2 on chart
+      StateHasChanged();
     }
-  }
-
-  private void UpdateChartLimits()
-  {
-    RecalculateChartLimits();
-    StateHasChanged();
   }
 
   private async Task ApplyDateRange(DateRange dateRange)
@@ -163,16 +122,38 @@
     var chartData = new ChartData
     {
       Id = $"{Guid.NewGuid()}",
+      DescriptorId = nameof(AverageWattsChartDescriptor),
       StartDate = startDate,
       EndDate = endDate,
-      Data = powerData
+      Power = powerData
     };
-
-    _chartData ??= new List<ChartData>();
-    _chartData.Add(chartData);
 
     await ChartDataCache.Add(SiteViewModel.CurrentSite.SiteId, chartData);
 
-    UpdateChartLimits();
+    AddChartReference(chartData);
+
+    StateHasChanged();
+  }
+
+  private void AddChartReference(ChartData chartData)
+  {
+    var chartDescriptor = _chartReferences.Keys.SingleOrDefault(item => item.Id == chartData.DescriptorId);
+
+    if (chartDescriptor == null)
+    {
+      if (!_chartDescriptorFactory.TryGetValue(chartData.DescriptorId, out var descriptorFactory))
+      {
+        throw new InvalidOperationException($"Unknown descriptor Id '{chartData.DescriptorId}'");
+      }
+
+      chartDescriptor = descriptorFactory.Invoke();
+
+      _chartReferences.Add(chartDescriptor, new List<ChartReference>());
+    }
+
+    var chartFragment = new ChartFactory().CreateChart(chartDescriptor, chartData);
+
+    var chartReferences = _chartReferences[chartDescriptor];
+    chartReferences.Add(new ChartReference(chartFragment));
   }
 }

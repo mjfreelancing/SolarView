@@ -1,61 +1,66 @@
-﻿<SfChart Title=@($"Period: {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}")>
+﻿<div class="@Class">
+  <SfChart Title=@($"Period: {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}")>
 
-  @*<ChartZoomSettings EnableMouseWheelZooming="true" EnablePinchZooming="true" EnableSelectionZooming="true"/>*@
+    @*<ChartZoomSettings EnableMouseWheelZooming="true" EnablePinchZooming="true" EnableSelectionZooming="true"/>*@
 
-  <ChartArea>
-    <ChartAreaBorder Width="1" />
-  </ChartArea>
+    <ChartArea>
+      <ChartAreaBorder Width="1" />
+    </ChartArea>
 
-  <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
-                     IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift">
-    @*<ChartAxisMajorGridLines Width="0" />*@
-  </ChartPrimaryXAxis>
+    <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
+                       IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift">
+      @*<ChartAxisMajorGridLines Width="0" />*@
+    </ChartPrimaryXAxis>
 
-  <ChartPrimaryYAxis LabelFormat="{value}W" Minimum="0" Maximum=@MaxWatts Interval="500" />
+    <ChartPrimaryYAxis LabelFormat="{value}W" Minimum="0" Maximum=@MaxWatts Interval="500" />
 
 
-  <ChartRows>
-    <ChartRow Height="50%"></ChartRow>
-    <ChartRow Height="50%"></ChartRow>
-  </ChartRows>
+    <ChartRows>
+      <ChartRow Height="50%"></ChartRow>
+      <ChartRow Height="50%"></ChartRow>
+    </ChartRows>
 
-  <ChartAxes>
-    <ChartAxis Minimum=@MinCost Maximum=@MaxCost Interval="0.2" OpposedPosition="true" RowIndex="1" Name="Y2Axis" LabelFormat="c">
-      @*<ChartAxisLineStyle Width="1"/>*@
-    </ChartAxis>
-  </ChartAxes>
+    <ChartAxes>
+      <ChartAxis Minimum=@MinCost Maximum=@MaxCost Interval="0.2" OpposedPosition="true" RowIndex="1" Name="Y2Axis" LabelFormat="c">
+        @*<ChartAxisLineStyle Width="1"/>*@
+      </ChartAxis>
+    </ChartAxes>
 
-  <ChartTooltipSettings Enable="true" />
+    <ChartTooltipSettings Enable="true" />
 
-  <ChartSeriesCollection>
-    @*red*@
-    <ChartSeries DataSource=@PowerData Opacity="0.8" Fill="#d12e2e"
-                 Name=@nameof(SolarView.Client.Common.Models.PowerData.Consumption) XName=@nameof(SolarView.Client.Common.Models.PowerData.Time)
-                 YName=@nameof(SolarView.Client.Common.Models.PowerData.Consumption) Type="ChartSeriesType.SplineArea">
-    </ChartSeries>
+    <ChartSeriesCollection>
+      @*red*@
+      <ChartSeries DataSource=@PowerData Opacity="0.8" Fill="#d12e2e"
+                   Name=@nameof(SolarView.Client.Common.Models.PowerData.Consumption) XName=@nameof(SolarView.Client.Common.Models.PowerData.Time)
+                   YName=@nameof(SolarView.Client.Common.Models.PowerData.Consumption) Type="ChartSeriesType.SplineArea">
+      </ChartSeries>
 
-    @*green*@
-    <ChartSeries DataSource=@PowerData Opacity="0.8" Fill="#2bab4d"
-                 Name=@nameof(SolarView.Client.Common.Models.PowerData.Production) XName=@nameof(SolarView.Client.Common.Models.PowerData.Time)
-                 YName=@nameof(SolarView.Client.Common.Models.PowerData.Production) Type="ChartSeriesType.SplineArea">
-    </ChartSeries>
+      @*green*@
+      <ChartSeries DataSource=@PowerData Opacity="0.8" Fill="#2bab4d"
+                   Name=@nameof(SolarView.Client.Common.Models.PowerData.Production) XName=@nameof(SolarView.Client.Common.Models.PowerData.Time)
+                   YName=@nameof(SolarView.Client.Common.Models.PowerData.Production) Type="ChartSeriesType.SplineArea">
+      </ChartSeries>
 
-    @*blue*@
-    <ChartSeries DataSource=@PowerData Opacity="0.6" Fill="#316bde"
-                 Name=@nameof(SolarView.Client.Common.Models.PowerData.SelfConsumption) XName=@nameof(SolarView.Client.Common.Models.PowerData.Time)
-                 YName=@nameof(SolarView.Client.Common.Models.PowerData.SelfConsumption) Type="ChartSeriesType.SplineArea">
-    </ChartSeries>
+      @*blue*@
+      <ChartSeries DataSource=@PowerData Opacity="0.6" Fill="#316bde"
+                   Name=@nameof(SolarView.Client.Common.Models.PowerData.SelfConsumption) XName=@nameof(SolarView.Client.Common.Models.PowerData.Time)
+                   YName=@nameof(SolarView.Client.Common.Models.PowerData.SelfConsumption) Type="ChartSeriesType.SplineArea">
+      </ChartSeries>
 
-    <ChartSeries DataSource=@PowerData YAxisName="Y2Axis" Type="ChartSeriesType.Line" Width="2" Fill="#006400"
-                 XName=@nameof(SolarView.Client.Common.Models.PowerData.Time) YName=@nameof(SolarView.Client.Common.Models.PowerData.AdjustedCost) />
+      <ChartSeries DataSource=@PowerData YAxisName="Y2Axis" Type="ChartSeriesType.Line" Width="2" Fill="#006400"
+                   XName=@nameof(SolarView.Client.Common.Models.PowerData.Time) YName=@nameof(SolarView.Client.Common.Models.PowerData.AdjustedCost) />
 
-    <ChartSeries DataSource=@PowerData YAxisName="Y2Axis" Type="ChartSeriesType.Line" Width="2" Fill="#640000"
-                 XName=@nameof(SolarView.Client.Common.Models.PowerData.Time) YName=@nameof(SolarView.Client.Common.Models.PowerData.NoSolarCost) />
+      <ChartSeries DataSource=@PowerData YAxisName="Y2Axis" Type="ChartSeriesType.Line" Width="2" Fill="#640000"
+                   XName=@nameof(SolarView.Client.Common.Models.PowerData.Time) YName=@nameof(SolarView.Client.Common.Models.PowerData.NoSolarCost) />
 
-  </ChartSeriesCollection>
-</SfChart>
+    </ChartSeriesCollection>
+  </SfChart>
+</div>
 
 @code {
+  [Parameter]
+  public string Class { get; set; }
+
   [Parameter]
   public DateTime StartDate { get; set; }
 

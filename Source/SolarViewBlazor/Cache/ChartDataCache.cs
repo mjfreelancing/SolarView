@@ -27,7 +27,7 @@ namespace SolarViewBlazor.Cache
       return chartIds.Count;
     }
 
-    public async Task<IList<ChartData>> GetData(string siteId)
+    public async Task<IReadOnlyList<ChartData>> GetData(string siteId)
     {
       var chartIds = await GetChartIds(siteId).ConfigureAwait(false);
 
