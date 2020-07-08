@@ -1,21 +1,41 @@
 ﻿<CascadingValue Value="this">
 
-  @foreach (var chart in Charts)
+  @foreach (var chartFragment in _chartFragments.Values)
   {
     @*Cascading: ChartContainer*@
-    @chart.Instance
+    @chartFragment
   }
 
 </CascadingValue>
 
 @code {
-  [Inject] private ISiteViewModel SiteViewModel { get; set; }
-  [Inject] private IChartDataCache ChartDataCache { get; set; }
+  [Parameter] public IChartDescriptor ChartDescriptor { get; set; }
+  [Parameter] public IReadOnlyList<ChartData> ChartData { get; set; }
+  [Parameter] public EventCallback<string> ChartDeleted { get; set; }
 
-  [Parameter] public IReadOnlyList<ChartReference> Charts { get; set; }
+  private readonly IDictionary<string, RenderFragment> _chartFragments = new Dictionary<string, RenderFragment>();
 
-  public Task DeleteChart(string chartId)
+  protected override void OnParametersSet()
   {
-    return ChartDataCache.Remove(SiteViewModel.CurrentSite.SiteId, chartId);
+    base.OnParametersSet();
+
+    foreach (var chartData in ChartData)
+    {
+      // when another chart is added we need to make sure only the new item is added to the DOM (and hence _chartFragments)
+      if (!_chartFragments.ContainsKey(chartData.Id))
+      {
+        var chartFragment = new ChartFactory().CreateChart(ChartDescriptor, chartData);
+        _chartFragments.Add(chartData.Id, chartFragment);
+      }
+    }
+  }
+
+  public async Task DeleteChart(string chartId)
+  {
+    // remove the fragment associated with the chart Id
+    _chartFragments.Remove(chartId);
+
+    // notify the parent
+    await ChartDeleted.InvokeAsync(chartId);
   }
 }

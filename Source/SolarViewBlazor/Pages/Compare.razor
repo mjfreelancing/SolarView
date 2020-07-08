@@ -15,11 +15,11 @@
                          MaxDate="@SiteViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
                          OnApplyDateRange="@(async dateRange => await ApplyDateRange(dateRange))" />
     </div>
-    @if (_chartReferences != null)
+    @if (_chartDescriptorData != null)
     {
-      @foreach (var descriptor in _chartReferences.Keys)
+      @foreach (var descriptor in _chartDescriptorData.Keys)
       {
-        var charts = _chartReferences[descriptor] as IReadOnlyList<ChartReference>;
+        var chartData = _chartDescriptorData[descriptor] as IReadOnlyList<ChartData>;
 
         <div class="mb-2">
           <SfAccordion ExpandMode="ExpandMode.Single">
@@ -27,7 +27,7 @@
               <AccordionItem Expanded="false">
                 <HeaderTemplate>@descriptor.Description</HeaderTemplate>
                 <ContentTemplate>
-                  <ChartContainer Charts="@charts" />
+                  <ChartContainer ChartDescriptor="@descriptor" ChartData="@chartData" ChartDeleted="@OnChartDeleted" />
                 </ContentTemplate>
               </AccordionItem>
             </AccordionItems>
@@ -54,7 +54,11 @@
     {nameof(AverageWattsChartDescriptor), () => new AverageWattsChartDescriptor()}
   };
 
-  private readonly IDictionary<IChartDescriptor, IList<ChartReference>> _chartReferences = new Dictionary<IChartDescriptor, IList<ChartReference>>();
+  // a mapping of chart data associated with each chart type
+  private readonly IDictionary<IChartDescriptor, IList<ChartData>> _chartDescriptorData = new Dictionary<IChartDescriptor, IList<ChartData>>();
+
+  // a mapping of chart data to the associated chart type (simplifies deletion of charts)
+  private readonly IDictionary<string, IChartDescriptor> _chartDataDescriptors = new Dictionary<string, IChartDescriptor>();
 
   public void Dispose()
   {
@@ -137,7 +141,7 @@
 
   private void AddChartReference(ChartData chartData)
   {
-    var chartDescriptor = _chartReferences.Keys.SingleOrDefault(item => item.Id == chartData.DescriptorId);
+    var chartDescriptor = _chartDescriptorData.Keys.SingleOrDefault(item => item.Id == chartData.DescriptorId);
 
     if (chartDescriptor == null)
     {
@@ -148,12 +152,29 @@
 
       chartDescriptor = descriptorFactory.Invoke();
 
-      _chartReferences.Add(chartDescriptor, new List<ChartReference>());
+      _chartDescriptorData.Add(chartDescriptor, new List<ChartData>());
     }
 
-    var chartFragment = new ChartFactory().CreateChart(chartDescriptor, chartData);
+    var chartReferences = _chartDescriptorData[chartDescriptor];
+    chartReferences.Add(chartData);
 
-    var chartReferences = _chartReferences[chartDescriptor];
-    chartReferences.Add(new ChartReference(chartFragment));
+    _chartDataDescriptors.Add(chartData.Id, chartDescriptor);
+  }
+
+  private async Task OnChartDeleted(string chartId)
+  {
+    var chartDescriptor = _chartDataDescriptors[chartId];             // the chart descriptor associated with this chart
+    var chartReferences = _chartDescriptorData[chartDescriptor];      // ALL chart data associated with the same chart type
+
+    var chartData = chartReferences.Single(item => item.Id == chartId);
+    chartReferences.Remove(chartData);
+
+    if (chartReferences.Count == 0)
+    {
+      _chartDescriptorData.Remove(chartDescriptor);
+    }
+
+    // update the cache
+    await ChartDataCache.Remove(SiteViewModel.CurrentSite.SiteId, chartId);
   }
 }
