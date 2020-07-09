@@ -16,9 +16,22 @@
           <AccordionItem Expanded="false">
             <HeaderTemplate>Add a new chart</HeaderTemplate>
             <ContentTemplate>
+
+              <div class="p-2">
+                @if (!_chartSelection.IsNullOrEmpty())
+                {
+                  @foreach (var selection in _chartSelection)
+                  {
+                    <SfCheckBox CssClass="mr-4" Label=@selection.ChartDescriptor.Description @bind-Checked="selection.Selected" />
+                  }
+                }
+              </div>
+
+              <hr />
+
               <ChartDateSelector MinDate="@SiteViewModel.CurrentSite.StartDate.ParseSolarDate()"
                                  MaxDate="@SiteViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
-                                 OnApplyDateRange="@(async dateRange => await ApplyDateRange(dateRange))"/>
+                                 OnApplyDateRange="@(async dateRange => await ApplyDateRange(dateRange))" />
             </ContentTemplate>
           </AccordionItem>
         </AccordionItems>
@@ -57,16 +70,23 @@
   [Inject] private ISolarViewService SolarViewService { get; set; }
   [Inject] private IChartDataCache ChartDataCache { get; set; }
 
-  // a registry of known charts that can be added
-  private readonly IDictionary<string, Func<IChartDescriptor>> _chartDescriptorFactory = new Dictionary<string, Func<IChartDescriptor>>
+  private class ChartSelection
   {
-    {nameof(AverageWattsChartDescriptor), () => new AverageWattsChartDescriptor()}
+    public bool Selected { get; set; }
+    public IChartDescriptor ChartDescriptor { get; set; }
+  }
+
+  // a list of possible charts the user can select
+  private readonly IReadOnlyList<ChartSelection> _chartSelection = new List<ChartSelection>
+{
+    new ChartSelection {Selected = true, ChartDescriptor = new AverageWattsChartDescriptor()},
+    new ChartSelection {Selected = true, ChartDescriptor = new CostBenefitChartDescriptor()}
   };
 
-  // a mapping of each chart type (by descriptor) to the associated chart data (1..n)
+  // each chart type created (by descriptor Id) mapped to the associated chart data (1..n)
   private readonly IDictionary<IChartDescriptor, IList<ChartData>> _chartDescriptorData = new Dictionary<IChartDescriptor, IList<ChartData>>();
 
-  // a mapping of chart Id to the associated chart type (simplifies deletion of charts)
+  // each unique chart Id mapped to the associated chart descriptor (simplifies deletion of charts)
   private readonly IDictionary<string, IChartDescriptor> _chartDescriptors = new Dictionary<string, IChartDescriptor>();
 
   public void Dispose()
@@ -132,39 +152,40 @@
 
     var powerData = (await SolarViewService.CollectData(SiteViewModel.CurrentSite.SiteId, startDate, endDate)).AsReadOnlyList();
 
-    var chartData = new ChartData
+    var selectedCharts = _chartSelection.Where(item => item.Selected);
+
+    foreach (var selection in selectedCharts)
     {
-      Id = $"{Guid.NewGuid()}",
-      DescriptorId = nameof(AverageWattsChartDescriptor),
-      StartDate = startDate,
-      EndDate = endDate,
-      Power = powerData
-    };
+      var chartData = new ChartData
+      {
+        Id = $"{Guid.NewGuid()}",
+        DescriptorId = selection.ChartDescriptor.Id,
+        StartDate = startDate,
+        EndDate = endDate,
+        Power = powerData
+      };
 
-    // add to the list of charts to be rendered
-    AddChartDescriptor(chartData);
+      // add to the list of charts to be rendered
+      AddChartDescriptor(chartData);
 
-    // Add the data to the cache
-    await ChartDataCache.Add(SiteViewModel.CurrentSite.SiteId, chartData);
+      // Add the data to the cache
+      await ChartDataCache.Add(SiteViewModel.CurrentSite.SiteId, chartData);
+    }
 
     StateHasChanged();
   }
 
   private void AddChartDescriptor(ChartData chartData)
   {
-    // find the required chart descriptor for the data to be visualized
+    // determine if any of the existing charts are of the same required type
     var chartDescriptor = _chartDescriptorData.Keys.SingleOrDefault(item => item.Id == chartData.DescriptorId);
 
     if (chartDescriptor == null)
     {
-      // get the factory responsible for creating an instance of the chart descriptor
-      if (!_chartDescriptorFactory.TryGetValue(chartData.DescriptorId, out var descriptorFactory))
-      {
-        throw new InvalidOperationException($"Unknown descriptor Id '{chartData.DescriptorId}'");
-      }
+      chartDescriptor = _chartSelection
+        .Single(item => item.ChartDescriptor.Id == chartData.DescriptorId)
+        .ChartDescriptor;
 
-      // instantiate and initialise the first instance
-      chartDescriptor = descriptorFactory.Invoke();
       _chartDescriptorData.Add(chartDescriptor, new List<ChartData>());
     }
 

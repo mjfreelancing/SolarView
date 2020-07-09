@@ -11,22 +11,9 @@
     </ChartArea>
 
     <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
-                       IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift">
-      @*<ChartAxisMajorGridLines Width="0" />*@
-    </ChartPrimaryXAxis>
+                       IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
 
-    <ChartPrimaryYAxis LabelFormat="{value}W" Minimum="0" Maximum=@MaxWatts Interval="500" />
-
-    <ChartRows>
-      <ChartRow Height="50%"></ChartRow>
-      <ChartRow Height="50%"></ChartRow>
-    </ChartRows>
-
-    <ChartAxes>
-      <ChartAxis Minimum=@MinCost Maximum=@MaxCost Interval="0.2" OpposedPosition="true" RowIndex="1" Name="Y2Axis" LabelFormat="c">
-        @*<ChartAxisLineStyle Width="1"/>*@
-      </ChartAxis>
-    </ChartAxes>
+    <ChartPrimaryYAxis LabelFormat="{value}W" Minimum="0" Maximum=@_maxWatts Interval="500" />
 
     <ChartTooltipSettings Enable="true" />
 
@@ -48,13 +35,6 @@
                    Name=@nameof(PowerData.SelfConsumption) XName=@nameof(PowerData.Time)
                    YName=@nameof(PowerData.SelfConsumption) Type="ChartSeriesType.SplineArea">
       </ChartSeries>
-
-      <ChartSeries DataSource=@ChartData.Power YAxisName="Y2Axis" Type="ChartSeriesType.Line" Width="2" Fill="#006400"
-                   XName=@nameof(PowerData.Time) YName=@nameof(PowerData.AdjustedCost) />
-
-      <ChartSeries DataSource=@ChartData.Power YAxisName="Y2Axis" Type="ChartSeriesType.Line" Width="2" Fill="#640000"
-                   XName=@nameof(PowerData.Time) YName=@nameof(PowerData.NoSolarCost) />
-
     </ChartSeriesCollection>
   </SfChart>
 </div>
@@ -64,9 +44,7 @@
   [CascadingParameter] public ChartContainer Parent { get; set; }
   [Parameter] public ChartData ChartData { get; set; }
 
-  private double MaxWatts { get; set; }
-  private double MinCost { get; set; }
-  private double MaxCost { get; set; }
+  private double _maxWatts;
 
   protected override void OnParametersSet()
   {
@@ -93,21 +71,7 @@
       .SelectMany(item => new[] { item.Consumption, item.Purchased, item.SelfConsumption, item.FeedIn, item.Production })
       .Max();
 
-    var minCost = powerData.Min(item => item.AdjustedCost);
-    var maxCost = powerData.Max(item => item.NoSolarCost);
-
-    MaxWatts = (1 + Math.Floor(maxWatts / 500d)) * 500d;        // intervals of 500 on chart
-
-    if (minCost > 0.0d)
-    {
-      MinCost = Math.Floor(minCost / 0.2d) * 0.2d;              // intervals of 0.2 on chart
-    }
-    else
-    {
-      MinCost = -(1 + Math.Floor(-minCost / 0.2d)) * 0.2d;      // intervals of 0.2 on chart
-    }
-
-    MaxCost = (1 + Math.Floor(maxCost / 0.2d)) * 0.2d;          // intervals of 0.2 on chart
+    _maxWatts = (1 + Math.Floor(maxWatts / 500d)) * 500d;        // intervals of 500 on chart
   }
 
   private async Task DeleteChart()
