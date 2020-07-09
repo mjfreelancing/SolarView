@@ -1,39 +1,30 @@
 ﻿@using DateRange = SolarView.Common.Models.DateRange
 
-<SfAccordion ExpandMode="ExpandMode.Single">
-  <AccordionItems>
-    <AccordionItem Expanded="false">
-      <HeaderTemplate>Add a new chart</HeaderTemplate>
-      <ContentTemplate>
-        <div class="chart-date-selector mb-2">
-          <div class="chart-date-options">
-            @foreach (var option in _options)
-            {
-              // DateRange is null for the custom option
-              var disabled = option.DateRange != null &&
-                             option.DateRange.StartDateTime < MinDate;
+<div class="chart-date-selector mb-2">
+  <div class="chart-date-options">
+    @foreach (var option in _options)
+    {
+      // DateRange is null for the custom option
+      var disabled = option.DateRange != null &&
+                     option.DateRange.StartDateTime < MinDate;
 
-              <div class="p-1">
-                <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@option.Selected" Disabled="@disabled"
-                               OnClick="@(() => UpdateStyles(option))" />
-              </div>
-            }
-          </div>
-          <div class="p-0 mt-2 chart-date-range-picker" style="display: @_dateRangePickerDisplay">
-            <SfDateRangePicker Min="@MinDate" Max="@MaxDate" Format="yyyy-MM-dd"
-                               @bind-StartDate="@StartDate" @bind-EndDate="@EndDate"
-                               Enabled="@(!_applyDateRangeDisabled)" StrictMode="true" Placeholder="Add a new range"
-                               ValueChanged="ApplyCustomDateRange" />
+      <div class="p-1">
+        <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@option.Selected" Disabled="@disabled"
+                       OnClick="@(() => UpdateStyles(option))" />
+      </div>
+    }
+  </div>
+  <div class="p-0 mt-2 chart-date-range-picker" style="display: @_dateRangePickerDisplay">
+    <SfDateRangePicker Min="@MinDate" Max="@MaxDate" Format="yyyy-MM-dd"
+                       @bind-StartDate="@StartDate" @bind-EndDate="@EndDate"
+                       Enabled="@(!_applyDateRangeDisabled)" StrictMode="true" Placeholder="Add a new range"
+                       ValueChanged="ApplyCustomDateRange" />
 
 
-          </div>
-          <button class="btn btn-outline-primary btn-width-medium mt-2" style="display: @_applyButtonDisplay"
-                  disabled="@_applyDateRangeDisabled" @onclick="DateRangeSelected">Apply</button>
-        </div>
-      </ContentTemplate>
-    </AccordionItem>
-  </AccordionItems>
-</SfAccordion>
+  </div>
+  <button class="btn btn-outline-primary btn-width-medium mt-2" style="display: @_applyButtonDisplay"
+          disabled="@_applyDateRangeDisabled" @onclick="DateRangeSelected">Apply</button>
+</div>
 
 @code {
   [Parameter] public Func<DateRange, Task> OnApplyDateRange { get; set; }

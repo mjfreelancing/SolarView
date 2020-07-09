@@ -1,60 +1,63 @@
-﻿<SfChart Title=@($"Period: {ChartData.StartDate:yyyy-MM-dd} to {ChartData.EndDate:yyyy-MM-dd}")>
+﻿<div class="d-flex">
+  <button class="ml-auto" @onclick="DeleteChart">Remove</button>
+</div>
+<div>
+  <SfChart Title=@($"Period: {ChartData.StartDate:yyyy-MM-dd} to {ChartData.EndDate:yyyy-MM-dd}")>
 
-  @*<ChartZoomSettings EnableMouseWheelZooming="true" EnablePinchZooming="true" EnableSelectionZooming="true"/>*@
+    @*<ChartZoomSettings EnableMouseWheelZooming="true" EnablePinchZooming="true" EnableSelectionZooming="true"/>*@
 
-  <ChartArea>
-    <ChartAreaBorder Width="1" />
-  </ChartArea>
+    <ChartArea>
+      <ChartAreaBorder Width="1" />
+    </ChartArea>
 
-  <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
-                     IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift">
-    @*<ChartAxisMajorGridLines Width="0" />*@
-  </ChartPrimaryXAxis>
+    <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
+                       IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift">
+      @*<ChartAxisMajorGridLines Width="0" />*@
+    </ChartPrimaryXAxis>
 
-  <ChartPrimaryYAxis LabelFormat="{value}W" Minimum="0" Maximum=@MaxWatts Interval="500" />
+    <ChartPrimaryYAxis LabelFormat="{value}W" Minimum="0" Maximum=@MaxWatts Interval="500" />
 
-  <ChartRows>
-    <ChartRow Height="50%"></ChartRow>
-    <ChartRow Height="50%"></ChartRow>
-  </ChartRows>
+    <ChartRows>
+      <ChartRow Height="50%"></ChartRow>
+      <ChartRow Height="50%"></ChartRow>
+    </ChartRows>
 
-  <ChartAxes>
-    <ChartAxis Minimum=@MinCost Maximum=@MaxCost Interval="0.2" OpposedPosition="true" RowIndex="1" Name="Y2Axis" LabelFormat="c">
-      @*<ChartAxisLineStyle Width="1"/>*@
-    </ChartAxis>
-  </ChartAxes>
+    <ChartAxes>
+      <ChartAxis Minimum=@MinCost Maximum=@MaxCost Interval="0.2" OpposedPosition="true" RowIndex="1" Name="Y2Axis" LabelFormat="c">
+        @*<ChartAxisLineStyle Width="1"/>*@
+      </ChartAxis>
+    </ChartAxes>
 
-  <ChartTooltipSettings Enable="true" />
+    <ChartTooltipSettings Enable="true" />
 
-  <ChartSeriesCollection>
-    @*red*@
-    <ChartSeries DataSource=@ChartData.Power Opacity="0.8" Fill="#d12e2e"
-                 Name=@nameof(PowerData.Consumption) XName=@nameof(PowerData.Time)
-                 YName=@nameof(PowerData.Consumption) Type="ChartSeriesType.SplineArea">
-    </ChartSeries>
+    <ChartSeriesCollection>
+      @*red*@
+      <ChartSeries DataSource=@ChartData.Power Opacity="0.8" Fill="#d12e2e"
+                   Name=@nameof(PowerData.Consumption) XName=@nameof(PowerData.Time)
+                   YName=@nameof(PowerData.Consumption) Type="ChartSeriesType.SplineArea">
+      </ChartSeries>
 
-    @*green*@
-    <ChartSeries DataSource=@ChartData.Power Opacity="0.8" Fill="#2bab4d"
-                 Name=@nameof(PowerData.Production) XName=@nameof(PowerData.Time)
-                 YName=@nameof(PowerData.Production) Type="ChartSeriesType.SplineArea">
-    </ChartSeries>
+      @*green*@
+      <ChartSeries DataSource=@ChartData.Power Opacity="0.8" Fill="#2bab4d"
+                   Name=@nameof(PowerData.Production) XName=@nameof(PowerData.Time)
+                   YName=@nameof(PowerData.Production) Type="ChartSeriesType.SplineArea">
+      </ChartSeries>
 
-    @*blue*@
-    <ChartSeries DataSource=@ChartData.Power Opacity="0.6" Fill="#316bde"
-                 Name=@nameof(PowerData.SelfConsumption) XName=@nameof(PowerData.Time)
-                 YName=@nameof(PowerData.SelfConsumption) Type="ChartSeriesType.SplineArea">
-    </ChartSeries>
+      @*blue*@
+      <ChartSeries DataSource=@ChartData.Power Opacity="0.6" Fill="#316bde"
+                   Name=@nameof(PowerData.SelfConsumption) XName=@nameof(PowerData.Time)
+                   YName=@nameof(PowerData.SelfConsumption) Type="ChartSeriesType.SplineArea">
+      </ChartSeries>
 
-    <ChartSeries DataSource=@ChartData.Power YAxisName="Y2Axis" Type="ChartSeriesType.Line" Width="2" Fill="#006400"
-                 XName=@nameof(PowerData.Time) YName=@nameof(PowerData.AdjustedCost) />
+      <ChartSeries DataSource=@ChartData.Power YAxisName="Y2Axis" Type="ChartSeriesType.Line" Width="2" Fill="#006400"
+                   XName=@nameof(PowerData.Time) YName=@nameof(PowerData.AdjustedCost) />
 
-    <ChartSeries DataSource=@ChartData.Power YAxisName="Y2Axis" Type="ChartSeriesType.Line" Width="2" Fill="#640000"
-                 XName=@nameof(PowerData.Time) YName=@nameof(PowerData.NoSolarCost) />
+      <ChartSeries DataSource=@ChartData.Power YAxisName="Y2Axis" Type="ChartSeriesType.Line" Width="2" Fill="#640000"
+                   XName=@nameof(PowerData.Time) YName=@nameof(PowerData.NoSolarCost) />
 
-  </ChartSeriesCollection>
-</SfChart>
-
-<button @onclick="DeleteChart">Delete</button>
+    </ChartSeriesCollection>
+  </SfChart>
+</div>
 
 @code {
 

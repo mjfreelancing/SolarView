@@ -11,9 +11,18 @@
   </Loading>
   <SiteAvailable>
     <div class="mb-2">
-      <ChartDateSelector MinDate="@SiteViewModel.CurrentSite.StartDate.ParseSolarDate()"
-                         MaxDate="@SiteViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
-                         OnApplyDateRange="@(async dateRange => await ApplyDateRange(dateRange))" />
+      <SfAccordion ExpandMode="ExpandMode.Single">
+        <AccordionItems>
+          <AccordionItem Expanded="false">
+            <HeaderTemplate>Add a new chart</HeaderTemplate>
+            <ContentTemplate>
+              <ChartDateSelector MinDate="@SiteViewModel.CurrentSite.StartDate.ParseSolarDate()"
+                                 MaxDate="@SiteViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
+                                 OnApplyDateRange="@(async dateRange => await ApplyDateRange(dateRange))"/>
+            </ContentTemplate>
+          </AccordionItem>
+        </AccordionItems>
+      </SfAccordion>
     </div>
     @if (!_chartDescriptorData.IsNullOrEmpty())
     {
