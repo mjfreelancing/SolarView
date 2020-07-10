@@ -1,0 +1,64 @@
+﻿<div class="d-flex">
+  <button class="ml-auto" @onclick="DeleteChart">Remove</button>
+</div>
+<div>
+  <SfChart Title=@($"Period: {ChartData.StartDate:yyyy-MM-dd} to {ChartData.EndDate:yyyy-MM-dd}")>
+    <ChartArea>
+      <ChartAreaBorder Width="1" />
+    </ChartArea>
+
+    <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
+                       IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
+
+    <ChartPrimaryYAxis LabelFormat="{value}W" Minimum=@MinFeedIn Maximum=@MaxFeedIn Interval="500" />
+
+    <ChartTooltipSettings Enable="true" />
+
+    <ChartSeriesCollection>
+      <ChartSeries DataSource=@ChartData.Power Type="ChartSeriesType.Line" Width="2" Fill="#006400"
+                   XName=@nameof(PowerData.Time) YName=@nameof(PowerData.FeedIn) />
+    </ChartSeriesCollection>
+  </SfChart>
+</div>
+
+@code {
+
+  [CascadingParameter] public ChartContainer Parent { get; set; }
+  [Parameter] public ChartData ChartData { get; set; }
+
+  private double MinFeedIn { get; set; }
+  private double MaxFeedIn { get; set; }
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+
+    if (Parent == null)
+    {
+      throw new InvalidOperationException($"The {nameof(Parent)} parameter must be initialized");
+    }
+
+    if (ChartData?.Power == null)
+    {
+      throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
+    }
+
+    CalculateChartLimits();
+  }
+
+  private void CalculateChartLimits()
+  {
+    var powerData = ChartData.Power;
+
+    var minFeedIn = powerData.Min(item => item.FeedIn);
+    var maxFeedIn = powerData.Max(item => item.FeedIn);
+
+    MinFeedIn = Math.Floor(minFeedIn / 500d) * 500d;              // intervals of 0.2 on chart
+    MaxFeedIn = (1 + Math.Floor(maxFeedIn / 500d)) * 500d;          // intervals of 0.2 on chart
+  }
+
+  private async Task DeleteChart()
+  {
+    await Parent.DeleteChart(ChartData.Id);
+  }
+}

@@ -78,9 +78,10 @@
 
   // a list of possible charts the user can select
   private readonly IReadOnlyList<ChartSelection> _chartSelection = new List<ChartSelection>
-{
-    new ChartSelection {Selected = true, ChartDescriptor = new AverageWattsChartDescriptor()},
-    new ChartSelection {Selected = true, ChartDescriptor = new CostBenefitChartDescriptor()}
+  {
+    new ChartSelection {Selected = true, ChartDescriptor = new ConsumptionChartDescriptor()},
+    new ChartSelection {Selected = true, ChartDescriptor = new CostBenefitChartDescriptor()},
+    new ChartSelection {Selected = true, ChartDescriptor = new FeedInChartDescriptor()}
   };
 
   // each chart type created (by descriptor Id) mapped to the associated chart data (1..n)

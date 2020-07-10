@@ -15,11 +15,11 @@
     <ChartTooltipSettings Enable="true" />
 
     <ChartSeriesCollection>
-      <ChartSeries DataSource=@ChartData.Power Type="ChartSeriesType.Line" Width="2" Fill="#006400"
-                   XName=@nameof(PowerData.Time) YName=@nameof(PowerData.AdjustedCost) />
+      <ChartSeries DataSource=@_costData Type="ChartSeriesType.Line" Width="2" Fill="#006400"
+                   XName=@nameof(PowerCost.Time) YName=@nameof(PowerCost.AdjustedCost) />
 
-      <ChartSeries DataSource=@ChartData.Power Type="ChartSeriesType.Line" Width="2" Fill="#640000"
-                   XName=@nameof(PowerData.Time) YName=@nameof(PowerData.NoSolarCost) />
+      <ChartSeries DataSource=@_costData Type="ChartSeriesType.Line" Width="2" Fill="#640000"
+                   XName=@nameof(PowerCost.Time) YName=@nameof(PowerCost.NoSolarCost) />
     </ChartSeriesCollection>
   </SfChart>
 </div>
@@ -29,8 +29,33 @@
   [CascadingParameter] public ChartContainer Parent { get; set; }
   [Parameter] public ChartData ChartData { get; set; }
 
+  private class PowerCost
+  {
+    private double PurchaseCostPerW = 0.3283379d / 1000.0d;
+    private double FeedInCostPerW = 0.105d / 1000.0d;
+
+    public string Time { get; }
+    public double AdjustedCost { get; }
+    public double NoSolarCost { get; }
+
+    public PowerCost(PowerData powerData)
+    {
+      Time = powerData.Time;
+      AdjustedCost = powerData.Purchased * PurchaseCostPerW - powerData.FeedIn * FeedInCostPerW;
+      NoSolarCost = (powerData.Purchased + powerData.SelfConsumption) * PurchaseCostPerW;
+    }
+  }
+
+  private IReadOnlyList<PowerCost> _costData;
+
   private double MinCost { get; set; }
   private double MaxCost { get; set; }
+
+  // watts fed into the system are worth less than watts purchased
+  //private const double FeedInValueFactor = 0.105d / 0.3283379d;
+  //public double WithSolar => Purchased - FeedIn * FeedInValueFactor;
+  //public double WithoutSolar => Purchased + SelfConsumption;
+
 
   protected override void OnParametersSet()
   {
@@ -46,15 +71,17 @@
       throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
     }
 
+    _costData = ChartData.Power
+      .Select(item => new PowerCost(item))
+      .ToList();
+
     CalculateChartLimits();
   }
 
   private void CalculateChartLimits()
   {
-    var powerData = ChartData.Power;
-
-    var minCost = powerData.Min(item => item.AdjustedCost);
-    var maxCost = powerData.Max(item => item.NoSolarCost);
+    var minCost = _costData.Min(item => item.AdjustedCost);
+    var maxCost = _costData.Max(item => item.NoSolarCost);
 
     if (minCost > 0.0d)
     {

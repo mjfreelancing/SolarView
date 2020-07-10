@@ -4,11 +4,11 @@ using System.Collections.Generic;
 
 namespace SolarViewBlazor.Charts.Descriptors
 {
-  public class AverageWattsChartDescriptor : IChartDescriptor
+  public class FeedInChartDescriptor : IChartDescriptor
   {
-    public string Id => nameof(AverageWattsChartDescriptor);
-    public string Description => "Average Watts";
-    public Type ChartType => typeof(AverageWattsChart);
+    public string Id => nameof(FeedInChartDescriptor);
+    public string Description => "Feed In";
+    public Type ChartType => typeof(FeedInChart);
     public IDictionary<string, object> Parameters { get; } = new Dictionary<string, object>();
   }
 }
