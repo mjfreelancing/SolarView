@@ -1,11 +1,22 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
+using SolarViewBlazor.Charts.Descriptors;
 using SolarViewBlazor.Models;
+using System.Collections.Generic;
 
 namespace SolarViewBlazor.Charts
 {
   public class ChartFactory : IChartFactory
   {
+    private static readonly IReadOnlyList<IChartDescriptor> KnownDescriptors = new List<IChartDescriptor>
+    {
+      new ConsumptionChartDescriptor(),
+      new CostBenefitChartDescriptor(),
+      new FeedInChartDescriptor()
+    };
+
+    public IReadOnlyList<IChartDescriptor> ChartDescriptors => KnownDescriptors;
+
     public RenderFragment CreateChart(IChartDescriptor descriptor, ChartData chartData)
     {
       void CreateFragment(RenderTreeBuilder builder)

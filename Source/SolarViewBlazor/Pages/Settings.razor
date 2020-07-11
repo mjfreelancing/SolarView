@@ -34,7 +34,7 @@
 @code {
   [Inject] private ISiteViewModel SiteViewModel { get; set; }
   [Inject] IEventAggregator EventAggregator { get; set; }
-  [Inject] ILocalStorageService LocalStorage { get; set; }
+  [Inject] IChartDataCache ChartDataCache { get; set; }
   [Inject] private NavigationManager NavigationManager { get; set; }
 
   private bool _isLoaded;
@@ -78,8 +78,8 @@
 
   private async Task ClearLocalStorage()
   {
-    await LocalStorage.ClearAsync();
-    await SiteViewModel.ForgetSite();
+    await ChartDataCache.ClearAsync(SiteViewModel.CurrentSite.SiteId);
+    await SiteViewModel.ForgetSiteAsync();
 
     // go back to the home page so the user can connect to a new site
     NavigationManager.NavigateTo("/");

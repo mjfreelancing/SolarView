@@ -9,83 +9,180 @@ namespace SolarViewBlazor.Cache
 {
   public class ChartDataCache : IChartDataCache
   {
-    private const string IndexIdKey = "ChartIdx";
-    private const string ChartPrefixKey = "Chart";
-    private static readonly IList<string> EmptyChartIds = new List<string>();
+    private const string DataIndexKey = "DataIdx";
+    private const string ChartIndexKey = "DescriptorIdx";
     private readonly ILocalStorageService _localStorage;
     private IList<string> _chartIds;    // don't use this explicitly - use GetChartIds()
+    private IList<string> _dataIds;     // don't use this explicitly - use GetDataIds()
 
     public ChartDataCache(ILocalStorageService localStorage)
     {
       _localStorage = localStorage.WhenNotNull(nameof(localStorage));
     }
 
-    public async Task<int> GetCount(string siteId)
+    public async Task ClearAsync(string siteId)
     {
-      var chartIds = await GetChartIds(siteId);
-
-      return chartIds.Count;
+      await RemoveAllPowerData(siteId).ConfigureAwait(false);
+      await RemoveAllDescriptorData(siteId).ConfigureAwait(false);
+      await _localStorage.ClearAsync().ConfigureAwait(false);
     }
 
-    public async Task<IReadOnlyList<ChartData>> GetData(string siteId)
+    public async Task<IDictionary<string, ChartPowerData>> GetPowerDataAsync(string siteId)
+    {
+      var dataIds = await GetDataIds(siteId).ConfigureAwait(false);
+
+      var powerData = new Dictionary<string, ChartPowerData>();
+
+      foreach (var dataId in dataIds)
+      {
+        var dataIndexKey = GetDataIndexKey(siteId, dataId);
+        var chartPowerData = await _localStorage.GetItemAsync<ChartPowerData>(dataIndexKey).ConfigureAwait(false);
+
+        powerData.Add(dataId, chartPowerData);
+      }
+
+      return powerData;
+    }
+
+    public async Task AddPowerData(string siteId, string dataId, ChartPowerData powerData)
+    {
+      // update the individual power data
+      var dataIndexKey = GetDataIndexKey(siteId, dataId);
+      await _localStorage.SetItemAsync(dataIndexKey, powerData).ConfigureAwait(false);
+
+      // update the list of data Ids
+      var dataIds = await GetDataIds(siteId).ConfigureAwait(false);
+      dataIds.Add(dataId);
+
+      dataIndexKey = GetDataIndexKey(siteId);
+      await _localStorage.SetItemAsync(dataIndexKey, dataIds).ConfigureAwait(false);
+    }
+
+    public async Task RemovePowerData(string siteId, string dataId)
+    {
+      var dataIndexKey = GetDataIndexKey(siteId, dataId);
+      await _localStorage.RemoveItemAsync(dataIndexKey).ConfigureAwait(false);
+
+      var dataIds = await GetDataIds(siteId).ConfigureAwait(false);
+      dataIds.Remove(dataId);
+
+      dataIndexKey = GetDataIndexKey(siteId);
+      await _localStorage.SetItemAsync(dataIndexKey, dataIds).ConfigureAwait(false);
+    }
+
+    public async Task<IDictionary<string, DescriptorData>> GetChartDescriptorDataAsync(string siteId)
     {
       var chartIds = await GetChartIds(siteId).ConfigureAwait(false);
 
-      var chartTasks = chartIds.Select(chartId => _localStorage.GetItemAsync<ChartData>(GetChartIndexKey(siteId, chartId)));
+      var descriptorData = new Dictionary<string, DescriptorData>();
 
-      var results = await Task.WhenAll(chartTasks).ConfigureAwait(false);
+      foreach (var chartId in chartIds)
+      {
+        var chartIndexKey = GetChartIndexKey(siteId, chartId);
+        var chartDescriptor = await _localStorage.GetItemAsync<DescriptorData>(chartIndexKey).ConfigureAwait(false);
 
-      // can't just return 'results' because the calling code needs a non-fixed size collection
-      return results.ToList();
+        descriptorData.Add(chartId, chartDescriptor);
+      }
+
+      return descriptorData;
     }
 
-    public async Task Add(string siteId, ChartData chartData)
+    public async Task AddChartDescriptorData(string siteId, string chartId, DescriptorData descriptorData)
     {
-      var siteChartIndexKey = GetChartIndexKey(siteId, chartData.Id);
-      await _localStorage.SetItemAsync(siteChartIndexKey, chartData);
+      // update the individual descriptor data
+      var chartIndexKey = GetChartIndexKey(siteId, chartId);
+      await _localStorage.SetItemAsync(chartIndexKey, descriptorData).ConfigureAwait(false);
 
+      // update the list of chart Ids
       var chartIds = await GetChartIds(siteId).ConfigureAwait(false);
+      chartIds.Add(chartId);
 
-      chartIds.Add(chartData.Id);
-
-      var siteIdIndexKey = GetSiteIdIndexKey(siteId);
-      await _localStorage.SetItemAsync(siteIdIndexKey, chartIds).ConfigureAwait(false);
+      chartIndexKey = GetChartIndexKey(siteId);
+      await _localStorage.SetItemAsync(chartIndexKey, chartIds).ConfigureAwait(false);
     }
 
-    public async Task Remove(string siteId, string chartId)
+    public async Task RemoveChartDescriptorData(string siteId, string chartId)
     {
-      var siteChartIndexKey = GetChartIndexKey(siteId, chartId);
-      await _localStorage.RemoveItemAsync(siteChartIndexKey);
+      var chartIndexKey = GetChartIndexKey(siteId, chartId);
+      await _localStorage.RemoveItemAsync(chartIndexKey).ConfigureAwait(false);
 
       var chartIds = await GetChartIds(siteId).ConfigureAwait(false);
       chartIds.Remove(chartId);
 
-      var siteIdIndexKey = GetSiteIdIndexKey(siteId);
-      await _localStorage.SetItemAsync(siteIdIndexKey, chartIds).ConfigureAwait(false);
+      chartIndexKey = GetChartIndexKey(siteId);
+      await _localStorage.SetItemAsync(chartIndexKey, chartIds).ConfigureAwait(false);
     }
 
-    private async Task<IList<string>> GetChartIds(string siteId)
+    private static string GetDataIndexKey(string siteId)
     {
-      var siteIdIndexKey = GetSiteIdIndexKey(siteId);
+      // key for a list of data Id's
+      return $"{DataIndexKey}:{siteId}";
+    }
 
-      if (!await _localStorage.ContainKeyAsync(siteIdIndexKey).ConfigureAwait(false))
+    private static string GetDataIndexKey(string siteId, string dataId)
+    {
+      // key for power data against a given data Id
+      return $"{DataIndexKey}:{siteId}:{dataId}";
+    }
+
+    private async Task<IList<string>> GetDataIds(string siteId)
+    {
+      var dataIndexKey = GetDataIndexKey(siteId);
+
+      if (!await _localStorage.ContainKeyAsync(dataIndexKey).ConfigureAwait(false))
       {
-        return EmptyChartIds;
+        // can't send back a static list because the caller might add to it, resulting in it no
+        // longer being empty for the next time it is required
+        return new List<string>();
       }
 
-      _chartIds ??= await _localStorage.GetItemAsync<IList<string>>(siteIdIndexKey);
+      _dataIds ??= await _localStorage.GetItemAsync<IList<string>>(dataIndexKey).ConfigureAwait(false);
 
-      return _chartIds;
+      return _dataIds;
+    }
+
+    private static string GetChartIndexKey(string siteId)
+    {
+      // key for a list of chart Id's
+      return $"{ChartIndexKey}:{siteId}";
     }
 
     private static string GetChartIndexKey(string siteId, string chartId)
     {
-      return $"{ChartPrefixKey}:{siteId}:{chartId}";
+      // key for descriptor data against a given chart Id
+      return $"{ChartIndexKey}:{siteId}:{chartId}";
     }
 
-    private static string GetSiteIdIndexKey(string siteId)
+    private async Task<IList<string>> GetChartIds(string siteId)
     {
-      return $"{IndexIdKey}:{siteId}";
+      var chartIndexKey = GetChartIndexKey(siteId);
+
+      if (!await _localStorage.ContainKeyAsync(chartIndexKey).ConfigureAwait(false))
+      {
+        // can't send back a static list because the caller might add to it, resulting in it no
+        // longer being empty for the next time it is required
+        return new List<string>();
+      }
+
+      _chartIds ??= await _localStorage.GetItemAsync<IList<string>>(chartIndexKey).ConfigureAwait(false);
+
+      return _chartIds;
+    }
+
+    private async Task RemoveAllPowerData(string siteId)
+    {
+      var dataIds = await GetDataIds(siteId).ConfigureAwait(false);
+
+      var tasks = dataIds.Select(dataId => RemovePowerData(siteId, dataId));
+      await Task.WhenAll(tasks).ConfigureAwait(false);
+    }
+
+    private async Task RemoveAllDescriptorData(string siteId)
+    {
+      var chartIds = await GetChartIds(siteId).ConfigureAwait(false);
+
+      var tasks = chartIds.Select(chartId => RemoveChartDescriptorData(siteId, chartId));
+      await Task.WhenAll(tasks).ConfigureAwait(false);
     }
   }
 }

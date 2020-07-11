@@ -10,6 +10,6 @@ namespace SolarViewBlazor.ViewModels
     Task LoadCurrentSite(bool refresh);
     Task RefreshCurrentSite();
     Task<bool> ChangeSite(string siteId);
-    Task ForgetSite();
+    Task ForgetSiteAsync();
   }
 }

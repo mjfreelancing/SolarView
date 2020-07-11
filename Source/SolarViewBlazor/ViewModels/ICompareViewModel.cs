@@ -8,9 +8,10 @@ namespace SolarViewBlazor.ViewModels
 {
   public interface ICompareViewModel
   {
-    Task<bool> AddCharts(DateRange dateRange, IEnumerable<IChartDescriptor> chartDescriptors);
-    Task DeleteChart(string chartId);
-    IEnumerable<IChartDescriptor> GetDescriptors();
-    IEnumerable<ChartData> GetChartData(IChartDescriptor descriptor);
+    Task LoadFromCacheAsync();
+    Task<bool> AddChartsAsync(DateRange dateRange, IEnumerable<IChartDescriptor> chartDescriptors);
+    Task DeleteChartAsync(string chartId);
+    IReadOnlyList<IChartDescriptor> GetDescriptors();
+    IReadOnlyList<ChartData> GetDescriptorData(IChartDescriptor descriptor);
   }
 }

@@ -14,32 +14,67 @@ namespace SolarViewBlazor.ViewModels
 {
   public class CompareViewModel : ICompareViewModel
   {
+    private bool _cacheIsLoaded;
     private readonly ISiteViewModel _siteViewModel;
     private readonly ISolarViewService _solarViewService;
+    private readonly IChartFactory _chartFactory;
     private readonly IChartDataCache _chartDataCache;
 
     // groups of chart descriptors used to build the different chart types, mapped to one or more date ranges and associated power data
     private readonly IDictionary<IChartDescriptor, IList<ChartData>> _chartsToRender = new Dictionary<IChartDescriptor, IList<ChartData>>();
 
     // a list of all unique date ranges and associated power data (key is a unique Id associated with the data)
-    private readonly IDictionary<string, ChartPowerData> _chartPowerData = new Dictionary<string, ChartPowerData>();
+    private IDictionary<string, ChartPowerData> _chartPowerData; // = new Dictionary<string, ChartPowerData>();
 
     // a collection of all charts (key is the chart Id) and their associated descriptor / data
-    private readonly IDictionary<string, DescriptorData> _chartDescriptorData = new Dictionary<string, DescriptorData>();
+    private IDictionary<string, DescriptorData> _chartDescriptorData = new Dictionary<string, DescriptorData>();
 
-    public CompareViewModel(ISiteViewModel siteViewModel, ISolarViewService solarViewService, IChartDataCache chartDataCache)
+    public CompareViewModel(ISiteViewModel siteViewModel, ISolarViewService solarViewService, IChartFactory chartFactory, IChartDataCache chartDataCache)
     {
       _siteViewModel = siteViewModel.WhenNotNull(nameof(siteViewModel));
       _solarViewService = solarViewService.WhenNotNull(nameof(solarViewService));
+      _chartFactory = chartFactory.WhenNotNull(nameof(chartFactory));
       _chartDataCache = chartDataCache.WhenNotNull(nameof(chartDataCache));
     }
 
-    public async Task<bool> AddCharts(DateRange dateRange, IEnumerable<IChartDescriptor> chartDescriptors)
+    public async Task LoadFromCacheAsync()
+    {
+      if (!_cacheIsLoaded)
+      {
+        _chartPowerData = await _chartDataCache.GetPowerDataAsync(_siteViewModel.CurrentSite.SiteId);
+        _chartDescriptorData = await _chartDataCache.GetChartDescriptorDataAsync(_siteViewModel.CurrentSite.SiteId);
+
+        foreach (var (chartId, descriptorData) in _chartDescriptorData)
+        {
+          var chartDataId = descriptorData.ChartDataId;
+          var powerData = _chartPowerData[chartDataId];
+
+          var descriptorId = descriptorData.DescriptorId;
+          var chartDescriptor = _chartFactory.ChartDescriptors.Single(item => item.Id == descriptorId);
+
+          var chartData = new ChartData
+          {
+            Id = chartId,
+            DescriptorId = descriptorId,
+            StartDate = powerData.StartDate,
+            EndDate = powerData.EndDate,
+            Power = powerData.Power
+          };
+
+          // add to the list of charts to be rendered
+          UpdateChartsToRender(chartDescriptor, chartData);
+        }
+
+        _cacheIsLoaded = true;
+      }
+    }
+
+    public async Task<bool> AddChartsAsync(DateRange dateRange, IEnumerable<IChartDescriptor> chartDescriptors)
     {
       var (chartDataId, cachedPowerData) = await GetChartPowerData(dateRange);
 
       // determine what chart(s) need to be created (avoids duplication)
-      var missingDescriptors = chartDescriptors.Where(item => !ChartExists(chartDataId, item.Id)).ToList();
+      var missingDescriptors = chartDescriptors.Where(descriptor => !ChartDataExists(chartDataId, descriptor.Id)).ToList();
 
       if (missingDescriptors.Count == 0)
       {
@@ -63,16 +98,16 @@ namespace SolarViewBlazor.ViewModels
         };
 
         // add to the list of charts to be rendered
-        AddChartDescriptor(chartDescriptor, chartData);
+        UpdateChartsToRender(chartDescriptor, chartData);
 
         // Add the data to the cache
-        //await _chartDataCache.Add(SiteViewModel.CurrentSite.SiteId, chartData);
+        await _chartDataCache.AddChartDescriptorData(_siteViewModel.CurrentSite.SiteId, chartId, descriptorData);
       }
 
       return true;
     }
 
-    public Task DeleteChart(string chartId)
+    public async Task DeleteChartAsync(string chartId)
     {
       // get the Id of the data and descriptor associated with this chart
       var descriptorData = _chartDescriptorData[chartId];
@@ -97,36 +132,37 @@ namespace SolarViewBlazor.ViewModels
 
       // remove the chart reference
       _chartDescriptorData.Remove(chartId);
+      
+      // remove from the cache
+      await _chartDataCache.RemoveChartDescriptorData(_siteViewModel.CurrentSite.SiteId, chartId);
 
       // if there are no charts referring to the same power data then it can be removed
       if (_chartDescriptorData.Values.All(item => item.ChartDataId != descriptorData.ChartDataId))
       {
         _chartPowerData.Remove(descriptorData.ChartDataId);
+
+        // remove from the cache
+        await _chartDataCache.RemovePowerData(_siteViewModel.CurrentSite.SiteId, descriptorData.ChartDataId);
       }
-
-      // remove from the cache
-      //await _chartDataCache.Remove(SiteViewModel.CurrentSite.SiteId, chartId);
-
-      return Task.CompletedTask;
     }
 
-    public IEnumerable<IChartDescriptor> GetDescriptors()
+    public IReadOnlyList<IChartDescriptor> GetDescriptors()
     {
-      return _chartsToRender.Keys;
+      return _chartsToRender.Keys.AsReadOnlyList();
     }
 
-    public IEnumerable<ChartData> GetChartData(IChartDescriptor descriptor)
+    public IReadOnlyList<ChartData> GetDescriptorData(IChartDescriptor descriptor)
     {
-      return _chartsToRender[descriptor];
+      return _chartsToRender[descriptor].AsReadOnlyList();
     }
 
-    private bool ChartExists(string chartDataId, string chartDescriptorId)
+    private bool ChartDataExists(string chartDataId, string chartDescriptorId)
     {
       return _chartDescriptorData.Values.Any(item => item.ChartDataId == chartDataId &&
                                                      item.DescriptorId == chartDescriptorId);
     }
 
-    private void AddChartDescriptor(IChartDescriptor chartDescriptor, ChartData chartData)
+    private void UpdateChartsToRender(IChartDescriptor chartDescriptor, ChartData chartData)
     {
       // determine if any of the existing charts are of the same required type
       if (_chartsToRender.Keys.All(item => item.Id != chartData.DescriptorId))
@@ -164,6 +200,8 @@ namespace SolarViewBlazor.ViewModels
         cachedPowerData = new ChartPowerData(startDate, endDate, powerData);
 
         _chartPowerData.Add(chartDataId, cachedPowerData);
+
+        await _chartDataCache.AddPowerData(_siteViewModel.CurrentSite.SiteId, chartDataId, cachedPowerData);
       }
 
       return (chartDataId, cachedPowerData);

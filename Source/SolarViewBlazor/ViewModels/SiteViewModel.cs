@@ -60,7 +60,7 @@ namespace SolarViewBlazor.ViewModels
       return true;
     }
 
-    public Task ForgetSite()
+    public Task ForgetSiteAsync()
     {
       CurrentSite = null;
       return CurrentSiteChanged();

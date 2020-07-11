@@ -37,15 +37,16 @@
 
     @foreach (var descriptor in CompareViewModel.GetDescriptors())
     {
-      var chartData = CompareViewModel.GetChartData(descriptor).AsReadOnlyList();
+      var chartData = CompareViewModel.GetDescriptorData(descriptor);
 
-      <div class="mb-2">
+      <!-- 'key' is required to ensure the DOM is compared correctly if items are swapped or removed from anywhere other than the end -->
+      <div class="mb-2" @key="descriptor">
         <SfAccordion ExpandMode="ExpandMode.Multiple">
           <AccordionItems>
             <AccordionItem Expanded="false">
               <HeaderTemplate>@descriptor.Description (@chartData.Count)</HeaderTemplate>
               <ContentTemplate>
-                <ChartContainer ChartDescriptor="@descriptor" ChartData="@chartData" ChartDeleted="@OnChartDeleted" />
+                <ChartContainer ChartDescriptor="@descriptor" ChartData="@chartData" ChartDeleted="@(async chartId => await OnChartDeleted(chartId))" />
               </ContentTemplate>
             </AccordionItem>
           </AccordionItems>
@@ -63,16 +64,11 @@
 @code {
   [Inject] private ISiteViewModel SiteViewModel { get; set; }
   [Inject] IEventAggregator EventAggregator { get; set; }
-  //[Inject] private IChartDataCache ChartDataCache { get; set; }
+  [Inject] private IChartFactory ChartFactory { get; set; }
   [Inject] private ICompareViewModel CompareViewModel { get; set; }
 
   // a list of possible charts the user can select
-  private readonly IReadOnlyList<ChartSelection> _chartSelection = new List<ChartSelection>
-  {
-    new ChartSelection {Selected = true, ChartDescriptor = new ConsumptionChartDescriptor()},
-    new ChartSelection {Selected = true, ChartDescriptor = new CostBenefitChartDescriptor()},
-    new ChartSelection {Selected = true, ChartDescriptor = new FeedInChartDescriptor()}
-  };
+  private IReadOnlyList<ChartSelection> _chartSelection;
 
   public void Dispose()
   {
@@ -82,6 +78,14 @@
   protected override void OnInitialized()
   {
     base.OnInitialized();
+
+    _chartSelection = ChartFactory.ChartDescriptors
+      .Select(descriptor => new ChartSelection
+      {
+        Selected = true,
+        ChartDescriptor = descriptor
+      })
+      .ToList();
 
     EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
   }
@@ -111,47 +115,28 @@
     StateHasChanged();
   }
 
-  private /*async*/ Task LoadCharts()
+  private async Task LoadCharts()
   {
-    return Task.CompletedTask;
-
-    //_ = SiteViewModel.CurrentSite.WhenNotNull(nameof(SiteViewModel.CurrentSite));
-
-    //var chartCount = await ChartDataCache.GetCount(SiteViewModel.CurrentSite.SiteId);
-
-    //if (chartCount > 0)
-    //{
-    //  var allChartData = await ChartDataCache.GetData(SiteViewModel.CurrentSite.SiteId);
-
-    //  foreach (var chartData in allChartData)
-    //  {
-    //    AddChartDescriptor(chartData);
-    //  }
-
-    //  StateHasChanged();
-    //}
+    await CompareViewModel.LoadFromCacheAsync();
+    StateHasChanged();
   }
 
   private async Task ApplyDateRange(DateRange dateRange)
   {
-    var selectedCharts = _chartSelection.Where(item => item.Selected).Select(item => item.ChartDescriptor);
+    var selectedCharts = _chartSelection
+      .Where(item => item.Selected)
+      .Select(item => item.ChartDescriptor);
 
-    var added = await CompareViewModel.AddCharts(dateRange, selectedCharts);
+    var added = await CompareViewModel.AddChartsAsync(dateRange, selectedCharts);
 
     if (added)
     {
-      // Add the data to the cache
-      //await ChartDataCache.Add(SiteViewModel.CurrentSite.SiteId, chartData);
-
       StateHasChanged();
     }
   }
 
   private async Task OnChartDeleted(string chartId)
   {
-    await CompareViewModel.DeleteChart(chartId);
-
-    // remove from the cache
-    //await ChartDataCache.Remove(SiteViewModel.CurrentSite.SiteId, chartId);
+    await CompareViewModel.DeleteChartAsync(chartId);
   }
 }

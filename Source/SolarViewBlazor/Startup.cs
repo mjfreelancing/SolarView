@@ -12,6 +12,7 @@ using SolarView.Client.Common.KeyVault;
 using SolarView.Client.Common.Services.Site;
 using SolarView.Client.Common.Services.SolarView;
 using SolarViewBlazor.Cache;
+using SolarViewBlazor.Charts;
 using SolarViewBlazor.Configuration;
 using SolarViewBlazor.Events;
 using SolarViewBlazor.Services;
@@ -63,6 +64,7 @@ namespace SolarViewBlazor
       services.AddScoped<IKeyVaultConfiguration, KeyVaultConfiguration>();
       services.AddScoped<ISolarViewServiceConfiguration, SolarViewServiceConfiguration>();
       services.AddScoped<IKeyVaultCache, KeyVaultCache>();
+      services.AddScoped<IChartFactory, ChartFactory>(); 
       services.AddScoped<IChartDataCache, ChartDataCache>();
       services.AddScoped<IEventAggregator, EventAggregator>();
       services.AddScoped<ISiteService, SiteService>();

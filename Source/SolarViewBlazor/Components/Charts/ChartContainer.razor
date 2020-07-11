@@ -9,6 +9,7 @@
 </CascadingValue>
 
 @code {
+  [Inject] IChartFactory ChartFactory { get; set; }
   [Parameter] public IChartDescriptor ChartDescriptor { get; set; }
   [Parameter] public IReadOnlyList<ChartData> ChartData { get; set; }
   [Parameter] public EventCallback<string> ChartDeleted { get; set; }
@@ -24,7 +25,7 @@
       // when another chart is added we need to make sure only the new item is added to the DOM (and hence _chartFragments)
       if (!_chartFragments.ContainsKey(chartData.Id))
       {
-        var chartFragment = new ChartFactory().CreateChart(ChartDescriptor, chartData);
+        var chartFragment = ChartFactory.CreateChart(ChartDescriptor, chartData);
         _chartFragments.Add(chartData.Id, chartFragment);
       }
     }
