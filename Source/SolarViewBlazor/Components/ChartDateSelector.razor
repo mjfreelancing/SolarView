@@ -14,16 +14,28 @@
       </div>
     }
   </div>
-  <div class="p-0 mt-2 chart-date-range-picker" style="display: @_dateRangePickerDisplay">
-    <SfDateRangePicker Min="@MinDate" Max="@MaxDate" Format="yyyy-MM-dd"
-                       @bind-StartDate="@StartDate" @bind-EndDate="@EndDate"
-                       Enabled="@(!_applyDateRangeDisabled)" StrictMode="true" Placeholder="Add a new range"
-                       ValueChanged="ApplyCustomDateRange" />
+  
+  <LoadedView IsLoaded="@_dataIsLoaded">
+    <Loading>
+      <div class="mt-4">
+        <h5>Loading power data...</h5>
+      </div>
+    </Loading>
+    <Loaded>
+      <div class="p-0 mt-2 chart-date-range-picker" style="display: @_dateRangePickerDisplay">
+        <SfDateRangePicker Min="@MinDate" Max="@MaxDate" Format="yyyy-MM-dd"
+                           @bind-StartDate="@_startDate" @bind-EndDate="@_endDate"
+                           StrictMode="true" Placeholder="Add a new range"
+                           ValueChanged="ApplyCustomDateRange" />
 
 
-  </div>
-  <button class="btn btn-outline-primary btn-width-medium mt-2" style="display: @_applyButtonDisplay"
-          disabled="@_applyDateRangeDisabled" @onclick="DateRangeSelected">Apply</button>
+      </div>
+      <button class="btn btn-outline-primary btn-width-medium mt-2" style="display: @_applyButtonDisplay"
+              @onclick="DateRangeSelected">
+        Apply
+      </button>
+    </Loaded>
+  </LoadedView>
 </div>
 
 @code {
@@ -32,11 +44,11 @@
   [Parameter] public DateTime MaxDate { get; set; }
 
   private string _dateRangePickerDisplay = "none";
-  private bool _applyDateRangeDisabled;
   private string _applyButtonDisplay = "inline-block";
   private IReadOnlyList<DateRangeSelectOption> _options;
-  private DateTime? StartDate;
-  private DateTime? EndDate;
+  private DateTime? _startDate;
+  private DateTime? _endDate;
+  private bool _dataIsLoaded = true;
 
   protected override void OnParametersSet()
   {
@@ -106,22 +118,26 @@
 
   private async Task ApplyCustomDateRange()
   {
-    if (!StartDate.HasValue || !EndDate.HasValue)
+    if (!_startDate.HasValue || !_endDate.HasValue)
     {
       return;
     }
 
     try
     {
-      _applyDateRangeDisabled = true;
+      _dataIsLoaded = false;
 
-      var dateRange = new DateRange(StartDate.Value, EndDate.Value);
+      var dateRange = new DateRange(_startDate.Value, _endDate.Value);
 
       await OnApplyDateRange.Invoke(dateRange);
     }
     finally
     {
-      _applyDateRangeDisabled = false;
+      _dataIsLoaded = true;
+
+      // clear any manually entered dates
+      _startDate = default;
+      _endDate = default;
     }
   }
 
@@ -129,7 +145,7 @@
   {
     try
     {
-      _applyDateRangeDisabled = true;
+      _dataIsLoaded = false;
 
       var dateRange = _options.Single(item => item.Selected).DateRange;
 
@@ -142,11 +158,7 @@
     }
     finally
     {
-      // clear any manually entered dates
-      StartDate = default;
-      EndDate = default;
-
-      _applyDateRangeDisabled = false;
+      _dataIsLoaded = true;
     }
   }
 }
