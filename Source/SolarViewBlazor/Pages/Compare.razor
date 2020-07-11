@@ -35,25 +35,22 @@
       </SfAccordion>
     </div>
 
-    @if (!_chartsToRender.IsNullOrEmpty())
+    @foreach (var descriptor in CompareViewModel.GetDescriptors())
     {
-      @foreach (var (descriptor, chartData) in _chartsToRender)
-      {
-        var readOnlyData = chartData as IReadOnlyList<ChartData>;
+      var chartData = CompareViewModel.GetChartData(descriptor).AsReadOnlyList();
 
-        <div class="mb-2">
-          <SfAccordion ExpandMode="ExpandMode.Multiple">
-            <AccordionItems>
-              <AccordionItem Expanded="false">
-                <HeaderTemplate>@descriptor.Description (@chartData.Count)</HeaderTemplate>
-                <ContentTemplate>
-                  <ChartContainer ChartDescriptor="@descriptor" ChartData="@readOnlyData" ChartDeleted="@OnChartDeleted" />
-                </ContentTemplate>
-              </AccordionItem>
-            </AccordionItems>
-          </SfAccordion>
-        </div>
-      }
+      <div class="mb-2">
+        <SfAccordion ExpandMode="ExpandMode.Multiple">
+          <AccordionItems>
+            <AccordionItem Expanded="false">
+              <HeaderTemplate>@descriptor.Description (@chartData.Count)</HeaderTemplate>
+              <ContentTemplate>
+                <ChartContainer ChartDescriptor="@descriptor" ChartData="@chartData" ChartDeleted="@OnChartDeleted" />
+              </ContentTemplate>
+            </AccordionItem>
+          </AccordionItems>
+        </SfAccordion>
+      </div>
     }
 
   </SiteAvailable>
@@ -66,41 +63,8 @@
 @code {
   [Inject] private ISiteViewModel SiteViewModel { get; set; }
   [Inject] IEventAggregator EventAggregator { get; set; }
-  [Inject] private ISolarViewService SolarViewService { get; set; }
-  [Inject] private IChartDataCache ChartDataCache { get; set; }
-
-  private class ChartSelection
-  {
-    public bool Selected { get; set; }
-    public IChartDescriptor ChartDescriptor { get; set; }
-  }
-
-  // chart data that can be shared amongst multiple descriptors
-  private class ChartPowerData
-  {
-    public DateTime StartDate { get; }
-    public DateTime EndDate { get; }
-    public IReadOnlyList<PowerData> Power { get; set; }
-
-    public ChartPowerData(DateTime startDate, DateTime endDate, IReadOnlyList<PowerData> power)
-    {
-      StartDate = startDate;
-      EndDate = endDate;
-      Power = power;
-    }
-  }
-
-  private class DescriptorData
-  {
-    public string ChartDataId { get; set; }           // uniquely identify each cached chart
-    public string DescriptorId { get; set; }          // identify the descriptor used to visualize this data
-
-    public DescriptorData(string chartDataId, string descriptorId)
-    {
-      ChartDataId = chartDataId;
-      DescriptorId = descriptorId;
-    }
-  }
+  //[Inject] private IChartDataCache ChartDataCache { get; set; }
+  [Inject] private ICompareViewModel CompareViewModel { get; set; }
 
   // a list of possible charts the user can select
   private readonly IReadOnlyList<ChartSelection> _chartSelection = new List<ChartSelection>
@@ -109,20 +73,6 @@
     new ChartSelection {Selected = true, ChartDescriptor = new CostBenefitChartDescriptor()},
     new ChartSelection {Selected = true, ChartDescriptor = new FeedInChartDescriptor()}
   };
-
-
-  private readonly IDictionary<IChartDescriptor, IList<ChartData>> _chartsToRender = new Dictionary<IChartDescriptor, IList<ChartData>>();
-
-
-
-
-
-  // a list of all unique date ranges and associated data (key is a unique Id associated with the data)
-  private readonly IDictionary<string, ChartPowerData> _chartPowerData = new Dictionary<string, ChartPowerData>();
-
-  // a collection of all charts (key is the chart GUID) and their associated descriptor / data
-  private readonly IDictionary<string, DescriptorData> _chartDescriptorData = new Dictionary<string, DescriptorData>();
-
 
   public void Dispose()
   {
@@ -184,127 +134,24 @@
 
   private async Task ApplyDateRange(DateRange dateRange)
   {
-    var (chartDataId, cachedPowerData) = await GetChartPowerData(dateRange);
+    var selectedCharts = _chartSelection.Where(item => item.Selected).Select(item => item.ChartDescriptor);
 
-    // what chart(s) need to be created (avoids duplication)
-    var selectedCharts = _chartSelection.Where(item => item.Selected && !ChartExists(chartDataId, item.ChartDescriptor.Id));
+    var added = await CompareViewModel.AddCharts(dateRange, selectedCharts);
 
-    foreach (var selection in selectedCharts)
+    if (added)
     {
-      var chartId = $"{Guid.NewGuid()}";
-      var descriptorData = new DescriptorData(chartDataId, selection.ChartDescriptor.Id);
-
-      _chartDescriptorData.Add(chartId, descriptorData);
-
-      var chartData = new ChartData
-      {
-        Id = chartId,
-        DescriptorId = selection.ChartDescriptor.Id,
-        StartDate = dateRange.StartDateTime,
-        EndDate = dateRange.EndDateTime,
-        Power = cachedPowerData.Power
-      };
-
-      // add to the list of charts to be rendered
-      AddChartDescriptor(chartData);
-
       // Add the data to the cache
       //await ChartDataCache.Add(SiteViewModel.CurrentSite.SiteId, chartData);
+
+      StateHasChanged();
     }
-
-    StateHasChanged();
-  }
-
-  private async Task<(string chartDataId, ChartPowerData cachedPowerData)> GetChartPowerData(DateRange dateRange)
-  {
-    var startDate = dateRange.StartDateTime;
-    var endDate = dateRange.EndDateTime;
-
-    // check if we already have the required data
-    var cachedPowerDataItems = _chartPowerData
-      .Where(kvp => kvp.Value.StartDate == startDate &&
-                    kvp.Value.EndDate == endDate)
-      .ToList();
-
-    string chartDataId;
-    ChartPowerData cachedPowerData;
-
-    if (cachedPowerDataItems.Any())
-    {
-      (chartDataId, cachedPowerData) = cachedPowerDataItems.First();
-    }
-    else
-    {
-      var powerData = (await SolarViewService.CollectData(SiteViewModel.CurrentSite.SiteId, startDate, endDate)).AsReadOnlyList();
-
-      chartDataId = $"{Guid.NewGuid()}";
-      cachedPowerData = new ChartPowerData(startDate, endDate, powerData);
-
-      _chartPowerData.Add(chartDataId, cachedPowerData);
-    }
-
-    return (chartDataId, cachedPowerData);
-  }
-
-  private bool ChartExists(string chartDataId, string chartDescriptorId)
-  {
-    return _chartDescriptorData.Values.Any(item => item.ChartDataId == chartDataId &&
-                                                   item.DescriptorId == chartDescriptorId);
-  }
-
-  private void AddChartDescriptor(ChartData chartData)
-  {
-    // determine if any of the existing charts are of the same required type
-    var chartDescriptor = _chartsToRender.Keys.SingleOrDefault(item => item.Id == chartData.DescriptorId);
-
-    if (chartDescriptor == null)
-    {
-      chartDescriptor = _chartSelection
-        .Single(item => item.ChartDescriptor.Id == chartData.DescriptorId)
-        .ChartDescriptor;
-
-      _chartsToRender.Add(chartDescriptor, new List<ChartData>());
-    }
-
-    // track the data associated with the required chart descriptor
-    _chartsToRender[chartDescriptor].Add(chartData);
   }
 
   private async Task OnChartDeleted(string chartId)
   {
-    // get the Id of the data and descriptor associated with this chart
-    var descriptorData = _chartDescriptorData[chartId];
+    await CompareViewModel.DeleteChart(chartId);
 
-    // get the chart descriptor
-    var chartDescriptor = _chartsToRender
-      .Single(item => item.Key.Id == descriptorData.DescriptorId)
-      .Key;
-
-    // get all data associated with the descriptor (multiple charts)
-    var descriptorChartData = _chartsToRender[chartDescriptor];
-
-    // remove the data associated with this chart
-    var chartData = descriptorChartData.Single(item => item.Id == chartId);
-    descriptorChartData.Remove(chartData);
-
-    // if there's no more charts associated with this descriptor then we can remove the entire group
-    if (descriptorChartData.Count == 0)
-    {
-      _chartsToRender.Remove(chartDescriptor);
-    }
-
-    // remove the chart reference
-    _chartDescriptorData.Remove(chartId);
-
-    // if there are no charts referring to the same power data then it can be removed
-    if (_chartDescriptorData.Values.All(item => item.ChartDataId != descriptorData.ChartDataId))
-    {
-      _chartPowerData.Remove(descriptorData.ChartDataId);
-    }
-
-
-
-  // remove from the cache
-    await ChartDataCache.Remove(SiteViewModel.CurrentSite.SiteId, chartId);
+    // remove from the cache
+    //await ChartDataCache.Remove(SiteViewModel.CurrentSite.SiteId, chartId);
   }
 }

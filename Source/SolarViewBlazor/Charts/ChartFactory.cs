@@ -6,11 +6,6 @@ namespace SolarViewBlazor.Charts
 {
   public class ChartFactory : IChartFactory
   {
-    //public IChartDescriptor RegisterChartType(Type chartType)
-    //{
-    //  throw new NotImplementedException();
-    //}
-
     public RenderFragment CreateChart(IChartDescriptor descriptor, ChartData chartData)
     {
       void CreateFragment(RenderTreeBuilder builder)

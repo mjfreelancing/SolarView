@@ -5,7 +5,6 @@ namespace SolarViewBlazor.Charts
 {
   public interface IChartFactory
   {
-    //IChartDescriptor RegisterChartType(Type chartType);
     RenderFragment CreateChart(IChartDescriptor descriptor, ChartData chartData);
   }
 }

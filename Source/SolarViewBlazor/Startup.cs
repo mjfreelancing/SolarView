@@ -64,9 +64,10 @@ namespace SolarViewBlazor
       services.AddScoped<ISolarViewServiceConfiguration, SolarViewServiceConfiguration>();
       services.AddScoped<IKeyVaultCache, KeyVaultCache>();
       services.AddScoped<IChartDataCache, ChartDataCache>();
+      services.AddScoped<IEventAggregator, EventAggregator>();
       services.AddScoped<ISiteService, SiteService>();
       services.AddScoped<ISiteViewModel, SiteViewModel>();
-      services.AddScoped<IEventAggregator, EventAggregator>();
+      services.AddScoped<ICompareViewModel, CompareViewModel>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
