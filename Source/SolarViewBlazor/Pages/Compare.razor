@@ -85,6 +85,7 @@
         Selected = true,
         ChartDescriptor = descriptor
       })
+      .OrderBy(item => item.ChartDescriptor.Description)
       .ToList();
 
     EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
