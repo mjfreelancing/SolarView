@@ -19,6 +19,7 @@ namespace SolarViewBlazor.Models
     {
       StartDate = startDate;
       EndDate = endDate;
-      Power = power;    }
+      Power = power;
+    }
   }
 }

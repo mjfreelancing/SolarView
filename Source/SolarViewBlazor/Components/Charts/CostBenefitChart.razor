@@ -37,7 +37,7 @@
   {
     private double PurchaseCostPerW = 0.3283379d / 1000.0d;
     private double FeedInCostPerW = 0.105d / 1000.0d;
-    private double FixedCostPerQuarterHour = 0.99d / 24 / 4;
+    private double FixedCostPerQuarterHour = 0.99d / 24.0d / 4.0d;
 
     public string Time { get; }
     public double WithSolarCost { get; }
@@ -83,31 +83,18 @@
 
       foreach (var powerData in ChartData.Power)
       {
-        // todo: consider mapping
-
         if (lastPowerItem == default)
         {
           lastPowerItem = new PowerData
           {
             Time = powerData.Time,
-            WattHour = new WattsData
-            {
-              Consumption = powerData.WattHour.Consumption,
-              Production = powerData.WattHour.Production,
-              FeedIn = powerData.WattHour.FeedIn,
-              Purchased = powerData.WattHour.Purchased,
-              SelfConsumption = powerData.WattHour.SelfConsumption
-            }
+            WattHour = powerData.WattHour
           };
         }
         else
         {
           lastPowerItem.Time = powerData.Time;
-          lastPowerItem.WattHour.Consumption += powerData.WattHour.Consumption;
-          lastPowerItem.WattHour.Production += powerData.WattHour.Production;
-          lastPowerItem.WattHour.FeedIn += powerData.WattHour.FeedIn;
-          lastPowerItem.WattHour.Purchased += powerData.WattHour.Purchased;
-          lastPowerItem.WattHour.SelfConsumption += powerData.WattHour.SelfConsumption;
+          lastPowerItem.WattHour = WattsDataHelpers.Aggregate(lastPowerItem.WattHour, powerData.WattHour);
         }
 
         costData.Add(new PowerCost(lastPowerItem));
@@ -129,18 +116,22 @@
   {
     var minCost = _costData.Min(item => item.WithSolarCost);
     var maxCost = _costData.Max(item => item.WithoutSolarCost);
-    _interval = _cumulativeMode ? 1.0d : 0.2d;
+
+    var range = maxCost - minCost;
+    var scalingFactor = range < 1.0d ? 100 : 1;
 
     if (minCost > 0.0d)
     {
-      _minCost = Math.Floor(minCost / _interval) * _interval;
+      _minCost = (Math.Floor(minCost * scalingFactor) - 0.5d) / scalingFactor;
     }
     else
     {
-      _minCost = -(1 + Math.Floor(-minCost / _interval)) * _interval;
+      _minCost = (-Math.Ceiling(-minCost * scalingFactor) - 0.5d) / scalingFactor;
     }
 
-    _maxCost = (1 + Math.Floor(maxCost / _interval)) * _interval;
+    _maxCost = (Math.Ceiling(maxCost * scalingFactor) + 0.5d) / scalingFactor;
+
+    _interval = (_maxCost - _minCost) / 8;
   }
 
   private async Task DeleteChart()
