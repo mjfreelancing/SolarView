@@ -78,29 +78,17 @@
   {
     if (_cumulativeMode)
     {
-      var costData = new List<PowerCost>();
-      var lastPowerItem = default(PowerData);
+      var lastPowerItem = new PowerData { WattHour = new WattsData() };
 
-      foreach (var powerData in ChartData.Power)
-      {
-        if (lastPowerItem == default)
-        {
-          lastPowerItem = new PowerData
-          {
-            Time = powerData.Time,
-            WattHour = powerData.WattHour
-          };
-        }
-        else
+      _costData = ChartData.Power
+        .Select(powerData =>
         {
           lastPowerItem.Time = powerData.Time;
           lastPowerItem.WattHour = WattsDataHelpers.Aggregate(lastPowerItem.WattHour, powerData.WattHour);
-        }
 
-        costData.Add(new PowerCost(lastPowerItem));
-      }
-
-      _costData = costData;
+          return new PowerCost(lastPowerItem);
+        })
+        .ToList();
     }
     else
     {
