@@ -1,4 +1,14 @@
-﻿<div class="p-2 d-flex">
+﻿@using SolarView.Client.Common.Helpers
+
+<div class="p-2 d-flex align-items-center">
+  <SfCheckBox Label="Cumulative" @bind-Checked="@_cumulativeMode" @onchange="CalculateChartData" />
+  <div class="ml-4" style="width: 120px">
+    <SfDropDownList TValue="PowerUnit" TItem="DisplayUnit" Placeholder="Units" PopupHeight="100" Value="@_selectedUnit"
+                    DataSource="@_displayUnits">
+      <DropDownListFieldSettings Value="@nameof(DisplayUnit.Id)" Text="@nameof(DisplayUnit.Text)" />
+      <DropDownListEvents TValue="PowerUnit" ValueChange="OnUnitChange" />
+    </SfDropDownList>
+  </div>
   <button class="ml-auto" @onclick="DeleteChart">Remove</button>
 </div>
 <div>
@@ -10,7 +20,8 @@
     <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
                        IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
 
-    <ChartPrimaryYAxis LabelFormat="{value}W" Minimum=@_minFeedIn Maximum=@_maxFeedIn Interval="500" />
+    @*Minimum=@_minFeedIn Maximum=@_maxFeedIn Interval="500"*@
+    <ChartPrimaryYAxis LabelFormat="@_axisFormat" />
 
     <ChartTooltipSettings Enable="true" />
 
@@ -39,44 +50,136 @@
     }
   }
 
-  private double _minFeedIn;
-  private double _maxFeedIn;
-  private IReadOnlyList<TimeFeedIn> _timeFeedIn;
-
-  protected override void OnParametersSet()
+  public enum PowerUnit
   {
-    base.OnParametersSet();
-
-    if (Parent == null)
-    {
-      throw new InvalidOperationException($"The {nameof(Parent)} parameter must be initialized");
-    }
-
-    if (ChartData?.Power == null)
-    {
-      throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
-    }
-
-    _timeFeedIn = ChartData.Power
-      .Select(item => new TimeFeedIn(item.Time, item.Watts.FeedIn))
-      .AsReadOnlyList();
-
-    CalculateChartLimits();
+    Watts,
+    WattHour
   }
 
-  private void CalculateChartLimits()
+  private class DisplayUnit
   {
-    //var powerData = ChartData.Power;
+    public PowerUnit Id { get; }
+    public string Text { get; }
 
-    var minFeedIn = _timeFeedIn.Min(item => item.FeedIn);
-    var maxFeedIn = _timeFeedIn.Max(item => item.FeedIn);
+    public DisplayUnit(PowerUnit id, string text)
+    {
+      Id = id;
+      Text = text;
+    }
+  }
 
-    _minFeedIn = Math.Floor(minFeedIn / 500d) * 500d;              // intervals of 0.2 on chart
-    _maxFeedIn = (1 + Math.Floor(maxFeedIn / 500d)) * 500d;          // intervals of 0.2 on chart
+  private readonly IList<DisplayUnit> _displayUnits = new List<DisplayUnit>
+{
+    new DisplayUnit(PowerUnit.Watts, "Watts"),
+    new DisplayUnit(PowerUnit.WattHour, "Watt-Hour"),
+  };
+
+  private PowerUnit _selectedUnit = PowerUnit.Watts;
+
+  private double _minFeedIn;
+  private double _maxFeedIn;
+  private bool _cumulativeMode;
+  private string _axisFormat => GetAxisFormat();
+  private IReadOnlyList<TimeFeedIn> _timeFeedIn;
+
+  //protected override void OnParametersSet()
+  //{
+  //  base.OnParametersSet();
+
+  //  if (Parent == null)
+  //  {
+  //    throw new InvalidOperationException($"The {nameof(Parent)} parameter must be initialized");
+  //  }
+
+  //  if (ChartData?.Power == null)
+  //  {
+  //    throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
+  //  }
+
+  //  _timeFeedIn = ChartData.Power
+  //    .Select(item => new TimeFeedIn(item.Time, item.Watts.FeedIn))
+  //    .AsReadOnlyList();
+
+  //  CalculateChartLimits();
+  //}
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    CalculateChartData();
+  }
+
+  private void CalculateChartData()
+  {
+    if (_cumulativeMode)
+    {
+      var lastPowerItem = new PowerData { Watts = new WattsData() };
+
+      _timeFeedIn = ChartData.Power
+      .Select(powerData =>
+      {
+        var scaledData = _selectedUnit == PowerUnit.Watts
+          ? WattsDataHelpers.Scale(powerData.Watts, 0.001d)
+          : WattsDataHelpers.Scale(powerData.WattHour, 0.001d);
+
+        lastPowerItem.Watts = WattsDataHelpers.Aggregate(lastPowerItem.Watts, scaledData);
+
+        return new TimeFeedIn(powerData.Time, lastPowerItem.Watts.FeedIn);
+      })
+      .AsReadOnlyList();
+    }
+    else
+    {
+      _timeFeedIn = ChartData.Power
+        .Select(item =>
+        {
+          var wattData = _selectedUnit == PowerUnit.Watts
+            ? item.Watts
+            : item.WattHour;
+
+          return new TimeFeedIn(item.Time, wattData.FeedIn);
+        })
+        .AsReadOnlyList();
+    }
+
+    //CalculateChartLimits()
+  }
+
+  //private void CalculateChartLimits()
+  //{
+  //  var minFeedIn = _timeFeedIn.Min(item => item.FeedIn);
+  //  var maxFeedIn = _timeFeedIn.Max(item => item.FeedIn);
+
+  //  _minFeedIn = Math.Floor(minFeedIn / 500d) * 500d;
+  //  _maxFeedIn = (1 + Math.Floor(maxFeedIn / 500d)) * 500d;
+  //}
+
+  private string GetAxisFormat()
+  {
+    return (_selectedUnit, _cumulativeMode) switch
+    {
+      (PowerUnit.Watts, true) => "{value}KW",
+      (PowerUnit.Watts, false) => "{value}W",
+      (PowerUnit.WattHour, true) => "{value}KWh",
+      (PowerUnit.WattHour, false) => "{value}Wh",
+      (_, _) => throw new InvalidOperationException($"Unknown Unit/Mode combination: {_selectedUnit}/{_cumulativeMode}")
+    };
+
+    //return _cumulativeMode switch
+    //{
+    //  true => "{value}KW",
+    //  false => "{value}W"
+    //};
   }
 
   private async Task DeleteChart()
   {
     await Parent.DeleteChart(ChartData.Id);
+  }
+
+  private void OnUnitChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<PowerUnit> args)
+  {
+    _selectedUnit = args.Value;
+    CalculateChartData();
   }
 }

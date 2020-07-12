@@ -1,6 +1,6 @@
 ﻿@using SolarView.Client.Common.Helpers
 <div class="p-2 d-flex">
-  <SfCheckBox Label="Cumulative" @bind-Checked="@_cumulativeMode" OnClick="@CalculateChartData" />
+  <SfCheckBox Label="Cumulative" @bind-Checked="@_cumulativeMode" @onchange="CalculateChartData" />
   <button class="ml-auto" @onclick="DeleteChart">Remove</button>
 </div>
 <div>
@@ -57,20 +57,26 @@
   private bool _cumulativeMode;
   private IReadOnlyList<PowerCost> _costData;
 
-  protected override void OnParametersSet()
+  //protected override void OnParametersSet()
+  //{
+  //  base.OnParametersSet();
+
+  //  if (Parent == null)
+  //  {
+  //    throw new InvalidOperationException($"The {nameof(Parent)} parameter must be initialized");
+  //  }
+
+  //  if (ChartData?.Power == null)
+  //  {
+  //    throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
+  //  }
+
+  //  CalculateChartData();
+  //}
+
+  protected override void OnInitialized()
   {
-    base.OnParametersSet();
-
-    if (Parent == null)
-    {
-      throw new InvalidOperationException($"The {nameof(Parent)} parameter must be initialized");
-    }
-
-    if (ChartData?.Power == null)
-    {
-      throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
-    }
-
+    base.OnInitialized();
     CalculateChartData();
   }
 

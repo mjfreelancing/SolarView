@@ -10,7 +10,7 @@
 
       <div class="p-1">
         <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@option.Selected" Disabled="@disabled"
-                       OnClick="@(() => UpdateStyles(option))" />
+                       @onclick="@(() => UpdateStyles(option))" />
       </div>
     }
   </div>

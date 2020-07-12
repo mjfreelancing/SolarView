@@ -1,6 +1,7 @@
 ﻿@using SolarView.Client.Common.Helpers
+
 <div class="p-2 d-flex align-items-center">
-  <SfCheckBox Label="Cumulative" @bind-Checked="@_cumulativeMode" OnClick="@CalculateChartData" />
+  <SfCheckBox Label="Cumulative" @bind-Checked="@_cumulativeMode" @onchange="CalculateChartData" />
   <div class="ml-4" style="width: 120px">
     <SfDropDownList TValue="PowerUnit" TItem="DisplayUnit" Placeholder="Units" PopupHeight="100" Value="@_selectedUnit"
                     DataSource="@_displayUnits">
@@ -118,20 +119,24 @@
 
   private IReadOnlyList<TimeWatts> _timeWatts;
 
-  protected override void OnParametersSet()
+  //protected override void OnParametersSet()
+  //{
+  //  base.OnParametersSet();
+
+  //  if (Parent == null)
+  //  {
+  //    throw new InvalidOperationException($"The {nameof(Parent)} parameter must be initialized");
+  //  }
+
+  //  if (ChartData?.Power == null)
+  //  {
+  //    throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
+  //  }
+  //}
+
+  protected override void OnInitialized()
   {
-    base.OnParametersSet();
-
-    if (Parent == null)
-    {
-      throw new InvalidOperationException($"The {nameof(Parent)} parameter must be initialized");
-    }
-
-    if (ChartData?.Power == null)
-    {
-      throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
-    }
-
+    base.OnInitialized();
     CalculateChartData();
   }
 
