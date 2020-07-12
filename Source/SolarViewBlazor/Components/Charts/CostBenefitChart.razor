@@ -1,6 +1,9 @@
 ﻿<div class="d-flex">
   <button class="ml-auto" @onclick="DeleteChart">Remove</button>
 </div>
+<div class="p-1">
+  <SfCheckBox Label="Cumulative" @bind-Checked="@_cumulativeMode" OnClick="@CalculateChartData" />
+</div>
 <div>
   <SfChart Title=@($"Period: {ChartData.StartDate:yyyy-MM-dd} to {ChartData.EndDate:yyyy-MM-dd}")>
     <ChartArea>
@@ -8,19 +11,20 @@
     </ChartArea>
 
     <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
-                       IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift"/>
+                       IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
 
-    <ChartPrimaryYAxis Minimum=@MinCost Maximum=@MaxCost Interval="0.2" LabelFormat="c" />
+    <ChartPrimaryYAxis Minimum=@_minCost Maximum=@_maxCost Interval="@_interval" LabelFormat="c" />
 
     <ChartTooltipSettings Enable="true" />
 
     <ChartSeriesCollection>
-      <ChartSeries DataSource=@_costData Type="ChartSeriesType.Line" Width="2" Fill="#006400"
-                   XName=@nameof(PowerCost.Time) YName=@nameof(PowerCost.AdjustedCost) />
+      <ChartSeries DataSource=@_costData Name="Without Solar" Type="ChartSeriesType.Line" Width="2" Fill="#640000"
+                   XName=@nameof(PowerCost.Time) YName=@nameof(PowerCost.WithoutSolarCost) />
 
-      <ChartSeries DataSource=@_costData Type="ChartSeriesType.Line" Width="2" Fill="#640000"
-                   XName=@nameof(PowerCost.Time) YName=@nameof(PowerCost.NoSolarCost) />
+      <ChartSeries DataSource=@_costData Name="With Solar" Type="ChartSeriesType.Line" Width="2" Fill="#006400"
+                   XName=@nameof(PowerCost.Time) YName=@nameof(PowerCost.WithSolarCost) />
     </ChartSeriesCollection>
+    <ChartLegendSettings Visible="true" />
   </SfChart>
 </div>
 
@@ -33,29 +37,25 @@
   {
     private double PurchaseCostPerW = 0.3283379d / 1000.0d;
     private double FeedInCostPerW = 0.105d / 1000.0d;
+    private double FixedCostPerQuarterHour = 0.99d / 24 / 4;
 
     public string Time { get; }
-    public double AdjustedCost { get; }
-    public double NoSolarCost { get; }
+    public double WithSolarCost { get; }
+    public double WithoutSolarCost { get; }
 
     public PowerCost(PowerData powerData)
     {
       Time = powerData.Time;
-      AdjustedCost = powerData.WattHour.Purchased * PurchaseCostPerW - powerData.WattHour.FeedIn * FeedInCostPerW;
-      NoSolarCost = (powerData.WattHour.Purchased + powerData.WattHour.SelfConsumption) * PurchaseCostPerW;
+      WithSolarCost = FixedCostPerQuarterHour + (powerData.WattHour.Purchased * PurchaseCostPerW - powerData.WattHour.FeedIn * FeedInCostPerW);
+      WithoutSolarCost = FixedCostPerQuarterHour + ((powerData.WattHour.Purchased + powerData.WattHour.SelfConsumption) * PurchaseCostPerW);
     }
   }
 
+  private double _minCost;
+  private double _maxCost;
+  private double _interval;
+  private bool _cumulativeMode;
   private IReadOnlyList<PowerCost> _costData;
-
-  private double MinCost { get; set; }
-  private double MaxCost { get; set; }
-
-  // watts fed into the system are worth less than watts purchased
-  //private const double FeedInValueFactor = 0.105d / 0.3283379d;
-  //public double WithSolar => Purchased - FeedIn * FeedInValueFactor;
-  //public double WithoutSolar => Purchased + SelfConsumption;
-
 
   protected override void OnParametersSet()
   {
@@ -71,28 +71,76 @@
       throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
     }
 
-    _costData = ChartData.Power
-      .Select(item => new PowerCost(item))
-      .ToList();
+    CalculateChartData();
+  }
+
+  private void CalculateChartData()
+  {
+    if (_cumulativeMode)
+    {
+      var costData = new List<PowerCost>();
+      var lastPowerItem = default(PowerData);
+
+      foreach (var powerData in ChartData.Power)
+      {
+        // todo: consider mapping
+
+        if (lastPowerItem == default)
+        {
+          lastPowerItem = new PowerData
+          {
+            Time = powerData.Time,
+            WattHour = new WattsData
+            {
+              Consumption = powerData.WattHour.Consumption,
+              Production = powerData.WattHour.Production,
+              FeedIn = powerData.WattHour.FeedIn,
+              Purchased = powerData.WattHour.Purchased,
+              SelfConsumption = powerData.WattHour.SelfConsumption
+            }
+          };
+        }
+        else
+        {
+          lastPowerItem.Time = powerData.Time;
+          lastPowerItem.WattHour.Consumption += powerData.WattHour.Consumption;
+          lastPowerItem.WattHour.Production += powerData.WattHour.Production;
+          lastPowerItem.WattHour.FeedIn += powerData.WattHour.FeedIn;
+          lastPowerItem.WattHour.Purchased += powerData.WattHour.Purchased;
+          lastPowerItem.WattHour.SelfConsumption += powerData.WattHour.SelfConsumption;
+        }
+
+        costData.Add(new PowerCost(lastPowerItem));
+      }
+
+      _costData = costData;
+    }
+    else
+    {
+      _costData = ChartData.Power
+        .Select(item => new PowerCost(item))
+        .ToList();
+    }
 
     CalculateChartLimits();
   }
 
   private void CalculateChartLimits()
   {
-    var minCost = _costData.Min(item => item.AdjustedCost);
-    var maxCost = _costData.Max(item => item.NoSolarCost);
+    var minCost = _costData.Min(item => item.WithSolarCost);
+    var maxCost = _costData.Max(item => item.WithoutSolarCost);
+    _interval = _cumulativeMode ? 1.0d : 0.2d;
 
     if (minCost > 0.0d)
     {
-      MinCost = Math.Floor(minCost / 0.2d) * 0.2d;              // intervals of 0.2 on chart
+      _minCost = Math.Floor(minCost / _interval) * _interval;
     }
     else
     {
-      MinCost = -(1 + Math.Floor(-minCost / 0.2d)) * 0.2d;      // intervals of 0.2 on chart
+      _minCost = -(1 + Math.Floor(-minCost / _interval)) * _interval;
     }
 
-    MaxCost = (1 + Math.Floor(maxCost / 0.2d)) * 0.2d;          // intervals of 0.2 on chart
+    _maxCost = (1 + Math.Floor(maxCost / _interval)) * _interval;
   }
 
   private async Task DeleteChart()

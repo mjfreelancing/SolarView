@@ -19,23 +19,21 @@
 
     <ChartSeriesCollection>
       @*red*@
-      <ChartSeries DataSource=@_timeWatts Opacity="0.8" Fill="#d12e2e"
-                   Name=@nameof(TimeWatts.Consumption) XName=@nameof(PowerData.Time)
-                   YName=@nameof(TimeWatts.Consumption) Type="ChartSeriesType.SplineArea">
+      <ChartSeries DataSource=@_timeWatts Opacity="0.8" Fill="#d12e2e" Name="Consumption"
+                   XName=@nameof(PowerData.Time) YName=@nameof(TimeWatts.Consumption) Type="ChartSeriesType.SplineArea">
       </ChartSeries>
 
       @*green*@
-      <ChartSeries DataSource=@_timeWatts Opacity="0.8" Fill="#2bab4d"
-                   Name=@nameof(TimeWatts.Production) XName=@nameof(PowerData.Time)
-                   YName=@nameof(TimeWatts.Production) Type="ChartSeriesType.SplineArea">
+      <ChartSeries DataSource=@_timeWatts Opacity="0.8" Fill="#2bab4d" Name="Production"
+                   XName=@nameof(PowerData.Time) YName=@nameof(TimeWatts.Production) Type="ChartSeriesType.SplineArea">
       </ChartSeries>
 
       @*blue*@
-      <ChartSeries DataSource=@_timeWatts Opacity="0.6" Fill="#316bde"
-                   Name=@nameof(TimeWatts.SelfConsumption) XName=@nameof(PowerData.Time)
-                   YName=@nameof(TimeWatts.SelfConsumption) Type="ChartSeriesType.SplineArea">
+      <ChartSeries DataSource=@_timeWatts Opacity="0.6" Fill="#316bde" Name="Self Consumption"
+                   XName=@nameof(PowerData.Time) YName=@nameof(TimeWatts.SelfConsumption) Type="ChartSeriesType.SplineArea">
       </ChartSeries>
     </ChartSeriesCollection>
+    <ChartLegendSettings Visible="true" />
   </SfChart>
 </div>
 
