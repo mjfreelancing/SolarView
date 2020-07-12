@@ -14,17 +14,17 @@ using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
 {
-  public class SolarViewDayAsMeterPoints : FunctionBase
+  public class PersistSolarViewDayAsMeterPoints : FunctionBase
   {
     private readonly ISolarViewRepositoryFactory _repositoryFactory;
 
-    public SolarViewDayAsMeterPoints(ITracker tracker, ISolarViewRepositoryFactory repositoryFactory)
+    public PersistSolarViewDayAsMeterPoints(ITracker tracker, ISolarViewRepositoryFactory repositoryFactory)
       : base(tracker)
     {
       _repositoryFactory = repositoryFactory.WhenNotNull(nameof(repositoryFactory));
     }
 
-    [FunctionName(nameof(SolarViewDayAsMeterPoints))]
+    [FunctionName(nameof(PersistSolarViewDayAsMeterPoints))]
     public async Task Run(
       [ActivityTrigger] IDurableActivityContext context,
       [Table(Constants.Table.Power, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable powerTable)
@@ -38,7 +38,7 @@ namespace SolarViewFunctions.Functions
       var entities = solarViewDay.Meters
         .SelectMany(
           meter => meter.Points,
-          (meter, point) => new MeterPowerEntity(solarViewDay.SiteId, point.Timestamp, meter.MeterType, point.Watts))
+          (meter, point) => new MeterPowerEntity(solarViewDay.SiteId, point.Timestamp, meter.MeterType, point.Watts, point.WattHour))
         .AsReadOnlyList();
 
       Tracker.TrackInfo($"Persisting {entities.Count} meter points for {solarViewDay.Date}");

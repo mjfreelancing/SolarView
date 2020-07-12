@@ -55,10 +55,14 @@ namespace SolarViewFunctions.Mapping
       CreateMap<SiteEntity, SiteInfoResponse>();
 
       // SolarEdge raw DTO data to SolarView models (nullable to non-nullable meter values)
-      CreateMap<SolarDataDto, SolarData>()
+      CreateMap<PowerDataDto, SolarData>()
         .ForMember(dest => dest.MeterValues, opt => opt.MapFrom(src => src.PowerDetails));
 
+      CreateMap<EnergyDataDto, SolarData>()
+        .ForMember(dest => dest.MeterValues, opt => opt.MapFrom(src => src.EnergyDetails));
+
       CreateMap<PowerDetailsDto, MeterValues>();
+      CreateMap<EnergyDetailsDto, MeterValues>();
       CreateMap<MeterDto, Meter>();
 
       CreateMap<MeterValueDto, MeterValue>()

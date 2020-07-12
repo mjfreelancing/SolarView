@@ -19,21 +19,21 @@
 
     <ChartSeriesCollection>
       @*red*@
-      <ChartSeries DataSource=@ChartData.Power Opacity="0.8" Fill="#d12e2e"
-                   Name=@nameof(PowerData.Consumption) XName=@nameof(PowerData.Time)
-                   YName=@nameof(PowerData.Consumption) Type="ChartSeriesType.SplineArea">
+      <ChartSeries DataSource=@_timeWatts Opacity="0.8" Fill="#d12e2e"
+                   Name=@nameof(TimeWatts.Consumption) XName=@nameof(PowerData.Time)
+                   YName=@nameof(TimeWatts.Consumption) Type="ChartSeriesType.SplineArea">
       </ChartSeries>
 
       @*green*@
-      <ChartSeries DataSource=@ChartData.Power Opacity="0.8" Fill="#2bab4d"
-                   Name=@nameof(PowerData.Production) XName=@nameof(PowerData.Time)
-                   YName=@nameof(PowerData.Production) Type="ChartSeriesType.SplineArea">
+      <ChartSeries DataSource=@_timeWatts Opacity="0.8" Fill="#2bab4d"
+                   Name=@nameof(TimeWatts.Production) XName=@nameof(PowerData.Time)
+                   YName=@nameof(TimeWatts.Production) Type="ChartSeriesType.SplineArea">
       </ChartSeries>
 
       @*blue*@
-      <ChartSeries DataSource=@ChartData.Power Opacity="0.6" Fill="#316bde"
-                   Name=@nameof(PowerData.SelfConsumption) XName=@nameof(PowerData.Time)
-                   YName=@nameof(PowerData.SelfConsumption) Type="ChartSeriesType.SplineArea">
+      <ChartSeries DataSource=@_timeWatts Opacity="0.6" Fill="#316bde"
+                   Name=@nameof(TimeWatts.SelfConsumption) XName=@nameof(PowerData.Time)
+                   YName=@nameof(TimeWatts.SelfConsumption) Type="ChartSeriesType.SplineArea">
       </ChartSeries>
     </ChartSeriesCollection>
   </SfChart>
@@ -44,7 +44,28 @@
   [CascadingParameter] public ChartContainer Parent { get; set; }
   [Parameter] public ChartData ChartData { get; set; }
 
+  private class TimeWatts
+  {
+    public string Time { get; }
+    public double Consumption { get; set; }
+    public double Production { get; set; }
+    public double FeedIn { get; set; }
+    public double Purchased { get; set; }
+    public double SelfConsumption { get; set; }
+
+    public TimeWatts(string time, WattsData watts)
+    {
+      Time = time;
+      Consumption = watts.Consumption;
+      Production = watts.Production;
+      FeedIn = watts.FeedIn;
+      Purchased = watts.Purchased;
+      SelfConsumption = watts.SelfConsumption;
+    }
+  }
+
   private double _maxWatts;
+  private IReadOnlyList<TimeWatts> _timeWatts;
 
   protected override void OnParametersSet()
   {
@@ -60,6 +81,10 @@
       throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
     }
 
+    _timeWatts = ChartData.Power
+      .Select(item => new TimeWatts(item.Time, item.Watts))
+      .AsReadOnlyList();
+
     CalculateChartLimits();
   }
 
@@ -68,8 +93,19 @@
     var powerData = ChartData.Power;
 
     var maxWatts = powerData
-      .SelectMany(item => new[] { item.Consumption, item.Purchased, item.SelfConsumption, item.FeedIn, item.Production })
-      .Max();
+      .Max(item =>
+      {
+        var watts = item.Watts;
+
+        return new[]
+        {
+          watts.Consumption,
+          watts.Purchased,
+          watts.SelfConsumption,
+          watts.FeedIn,
+          watts.Production
+        }.Max();
+      });
 
     _maxWatts = (1 + Math.Floor(maxWatts / 500d)) * 500d;        // intervals of 500 on chart
   }

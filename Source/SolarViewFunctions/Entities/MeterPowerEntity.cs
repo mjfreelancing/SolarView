@@ -12,12 +12,13 @@ namespace SolarViewFunctions.Entities
     public string Time { get; set; }
     public string MeterType { get; set; }
     public double Watts { get; set; }
+    public double WattHour { get; set; }
 
     public MeterPowerEntity()
     {
     }
 
-    public MeterPowerEntity(string site, DateTime timestamp, MeterType meterType, double watts)
+    public MeterPowerEntity(string site, DateTime timestamp, MeterType meterType, double watts, double wattHour)
     {
       Site = site;
       Date = $"{timestamp:yyyyMMdd}";
@@ -25,6 +26,7 @@ namespace SolarViewFunctions.Entities
       Time = $"{timestamp:HHmm}";
       MeterType = $"{meterType}";
       Watts = watts;
+      WattHour = wattHour;
 
       PartitionKey = $"{Site}_{Date}_{MeterType}";
       RowKey = $"{Time}";

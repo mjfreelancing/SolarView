@@ -41,8 +41,8 @@
     public PowerCost(PowerData powerData)
     {
       Time = powerData.Time;
-      AdjustedCost = powerData.Purchased * PurchaseCostPerW - powerData.FeedIn * FeedInCostPerW;
-      NoSolarCost = (powerData.Purchased + powerData.SelfConsumption) * PurchaseCostPerW;
+      AdjustedCost = powerData.WattHour.Purchased * PurchaseCostPerW - powerData.WattHour.FeedIn * FeedInCostPerW;
+      NoSolarCost = (powerData.WattHour.Purchased + powerData.WattHour.SelfConsumption) * PurchaseCostPerW;
     }
   }
 

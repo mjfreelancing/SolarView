@@ -49,26 +49,38 @@ namespace SolarViewFunctions.Functions
       // need to get the site API key
       var siteInfo = await context.CallActivityWithRetryAsync<SecretSiteInfo>(nameof(GetSiteInfo), GetDefaultRetryOptions(), powerQuery.SiteId);
 
-      // executed via context.CallHttpAsync() - this method tracks the request
-      var solarDataResponse = await SolarEdgeApi.GetSolarDataAsync(context, Constants.SolarEdge.MonitoringUri, siteInfo.ApiKey, powerQuery, Tracker);
+      // Note: if the two API calls below need to be run in parallel the calls will need to be moved to another function.
+      // Not worth it in this case.
 
-      if (solarDataResponse.IsError)
+      // executed via context.CallHttpAsync() - this method tracks the request
+      var powerDataResponse = await SolarEdgeApi.GetPowerDetailsAsync(context, Constants.SolarEdge.MonitoringUri, siteInfo.ApiKey, powerQuery, Tracker);
+
+      if (powerDataResponse.IsError)
       {
         // handled at the calling orchestrator
-        throw new SolarEdgeResponseException(solarDataResponse.StatusCode, powerQuery.SiteId, powerQuery.StartDateTime, powerQuery.EndDateTime);
+        throw new SolarEdgeResponseException(powerDataResponse.StatusCode, powerQuery.SiteId, powerQuery.StartDateTime, powerQuery.EndDateTime);
       }
 
-      var solarData = _mapper.Map<SolarData>(solarDataResponse.SolarData);
+      var energyDataResponse = await SolarEdgeApi.GetEnergyDetailsAsync(context, Constants.SolarEdge.MonitoringUri, siteInfo.ApiKey, powerQuery, Tracker);
 
-      Tracker.TrackInfo($"Power data has been collected for SiteId {powerQuery.SiteId} between {powerQuery.StartDateTime} and {powerQuery.EndDateTime}");
+      if (energyDataResponse.IsError)
+      {
+        // handled at the calling orchestrator
+        throw new SolarEdgeResponseException(energyDataResponse.StatusCode, powerQuery.SiteId, powerQuery.StartDateTime, powerQuery.EndDateTime);
+      }
 
-      var solarDays = GetSolarViewDays(powerQuery.SiteId, solarData);
+      var powerData = _mapper.Map<SolarData>(powerDataResponse.PowerData);
+      var energyData = _mapper.Map<SolarData>(energyDataResponse.EnergyData);
+
+      Tracker.TrackInfo($"Power and Energy data has been collected for SiteId {powerQuery.SiteId} between {powerQuery.StartDateTime} and {powerQuery.EndDateTime}");
+
+      var solarDays = GetSolarViewDays(powerQuery.SiteId, powerData, energyData);
 
       var tasks = solarDays.Select(solarDay =>
       {
         Tracker.TrackInfo($"Initiating a request to persist power data for SiteId {solarDay.SiteId}, {solarDay.Date}");
         
-        return context.CallActivityWithRetryAsync(nameof(SolarViewDayAsMeterPoints), GetDefaultRetryOptions(), solarDay);
+        return context.CallActivityWithRetryAsync(nameof(PersistSolarViewDayAsMeterPoints), GetDefaultRetryOptions(), solarDay);
       });
 
       await Task.WhenAll(tasks);
@@ -76,11 +88,11 @@ namespace SolarViewFunctions.Functions
       Tracker.TrackInfo($"All power data for SiteId {powerQuery.SiteId} between {powerQuery.StartDateTime} and {powerQuery.EndDateTime} has been persisted");
     }
 
-    private static IEnumerable<SolarViewDay> GetSolarViewDays(string siteId, SolarData solarData)
+    private static IEnumerable<SolarViewDay> GetSolarViewDays(string siteId, SolarData powerData, SolarData energyData)
     {
       // flattened list of data points - so we can group into days and meter types
-      var meterPoints =
-        from meter in solarData.MeterValues.Meters
+      var powerMeterPoints =
+        from meter in powerData.MeterValues.Meters
         let meterType = meter.Type.As<MeterType>()
         from value in meter.Values
         let timestamp = value.Date.ParseSolarDateTime()
@@ -91,6 +103,33 @@ namespace SolarViewFunctions.Functions
           MeterType = meterType,
           Timestamp = timestamp,
           Watts = watts
+        };
+
+      var energyMeterPoints =
+        from meter in energyData.MeterValues.Meters
+        let meterType = meter.Type.As<MeterType>()
+        from value in meter.Values
+        let timestamp = value.Date.ParseSolarDateTime()
+        let wattHour = value.Value
+        select new
+        {
+          timestamp.Date,
+          MeterType = meterType,
+          Timestamp = timestamp,
+          WattHour = wattHour
+        };
+
+      var meterPoints = from power in powerMeterPoints
+        join energy in energyMeterPoints
+          on new {power.MeterType, power.Date, power.Timestamp}
+          equals new {energy.MeterType, energy.Date, energy.Timestamp}
+        select new
+        {
+          power.MeterType,
+          power.Date,
+          power.Timestamp,
+          power.Watts,
+          WattHour = energy.WattHour
         };
 
       return
@@ -106,12 +145,12 @@ namespace SolarViewFunctions.Functions
               MeterType = dailyMeterPoint.Key,
               Points = dailyMeterPoint
                 .OrderBy(item => item.Timestamp)
-                .Select(item =>
-                  new SolarViewMeterPoint
-                  {
-                    Timestamp = item.Timestamp,
-                    Watts = item.Watts
-                  })
+                .Select(item => new SolarViewMeterPoint
+                {
+                  Timestamp = item.Timestamp,
+                  Watts = item.Watts,
+                  WattHour = item.WattHour
+                })
             }
         };
     }

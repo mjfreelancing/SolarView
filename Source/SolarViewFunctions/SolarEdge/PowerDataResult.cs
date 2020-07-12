@@ -4,24 +4,24 @@ using System.Net;
 
 namespace SolarViewFunctions.SolarEdge
 {
-  public class SolarDataResult
+  public class PowerDataResult
   {
     public HttpStatusCode StatusCode { get; }
-    public SolarDataDto SolarData { get; }
+    public PowerDataDto PowerData { get; }
     public bool IsError => StatusCode != HttpStatusCode.OK;
 
-    public SolarDataResult(SolarDataDto solarData)
+    public PowerDataResult(PowerDataDto powerData)
     {
       StatusCode = HttpStatusCode.OK;
-      SolarData = solarData.WhenNotNull(nameof(solarData));
+      PowerData = powerData.WhenNotNull(nameof(powerData));
     }
 
-    public static SolarDataResult Error(HttpStatusCode statusCode)
+    public static PowerDataResult Error(HttpStatusCode statusCode)
     {
-      return new SolarDataResult(statusCode);
+      return new PowerDataResult(statusCode);
     }
 
-    private SolarDataResult(HttpStatusCode statusCode)
+    private PowerDataResult(HttpStatusCode statusCode)
     {
       StatusCode = statusCode;
     }

@@ -17,13 +17,15 @@ namespace SolarViewFunctions.Entities
     public int DayCount { get; set; }           // the first and last month may be partial months
     public string MeterType { get; set; }
     public double Watts { get; set; }
+    public double WattHour { get; set; }
 
     public MeterPowerMonthEntity()
     {
     }
 
     // startDate/endDate indicates when the data has been aggregated until (for partial month)
-    public MeterPowerMonthEntity(string site, DateTime startDate, DateTime endDate, string time, MeterType meterType, double watts)
+    public MeterPowerMonthEntity(string site, DateTime startDate, DateTime endDate, string time, MeterType meterType,
+      double watts, double wattHour)
     {
       Site = site;
       Year = startDate.Year;
@@ -35,6 +37,7 @@ namespace SolarViewFunctions.Entities
       DayCount = (endDate - startDate).Days + 1;
       MeterType = $"{meterType}";
       Watts = Math.Round(watts, 6, MidpointRounding.AwayFromZero);
+      WattHour = Math.Round(wattHour, 6, MidpointRounding.AwayFromZero);
 
       PartitionKey = $"{Site}_{YearMonth}_{MeterType}";
       RowKey = $"{Time}";

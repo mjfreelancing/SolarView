@@ -13,23 +13,23 @@ namespace SolarViewFunctions.SolarEdge
 {
   public class SolarEdgeApi
   {
-    public static async Task<SolarDataResult> GetSolarDataAsync(IDurableOrchestrationContext context, string solarEdgeUri, string apiKey,
+    public static async Task<PowerDataResult> GetPowerDetailsAsync(IDurableOrchestrationContext context, string solarEdgeUri, string apiKey,
       PowerQuery powerQuery, ITracker tracker)
     {
-      var solarEdgeRequest = CreateSolarEdgeRequest(solarEdgeUri, apiKey, powerQuery);
+      var powerDetailsRequest = CreatePowerDetailsRequest(solarEdgeUri, apiKey, powerQuery);
 
-      tracker.TrackInfo($"Getting solar data for SiteId {powerQuery.SiteId} between {powerQuery.StartDateTime} and {powerQuery.EndDateTime}",
+      tracker.TrackInfo($"Getting power data for SiteId {powerQuery.SiteId} between {powerQuery.StartDateTime} and {powerQuery.EndDateTime}",
         new {context.InstanceId}
       );
 
-      var response = await context.CallHttpAsync(solarEdgeRequest);
+      var response = await context.CallHttpAsync(powerDetailsRequest);
 
       if (response.StatusCode != HttpStatusCode.OK)
       {
         // 403 - forbidden
         // 429 - too many requests
         tracker.TrackError(
-          $"Failed to get solar data for SiteId '{powerQuery.SiteId}'",
+          $"Failed to get power data for SiteId '{powerQuery.SiteId}'",
           new
           {
             context.InstanceId,
@@ -41,17 +41,55 @@ namespace SolarViewFunctions.SolarEdge
           }
         );
         
-        return SolarDataResult.Error(response.StatusCode);
+        return PowerDataResult.Error(response.StatusCode);
       }
 
       tracker.TrackInfo($"SolarEdge response status = {response.StatusCode}");
 
-      var solarData = JsonConvert.DeserializeObject<SolarDataDto>(response.Content);
+      var solarData = JsonConvert.DeserializeObject<PowerDataDto>(response.Content);
 
-      return new SolarDataResult(solarData);
+      return new PowerDataResult(solarData);
     }
 
-    private static DurableHttpRequest CreateSolarEdgeRequest(string solarEdgeUri, string apiKey, PowerQuery powerQuery)
+    public static async Task<EnergyDataResult> GetEnergyDetailsAsync(IDurableOrchestrationContext context, string solarEdgeUri, string apiKey,
+      PowerQuery powerQuery, ITracker tracker)
+    {
+      var energyDetailsRequest = CreateEnergyDetailsRequest(solarEdgeUri, apiKey, powerQuery);
+
+      tracker.TrackInfo($"Getting energy data for SiteId {powerQuery.SiteId} between {powerQuery.StartDateTime} and {powerQuery.EndDateTime}",
+        new { context.InstanceId }
+      );
+
+      var response = await context.CallHttpAsync(energyDetailsRequest);
+
+      if (response.StatusCode != HttpStatusCode.OK)
+      {
+        // 403 - forbidden
+        // 429 - too many requests
+        tracker.TrackError(
+          $"Failed to get energy data for SiteId '{powerQuery.SiteId}'",
+          new
+          {
+            context.InstanceId,
+            context.ParentInstanceId,
+            response.StatusCode,
+            powerQuery.SiteId,
+            StartDate = powerQuery.StartDateTime,
+            EndDate = powerQuery.EndDateTime
+          }
+        );
+
+        return EnergyDataResult.Error(response.StatusCode);
+      }
+
+      tracker.TrackInfo($"SolarEdge response status = {response.StatusCode}");
+
+      var solarData = JsonConvert.DeserializeObject<EnergyDataDto>(response.Content);
+
+      return new EnergyDataResult(solarData);
+    }
+
+    private static DurableHttpRequest CreatePowerDetailsRequest(string solarEdgeUri, string apiKey, PowerQuery powerQuery)
     {
       // The SolarEdge API treats the end date as exclusive
       return DurableHttpRequestBuilder
@@ -59,6 +97,20 @@ namespace SolarViewFunctions.SolarEdge
         .AddParameter("startTime", powerQuery.StartDateTime)
         .AddParameter("endTime", powerQuery.EndDateTime)
         .AddParameter("meters", string.Join(',', EnumHelper.GetEnumValues<MeterType>()))
+        .AddParameter("api_key", apiKey)
+        .AddHeader("Accept", "application/json")
+        .Build();
+    }
+
+    private static DurableHttpRequest CreateEnergyDetailsRequest(string solarEdgeUri, string apiKey, PowerQuery powerQuery)
+    {
+      // The SolarEdge API treats the end date as exclusive
+      return DurableHttpRequestBuilder
+        .CreateUri(solarEdgeUri, $"{powerQuery.SiteId}/energyDetails")
+        .AddParameter("startTime", powerQuery.StartDateTime)
+        .AddParameter("endTime", powerQuery.EndDateTime)
+        .AddParameter("meters", string.Join(',', EnumHelper.GetEnumValues<MeterType>()))
+        .AddParameter("timeUnit", "QUARTER_OF_AN_HOUR")
         .AddParameter("api_key", apiKey)
         .AddHeader("Accept", "application/json")
         .Build();

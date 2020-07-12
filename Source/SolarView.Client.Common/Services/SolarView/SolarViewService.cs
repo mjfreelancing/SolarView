@@ -95,21 +95,39 @@ namespace SolarView.Client.Common.Services.SolarView
         {
           MeterType = meterType,
           item.Time,
-          item.Watts
+          item.Watts,
+          item.WattHour
         };
 
       return meterData
         .GroupBy(item => item.Time)
         .Select(item =>
         {
+          var production = item.Single(reading => reading.MeterType == MeterType.Production);
+          var consumption = item.Single(reading => reading.MeterType == MeterType.Consumption);
+          var feedIn = item.Single(reading => reading.MeterType == MeterType.FeedIn);
+          var purchased = item.Single(reading => reading.MeterType == MeterType.Purchased);
+          var selfConsumption = item.Single(reading => reading.MeterType == MeterType.SelfConsumption);
+
           return new PowerData
           {
             Time = item.Key,
-            Production = item.Single(reading => reading.MeterType == MeterType.Production).Watts,
-            Consumption = item.Single(reading => reading.MeterType == MeterType.Consumption).Watts,
-            FeedIn = item.Single(reading => reading.MeterType == MeterType.FeedIn).Watts,
-            Purchased = item.Single(reading => reading.MeterType == MeterType.Purchased).Watts,
-            SelfConsumption = item.Single(reading => reading.MeterType == MeterType.SelfConsumption).Watts
+            Watts = new WattsData
+            {
+              Production = production.Watts,
+              Consumption = consumption.Watts,
+              FeedIn = feedIn.Watts,
+              Purchased = purchased.Watts,
+              SelfConsumption = selfConsumption.Watts
+            },
+            WattHour = new WattsData
+            {
+              Production = production.WattHour,
+              Consumption = consumption.WattHour,
+              FeedIn = feedIn.WattHour,
+              Purchased = purchased.WattHour,
+              SelfConsumption = selfConsumption.WattHour
+            }
           };
         })
         .AsReadOnlyList();

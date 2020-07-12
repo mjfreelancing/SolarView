@@ -10,13 +10,13 @@
     <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
                        IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
 
-    <ChartPrimaryYAxis LabelFormat="{value}W" Minimum=@MinFeedIn Maximum=@MaxFeedIn Interval="500" />
+    <ChartPrimaryYAxis LabelFormat="{value}W" Minimum=@_minFeedIn Maximum=@_maxFeedIn Interval="500" />
 
     <ChartTooltipSettings Enable="true" />
 
     <ChartSeriesCollection>
-      <ChartSeries DataSource=@ChartData.Power Type="ChartSeriesType.Line" Width="2" Fill="#006400"
-                   XName=@nameof(PowerData.Time) YName=@nameof(PowerData.FeedIn) />
+      <ChartSeries DataSource=@_timeFeedIn Type="ChartSeriesType.Line" Width="2" Fill="#006400"
+                   XName=@nameof(TimeFeedIn.Time) YName=@nameof(TimeFeedIn.FeedIn) />
     </ChartSeriesCollection>
   </SfChart>
 </div>
@@ -26,8 +26,21 @@
   [CascadingParameter] public ChartContainer Parent { get; set; }
   [Parameter] public ChartData ChartData { get; set; }
 
-  private double MinFeedIn { get; set; }
-  private double MaxFeedIn { get; set; }
+  private class TimeFeedIn
+  {
+    public string Time { get; }
+    public double FeedIn { get; }
+
+    public TimeFeedIn(string time, double feedIn)
+    {
+      Time = time;
+      FeedIn = feedIn;
+    }
+  }
+
+  private double _minFeedIn;
+  private double _maxFeedIn;
+  private IReadOnlyList<TimeFeedIn> _timeFeedIn;
 
   protected override void OnParametersSet()
   {
@@ -43,18 +56,22 @@
       throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
     }
 
+    _timeFeedIn = ChartData.Power
+      .Select(item => new TimeFeedIn(item.Time, item.Watts.FeedIn))
+      .AsReadOnlyList();
+
     CalculateChartLimits();
   }
 
   private void CalculateChartLimits()
   {
-    var powerData = ChartData.Power;
+    //var powerData = ChartData.Power;
 
-    var minFeedIn = powerData.Min(item => item.FeedIn);
-    var maxFeedIn = powerData.Max(item => item.FeedIn);
+    var minFeedIn = _timeFeedIn.Min(item => item.FeedIn);
+    var maxFeedIn = _timeFeedIn.Max(item => item.FeedIn);
 
-    MinFeedIn = Math.Floor(minFeedIn / 500d) * 500d;              // intervals of 0.2 on chart
-    MaxFeedIn = (1 + Math.Floor(maxFeedIn / 500d)) * 500d;          // intervals of 0.2 on chart
+    _minFeedIn = Math.Floor(minFeedIn / 500d) * 500d;              // intervals of 0.2 on chart
+    _maxFeedIn = (1 + Math.Floor(maxFeedIn / 500d)) * 500d;          // intervals of 0.2 on chart
   }
 
   private async Task DeleteChart()
