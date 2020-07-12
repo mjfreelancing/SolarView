@@ -1,4 +1,13 @@
-﻿<div class="d-flex">
+﻿@using SolarView.Client.Common.Helpers
+<div class="p-2 d-flex align-items-center">
+  <SfCheckBox Label="Cumulative" @bind-Checked="@_cumulativeMode" OnClick="@CalculateChartData" />
+  <div class="ml-4" style="width: 120px">
+    <SfDropDownList TValue="PowerUnit" TItem="DisplayUnit" Placeholder="Units" PopupHeight="100" Value="@_selectedUnit"
+                    DataSource="@_displayUnits">
+      <DropDownListFieldSettings Value="@nameof(DisplayUnit.Id)" Text="@nameof(DisplayUnit.Text)" />
+      <DropDownListEvents TValue="PowerUnit" ValueChange="OnUnitChange" />
+    </SfDropDownList>
+  </div>
   <button class="ml-auto" @onclick="DeleteChart">Remove</button>
 </div>
 <div>
@@ -12,8 +21,9 @@
 
     <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
                        IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
-
-    <ChartPrimaryYAxis LabelFormat="{value}W" Minimum="0" Maximum=@_maxWatts Interval="500" />
+    
+    @*Maximum=@_maxWatts Interval="@_interval"*@
+    <ChartPrimaryYAxis LabelFormat="@_axisFormat" Minimum="0" />
 
     <ChartTooltipSettings Enable="true" />
 
@@ -60,9 +70,52 @@
       Purchased = watts.Purchased;
       SelfConsumption = watts.SelfConsumption;
     }
+
+    //public double GetMaxValue()
+    //{
+    //  return new[]
+    //  {
+    //    Consumption,
+    //    Purchased,
+    //    SelfConsumption,
+    //    FeedIn,
+    //    Production
+    //  }.Max();
+    //}
   }
 
-  private double _maxWatts;
+  public enum PowerUnit
+  {
+    Watts,
+    WattHour
+  }
+
+  private class DisplayUnit
+  {
+    public PowerUnit Id { get; }
+    public string Text { get; }
+
+    public DisplayUnit(PowerUnit id, string text)
+    {
+      Id = id;
+      Text = text;
+    }
+  }
+
+  private readonly IList<DisplayUnit> _displayUnits = new List<DisplayUnit>
+  {
+    new DisplayUnit(PowerUnit.Watts, "Watts"),
+    new DisplayUnit(PowerUnit.WattHour, "Watt-Hour"),
+  };
+
+  private PowerUnit _selectedUnit = PowerUnit.Watts;
+
+  //private double _maxWatts;
+  //private double _interval;
+  private bool _cumulativeMode;
+
+  private string _axisFormat => GetAxisFormat();
+
   private IReadOnlyList<TimeWatts> _timeWatts;
 
   protected override void OnParametersSet()
@@ -79,37 +132,74 @@
       throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
     }
 
-    _timeWatts = ChartData.Power
-      .Select(item => new TimeWatts(item.Time, item.Watts))
-      .AsReadOnlyList();
-
-    CalculateChartLimits();
+    CalculateChartData();
   }
 
-  private void CalculateChartLimits()
+  private void CalculateChartData()
   {
-    var powerData = ChartData.Power;
+    if (_cumulativeMode)
+    {
+      var lastWattsItem = new WattsData();
 
-    var maxWatts = powerData
-      .Max(item =>
-      {
-        var watts = item.Watts;
-
-        return new[]
+      _timeWatts = ChartData.Power
+        .Select(powerData =>
         {
-          watts.Consumption,
-          watts.Purchased,
-          watts.SelfConsumption,
-          watts.FeedIn,
-          watts.Production
-        }.Max();
-      });
+          // displaying in KW / KWh when aggregating
+          var scaledData = _selectedUnit == PowerUnit.Watts
+            ? WattsDataHelpers.Scale(powerData.Watts, 0.001d)
+            : WattsDataHelpers.Scale(powerData.WattHour, 0.001d);
 
-    _maxWatts = (1 + Math.Floor(maxWatts / 500d)) * 500d;        // intervals of 500 on chart
+          lastWattsItem = WattsDataHelpers.Aggregate(lastWattsItem, scaledData);
+
+          return new TimeWatts(powerData.Time, lastWattsItem);
+        })
+        .AsReadOnlyList();
+    }
+    else
+    {
+      _timeWatts = ChartData.Power
+        .Select(item =>
+        {
+          var wattData = _selectedUnit == PowerUnit.Watts
+            ? item.Watts
+            : item.WattHour;
+
+          return new TimeWatts(item.Time, wattData);
+        })
+        .AsReadOnlyList();
+    }
+
+    //CalculateChartLimits();
+  }
+
+  //private void CalculateChartLimits()
+  //{
+  //  var maxWatts = _timeWatts.Max(watts => watts.GetMaxValue());
+
+  //  _maxWatts = (1 + Math.Floor(maxWatts / 10d)) * 10d;
+  //  _interval = _maxWatts / 8;
+  //}
+
+  private string GetAxisFormat()
+  {
+    return (_selectedUnit, _cumulativeMode) switch
+    {
+      (PowerUnit.Watts, true) => "{value}KW",
+      (PowerUnit.Watts, false) => "{value}W",
+      (PowerUnit.WattHour, true) => "{value}KWh",
+      (PowerUnit.WattHour, false) => "{value}Wh",
+      (_, _) => throw new InvalidOperationException($"Unknown Unit/Mode combination: {_selectedUnit}/{_cumulativeMode}")
+    };
   }
 
   private async Task DeleteChart()
   {
     await Parent.DeleteChart(ChartData.Id);
+  }
+
+  private void OnUnitChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<PowerUnit> args)
+  {
+    _selectedUnit = args.Value;
+    CalculateChartData();
   }
 }

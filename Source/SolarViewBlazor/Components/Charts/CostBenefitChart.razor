@@ -1,8 +1,7 @@
-﻿<div class="d-flex">
-  <button class="ml-auto" @onclick="DeleteChart">Remove</button>
-</div>
-<div class="p-1">
+﻿@using SolarView.Client.Common.Helpers
+<div class="p-2 d-flex">
   <SfCheckBox Label="Cumulative" @bind-Checked="@_cumulativeMode" OnClick="@CalculateChartData" />
+  <button class="ml-auto" @onclick="DeleteChart">Remove</button>
 </div>
 <div>
   <SfChart Title=@($"Period: {ChartData.StartDate:yyyy-MM-dd} to {ChartData.EndDate:yyyy-MM-dd}")>
@@ -13,7 +12,8 @@
     <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
                        IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
 
-    <ChartPrimaryYAxis Minimum=@_minCost Maximum=@_maxCost Interval="@_interval" LabelFormat="c" />
+    @*Minimum=@_minCost Maximum=@_maxCost Interval="@_interval"*@
+    <ChartPrimaryYAxis LabelFormat="c" />
 
     <ChartTooltipSettings Enable="true" />
 
@@ -51,9 +51,9 @@
     }
   }
 
-  private double _minCost;
-  private double _maxCost;
-  private double _interval;
+  //private double _minCost;
+  //private double _maxCost;
+  //private double _interval;
   private bool _cumulativeMode;
   private IReadOnlyList<PowerCost> _costData;
 
@@ -88,39 +88,39 @@
 
           return new PowerCost(lastPowerItem);
         })
-        .ToList();
+        .AsReadOnlyList();
     }
     else
     {
       _costData = ChartData.Power
         .Select(item => new PowerCost(item))
-        .ToList();
+        .AsReadOnlyList();
     }
 
-    CalculateChartLimits();
+    //CalculateChartLimits();
   }
 
-  private void CalculateChartLimits()
-  {
-    var minCost = _costData.Min(item => item.WithSolarCost);
-    var maxCost = _costData.Max(item => item.WithoutSolarCost);
+  //private void CalculateChartLimits()
+  //{
+  //  var minCost = _costData.Min(item => item.WithSolarCost);
+  //  var maxCost = _costData.Max(item => item.WithoutSolarCost);
 
-    var range = maxCost - minCost;
-    var scalingFactor = range < 1.0d ? 100 : 1;
+  //  var range = maxCost - minCost;
+  //  var scalingFactor = range < 1.0d ? 100 : 1;
 
-    if (minCost > 0.0d)
-    {
-      _minCost = (Math.Floor(minCost * scalingFactor) - 0.5d) / scalingFactor;
-    }
-    else
-    {
-      _minCost = (-Math.Ceiling(-minCost * scalingFactor) - 0.5d) / scalingFactor;
-    }
+  //  if (minCost > 0.0d)
+  //  {
+  //    _minCost = (Math.Floor(minCost * scalingFactor) - 0.5d) / scalingFactor;
+  //  }
+  //  else
+  //  {
+  //    _minCost = (-Math.Ceiling(-minCost * scalingFactor) - 0.5d) / scalingFactor;
+  //  }
 
-    _maxCost = (Math.Ceiling(maxCost * scalingFactor) + 0.5d) / scalingFactor;
+  //  _maxCost = (Math.Ceiling(maxCost * scalingFactor) + 0.5d) / scalingFactor;
 
-    _interval = (_maxCost - _minCost) / 8;
-  }
+  //  _interval = (_maxCost - _minCost) / 8;
+  //}
 
   private async Task DeleteChart()
   {
