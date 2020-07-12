@@ -69,15 +69,15 @@
   }
 
   private readonly IList<DisplayUnit> _displayUnits = new List<DisplayUnit>
-{
+  {
     new DisplayUnit(PowerUnit.Watts, "Watts"),
     new DisplayUnit(PowerUnit.WattHour, "Watt-Hour"),
   };
 
   private PowerUnit _selectedUnit = PowerUnit.Watts;
 
-  private double _minFeedIn;
-  private double _maxFeedIn;
+  //private double _minFeedIn;
+  //private double _maxFeedIn;
   private bool _cumulativeMode;
   private string _axisFormat => GetAxisFormat();
   private IReadOnlyList<TimeFeedIn> _timeFeedIn;

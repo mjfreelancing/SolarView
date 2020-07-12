@@ -10,7 +10,7 @@
 
       <div class="p-1">
         <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@option.Selected" Disabled="@disabled"
-                       @onclick="@(() => UpdateStyles(option))" />
+                       @onchange="@(() => UpdateStyles(option))" />
       </div>
     }
   </div>
@@ -50,12 +50,18 @@
   private DateTime? _endDate;
   private bool _dataIsLoaded = true;
 
-  protected override void OnParametersSet()
-  {
-    base.OnParametersSet();
+  //protected override void OnParametersSet()
+  //{
+  //  base.OnParametersSet();
 
-    // ensure this is only performed the first time
-    _options ??= InitialiseOptions();
+  //  // ensure this is only performed the first time
+  //  _options ??= InitialiseOptions();
+  //}
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    _options = InitialiseOptions();
   }
 
   private IReadOnlyList<DateRangeSelectOption> InitialiseOptions()
