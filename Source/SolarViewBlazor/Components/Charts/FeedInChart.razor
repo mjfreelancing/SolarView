@@ -3,9 +3,9 @@
 <div class="p-2 d-flex align-items-center">
   <SfCheckBox Label="Cumulative" @bind-Checked="@_cumulativeMode" @onchange="CalculateChartData" />
   <div class="ml-4" style="width: 120px">
-    <SfDropDownList TValue="PowerUnit" TItem="DisplayUnit" Placeholder="Units" PopupHeight="100" Value="@_selectedUnit"
-                    DataSource="@_displayUnits">
-      <DropDownListFieldSettings Value="@nameof(DisplayUnit.Id)" Text="@nameof(DisplayUnit.Text)" />
+    <SfDropDownList TValue="PowerUnit" TItem="DisplayPowerUnit" Placeholder="Units" PopupHeight="100" Value="@_selectedUnit"
+                    DataSource="@_displayPowerUnits">
+      <DropDownListFieldSettings Value="@nameof(DisplayPowerUnit.Id)" Text="@nameof(DisplayPowerUnit.Text)" />
       <DropDownListEvents TValue="PowerUnit" ValueChange="OnUnitChange" />
     </SfDropDownList>
   </div>
@@ -49,33 +49,14 @@
     }
   }
 
-  public enum PowerUnit
+  private readonly IList<DisplayPowerUnit> _displayPowerUnits = new List<DisplayPowerUnit>
   {
-    Watts,
-    WattHour
-  }
-
-  private class DisplayUnit
-  {
-    public PowerUnit Id { get; }
-    public string Text { get; }
-
-    public DisplayUnit(PowerUnit id, string text)
-    {
-      Id = id;
-      Text = text;
-    }
-  }
-
-  private readonly IList<DisplayUnit> _displayUnits = new List<DisplayUnit>
-  {
-    new DisplayUnit(PowerUnit.Watts, "Watts"),
-    new DisplayUnit(PowerUnit.WattHour, "Watt-Hour"),
+    new DisplayPowerUnit(PowerUnit.Watts, "Watts"),
+    new DisplayPowerUnit(PowerUnit.WattHour, "Watt-Hour"),
   };
 
-  private PowerUnit _selectedUnit = PowerUnit.WattHour;
-
   private bool _cumulativeMode;
+  private PowerUnit _selectedUnit = PowerUnit.WattHour;
   private string _axisFormat => GetAxisFormat();
   private IReadOnlyList<TimeFeedIn> _timeFeedIn;
 
