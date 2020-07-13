@@ -1,9 +1,10 @@
-﻿@using SolarView.Client.Common.Helpers
+﻿@using SolarViewBlazor.Charts.Models
+@using SolarViewBlazor.Charts.ViewModels
 
 <div class="p-2 d-flex align-items-center">
-  <SfCheckBox Label="Cumulative" @bind-Checked="@_cumulativeMode" @onchange="CalculateChartData" />
+  <SfCheckBox Label="Cumulative" @bind-Checked="@_isCumulative" @onchange="CalculateChartData" />
   <div class="ml-4" style="width: 120px">
-    <SfDropDownList TValue="PowerUnit" TItem="DisplayPowerUnit" Placeholder="Units" PopupHeight="100" Value="@_selectedUnit"
+    <SfDropDownList TValue="PowerUnit" TItem="DisplayPowerUnit" Placeholder="Units" PopupHeight="100" Value="@_powerUnit"
                     DataSource="@_displayPowerUnits">
       <DropDownListFieldSettings Value="@nameof(DisplayPowerUnit.Id)" Text="@nameof(DisplayPowerUnit.Text)" />
       <DropDownListEvents TValue="PowerUnit" ValueChange="OnUnitChange" />
@@ -23,7 +24,7 @@
     <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
                        IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
     
-    <ChartPrimaryYAxis LabelFormat="@_axisFormat" Minimum="0" />
+    <ChartPrimaryYAxis LabelFormat="@_yAxisLabel" Minimum="0" />
 
     <ChartTooltipSettings Enable="true" />
 
@@ -48,39 +49,15 @@
 </div>
 
 @code {
-
+  [Inject] public IConsumptionChartViewModel ConsumptionViewModel { get; set; }
   [CascadingParameter] public ChartContainer Parent { get; set; }
   [Parameter] public ChartData ChartData { get; set; }
 
-  private class TimeWatts
-  {
-    public string Time { get; }
-    public double Consumption { get; set; }
-    public double Production { get; set; }
-    public double FeedIn { get; set; }
-    public double Purchased { get; set; }
-    public double SelfConsumption { get; set; }
+  private readonly IReadOnlyList<DisplayPowerUnit> _displayPowerUnits = ChartHelpers.GetDisplayPowerUnits();
 
-    public TimeWatts(string time, WattsData watts)
-    {
-      Time = time;
-      Consumption = watts.Consumption;
-      Production = watts.Production;
-      FeedIn = watts.FeedIn;
-      Purchased = watts.Purchased;
-      SelfConsumption = watts.SelfConsumption;
-    }
-  }
-
-  private readonly IList<DisplayPowerUnit> _displayPowerUnits = new List<DisplayPowerUnit>
-  {
-    new DisplayPowerUnit(PowerUnit.Watts, "Watts"),
-    new DisplayPowerUnit(PowerUnit.WattHour, "Watt-Hour"),
-  };
-
-  private bool _cumulativeMode;
-  private PowerUnit _selectedUnit = PowerUnit.WattHour;
-  private string _axisFormat => GetAxisFormat();
+  private bool _isCumulative;
+  private PowerUnit _powerUnit = PowerUnit.WattHour;
+  private string _yAxisLabel => ChartHelpers.GetYAxisLabel(_powerUnit, _isCumulative);
   private IReadOnlyList<TimeWatts> _timeWatts;
 
   protected override void OnInitialized()
@@ -91,49 +68,7 @@
 
   private void CalculateChartData()
   {
-    if (_cumulativeMode)
-    {
-      var lastWattsItem = new WattsData();
-
-      _timeWatts = ChartData.Power
-        .Select(powerData =>
-        {
-          // displaying in KW / KWh when aggregating
-          var scaledData = _selectedUnit == PowerUnit.Watts
-            ? WattsDataHelpers.Scale(powerData.Watts, 0.001d)
-            : WattsDataHelpers.Scale(powerData.WattHour, 0.001d);
-
-          lastWattsItem = WattsDataHelpers.Aggregate(lastWattsItem, scaledData);
-
-          return new TimeWatts(powerData.Time, lastWattsItem);
-        })
-        .AsReadOnlyList();
-    }
-    else
-    {
-      _timeWatts = ChartData.Power
-        .Select(item =>
-        {
-          var wattData = _selectedUnit == PowerUnit.Watts
-            ? item.Watts
-            : item.WattHour;
-
-          return new TimeWatts(item.Time, wattData);
-        })
-        .AsReadOnlyList();
-    }
-  }
-
-  private string GetAxisFormat()
-  {
-    return (_selectedUnit, _cumulativeMode) switch
-    {
-      (PowerUnit.Watts, true) => "{value}KW",
-      (PowerUnit.Watts, false) => "{value}W",
-      (PowerUnit.WattHour, true) => "{value}KWh",
-      (PowerUnit.WattHour, false) => "{value}Wh",
-      (_, _) => throw new InvalidOperationException($"Unknown Unit/Mode combination: {_selectedUnit}/{_cumulativeMode}")
-    };
+    _timeWatts = ConsumptionViewModel.CalculateData(ChartData.Power, _powerUnit, _isCumulative);
   }
 
   private async Task DeleteChart()
@@ -143,7 +78,7 @@
 
   private void OnUnitChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<PowerUnit> args)
   {
-    _selectedUnit = args.Value;
+    _powerUnit = args.Value;
     CalculateChartData();
   }
 }

@@ -1,9 +1,10 @@
-﻿@using SolarView.Client.Common.Helpers
+﻿@using SolarViewBlazor.Charts.Models
+@using SolarViewBlazor.Charts.ViewModels
 
 <div class="p-2 d-flex align-items-center">
-  <SfCheckBox Label="Cumulative" @bind-Checked="@_cumulativeMode" @onchange="CalculateChartData" />
+  <SfCheckBox Label="Cumulative" @bind-Checked="@_isCumulative" @onchange="CalculateChartData" />
   <div class="ml-4" style="width: 120px">
-    <SfDropDownList TValue="PowerUnit" TItem="DisplayPowerUnit" Placeholder="Units" PopupHeight="100" Value="@_selectedUnit"
+    <SfDropDownList TValue="PowerUnit" TItem="DisplayPowerUnit" Placeholder="Units" PopupHeight="100" Value="@_powerUnit"
                     DataSource="@_displayPowerUnits">
       <DropDownListFieldSettings Value="@nameof(DisplayPowerUnit.Id)" Text="@nameof(DisplayPowerUnit.Text)" />
       <DropDownListEvents TValue="PowerUnit" ValueChange="OnUnitChange" />
@@ -20,7 +21,7 @@
     <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
                        IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
 
-    <ChartPrimaryYAxis LabelFormat="@_axisFormat" />
+    <ChartPrimaryYAxis LabelFormat="@_yAxisLabel" />
 
     <ChartTooltipSettings Enable="true" />
 
@@ -34,30 +35,17 @@
 
 @code {
 
+  [Inject] public IFeedInChartViewModel FeedInViewModel { get; set; }
+
   [CascadingParameter] public ChartContainer Parent { get; set; }
+
   [Parameter] public ChartData ChartData { get; set; }
 
-  private class TimeFeedIn
-  {
-    public string Time { get; }
-    public double FeedIn { get; }
+  private readonly IReadOnlyList<DisplayPowerUnit> _displayPowerUnits = ChartHelpers.GetDisplayPowerUnits();
 
-    public TimeFeedIn(string time, double feedIn)
-    {
-      Time = time;
-      FeedIn = feedIn;
-    }
-  }
-
-  private readonly IList<DisplayPowerUnit> _displayPowerUnits = new List<DisplayPowerUnit>
-  {
-    new DisplayPowerUnit(PowerUnit.Watts, "Watts"),
-    new DisplayPowerUnit(PowerUnit.WattHour, "Watt-Hour"),
-  };
-
-  private bool _cumulativeMode;
-  private PowerUnit _selectedUnit = PowerUnit.WattHour;
-  private string _axisFormat => GetAxisFormat();
+  private bool _isCumulative;
+  private PowerUnit _powerUnit = PowerUnit.WattHour;
+  private string _yAxisLabel => ChartHelpers.GetYAxisLabel(_powerUnit, _isCumulative);
   private IReadOnlyList<TimeFeedIn> _timeFeedIn;
 
   protected override void OnInitialized()
@@ -68,48 +56,7 @@
 
   private void CalculateChartData()
   {
-    if (_cumulativeMode)
-    {
-      var lastPowerItem = new PowerData { Watts = new WattsData() };
-
-      _timeFeedIn = ChartData.Power
-      .Select(powerData =>
-      {
-        var scaledData = _selectedUnit == PowerUnit.Watts
-          ? WattsDataHelpers.Scale(powerData.Watts, 0.001d)
-          : WattsDataHelpers.Scale(powerData.WattHour, 0.001d);
-
-        lastPowerItem.Watts = WattsDataHelpers.Aggregate(lastPowerItem.Watts, scaledData);
-
-        return new TimeFeedIn(powerData.Time, lastPowerItem.Watts.FeedIn);
-      })
-      .AsReadOnlyList();
-    }
-    else
-    {
-      _timeFeedIn = ChartData.Power
-        .Select(item =>
-        {
-          var wattData = _selectedUnit == PowerUnit.Watts
-            ? item.Watts
-            : item.WattHour;
-
-          return new TimeFeedIn(item.Time, wattData.FeedIn);
-        })
-        .AsReadOnlyList();
-    }
-  }
-
-  private string GetAxisFormat()
-  {
-    return (_selectedUnit, _cumulativeMode) switch
-    {
-      (PowerUnit.Watts, true) => "{value}KW",
-      (PowerUnit.Watts, false) => "{value}W",
-      (PowerUnit.WattHour, true) => "{value}KWh",
-      (PowerUnit.WattHour, false) => "{value}Wh",
-      (_, _) => throw new InvalidOperationException($"Unknown Unit/Mode combination: {_selectedUnit}/{_cumulativeMode}")
-    };
+    _timeFeedIn = FeedInViewModel.CalculateData(ChartData.Power, _powerUnit, _isCumulative);
   }
 
   private async Task DeleteChart()
@@ -119,7 +66,7 @@
 
   private void OnUnitChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<PowerUnit> args)
   {
-    _selectedUnit = args.Value;
+    _powerUnit = args.Value;
     CalculateChartData();
   }
 }
