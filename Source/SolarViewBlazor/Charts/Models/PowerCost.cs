@@ -8,12 +8,14 @@ namespace SolarViewBlazor.Charts.Models
     public string Time { get; }
     public double WithSolarCost { get; }
     public double WithoutSolarCost { get; }
+    public double Saving { get; }
 
     public PowerCost(PowerData powerData, PowerCostConfiguration configuration)
     {
       Time = powerData.Time;
       WithSolarCost = configuration.FixedCostPerQuarterHour + (powerData.WattHour.Purchased * configuration.PurchaseCostPerW - powerData.WattHour.FeedIn * configuration.FeedInCostPerW);
       WithoutSolarCost = configuration.FixedCostPerQuarterHour + ((powerData.WattHour.Purchased + powerData.WattHour.SelfConsumption) * configuration.PurchaseCostPerW);
+      Saving = WithoutSolarCost - WithSolarCost;
     }
   }
 }

@@ -2,7 +2,10 @@
 
   @foreach (var chartFragment in _chartFragments.Values)
   {
-    @*Cascading: ChartContainer*@
+    @*<div @key="chartFragment">
+      @chartFragment
+    </div>*@
+
     @chartFragment
   }
 

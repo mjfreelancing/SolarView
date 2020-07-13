@@ -71,8 +71,11 @@ namespace SolarViewBlazor
       services.AddScoped<ISiteService, SiteService>();
       services.AddScoped<ISiteViewModel, SiteViewModel>();
       services.AddScoped<ICompareViewModel, CompareViewModel>();
-      services.AddScoped<IFeedInChartViewModel, FeedInChartViewModel>();
-      services.AddScoped<IConsumptionChartViewModel, ConsumptionChartViewModel>();
+
+      // there's no state - these only transform / aggregate data for charts
+      services.AddSingleton<IFeedInChartViewModel, FeedInChartViewModel>();
+      services.AddSingleton<IConsumptionChartViewModel, ConsumptionChartViewModel>();
+      services.AddSingleton<ICostBenefitChartViewModel, CostBenefitChartViewModel>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

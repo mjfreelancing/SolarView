@@ -1,7 +1,7 @@
-﻿@using SolarView.Client.Common.Helpers
-@using SolarViewBlazor.Charts.Models
+﻿@using SolarViewBlazor.Charts.Models
+@using SolarViewBlazor.Charts.ViewModels
 <div class="p-2 d-flex">
-  <SfCheckBox Label="Cumulative" @bind-Checked="@_cumulativeMode" @onchange="CalculateChartData" />
+  <SfCheckBox Label="Cumulative" @bind-Checked="@_isCumulative" @onchange="CalculateChartData" />
   <button class="ml-auto" @onclick="DeleteChart">Remove</button>
 </div>
 <div>
@@ -23,12 +23,16 @@
 
       <ChartSeries DataSource=@_costData Name="With Solar" Type="ChartSeriesType.Line" Width="2" Fill="#006400"
                    XName=@nameof(PowerCost.Time) YName=@nameof(PowerCost.WithSolarCost) />
+
+      <ChartSeries DataSource=@_costData Name="Saving" Type="ChartSeriesType.Line" Width="2" Fill="#ff6400"
+                   XName=@nameof(PowerCost.Time) YName=@nameof(PowerCost.Saving) />
     </ChartSeriesCollection>
     <ChartLegendSettings Visible="true" />
   </SfChart>
 </div>
 
 @code {
+  [Inject] public ICostBenefitChartViewModel CostBenefitViewModel { get; set; }
 
   [CascadingParameter] public ChartContainer Parent { get; set; }
 
@@ -37,46 +41,29 @@
   [Parameter] public double FeedInCostPerW { get; set; }
   [Parameter] public double FixedCostPerQuarterHour { get; set; }
 
-  private bool _cumulativeMode;
-  private PowerCostConfiguration _powerCostConfiguration;
+  private bool _isCumulative;
   private IReadOnlyList<PowerCost> _costData;
 
   protected override void OnInitialized()
   {
     base.OnInitialized();
 
-    _powerCostConfiguration = new PowerCostConfiguration
+    // todo: this could be injected as a singleton
+    var costConfiguration = new PowerCostConfiguration
     {
       PurchaseCostPerW = PurchaseCostPerW,
       FeedInCostPerW = FeedInCostPerW,
       FixedCostPerQuarterHour = FixedCostPerQuarterHour
     };
 
+    CostBenefitViewModel.SetCostConfiguration(costConfiguration);
+
     CalculateChartData();
   }
 
   private void CalculateChartData()
   {
-    if (_cumulativeMode)
-    {
-      var lastPowerItem = new PowerData { WattHour = new WattsData() };
-
-      _costData = ChartData.Power
-        .Select(powerData =>
-        {
-          lastPowerItem.Time = powerData.Time;
-          lastPowerItem.WattHour = WattsDataHelpers.Aggregate(lastPowerItem.WattHour, powerData.WattHour);
-
-          return new PowerCost(lastPowerItem, _powerCostConfiguration);
-        })
-        .AsReadOnlyList();
-    }
-    else
-    {
-      _costData = ChartData.Power
-        .Select(item => new PowerCost(item, _powerCostConfiguration))
-        .AsReadOnlyList();
-    }
+    _costData = CostBenefitViewModel.CalculateData(ChartData.Power, _isCumulative);
   }
 
   private async Task DeleteChart()
