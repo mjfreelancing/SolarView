@@ -1,12 +1,11 @@
 ﻿using SolarView.Common.Models;
 
-namespace SolarViewBlazor.Models
+namespace SolarView.Client.Common.Models
 {
   public class DateRangeSelectOption
   {
     public string Caption { get; set; }
-    public bool Selected { get; set; }
-    public bool IsCustom { get; set; }
+    public string Option { get; set; }     // string version of DateRangeOption
     public DateRange DateRange { get; set; }
   }
 }

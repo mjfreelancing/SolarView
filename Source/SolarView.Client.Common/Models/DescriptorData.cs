@@ -1,4 +1,4 @@
-﻿namespace SolarViewBlazor.Models
+﻿namespace SolarView.Client.Common.Models
 {
   public class DescriptorData
   {

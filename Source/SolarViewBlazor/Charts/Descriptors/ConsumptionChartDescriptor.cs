@@ -1,6 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using SolarView.Client.Common.Models;
 using SolarViewBlazor.Components.Charts;
+using System;
+using System.Collections.Generic;
 
 namespace SolarViewBlazor.Charts.Descriptors
 {

@@ -12,7 +12,6 @@
     <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
                        IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
 
-    @*Minimum=@_minCost Maximum=@_maxCost Interval="@_interval"*@
     <ChartPrimaryYAxis LabelFormat="c" />
 
     <ChartTooltipSettings Enable="true" />
@@ -51,28 +50,8 @@
     }
   }
 
-  //private double _minCost;
-  //private double _maxCost;
-  //private double _interval;
   private bool _cumulativeMode;
   private IReadOnlyList<PowerCost> _costData;
-
-  //protected override void OnParametersSet()
-  //{
-  //  base.OnParametersSet();
-
-  //  if (Parent == null)
-  //  {
-  //    throw new InvalidOperationException($"The {nameof(Parent)} parameter must be initialized");
-  //  }
-
-  //  if (ChartData?.Power == null)
-  //  {
-  //    throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
-  //  }
-
-  //  CalculateChartData();
-  //}
 
   protected override void OnInitialized()
   {
@@ -102,31 +81,7 @@
         .Select(item => new PowerCost(item))
         .AsReadOnlyList();
     }
-
-    //CalculateChartLimits();
   }
-
-  //private void CalculateChartLimits()
-  //{
-  //  var minCost = _costData.Min(item => item.WithSolarCost);
-  //  var maxCost = _costData.Max(item => item.WithoutSolarCost);
-
-  //  var range = maxCost - minCost;
-  //  var scalingFactor = range < 1.0d ? 100 : 1;
-
-  //  if (minCost > 0.0d)
-  //  {
-  //    _minCost = (Math.Floor(minCost * scalingFactor) - 0.5d) / scalingFactor;
-  //  }
-  //  else
-  //  {
-  //    _minCost = (-Math.Ceiling(-minCost * scalingFactor) - 0.5d) / scalingFactor;
-  //  }
-
-  //  _maxCost = (Math.Ceiling(maxCost * scalingFactor) + 0.5d) / scalingFactor;
-
-  //  _interval = (_maxCost - _minCost) / 8;
-  //}
 
   private async Task DeleteChart()
   {

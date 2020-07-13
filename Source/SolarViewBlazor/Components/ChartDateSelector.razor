@@ -8,10 +8,10 @@
       var disabled = option.DateRange != null &&
                      option.DateRange.StartDateTime < MinDate;
 
-      <div class="p-1">
-        <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@option.Selected" Disabled="@disabled"
-                       @onchange="@(() => UpdateStyles(option))" />
-      </div>
+    <div class="p-1">
+      <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@_selecteDateRangeOption" Disabled="@disabled"
+                     Value="@option.Option" TChecked="DateRangeOption" ValueChange="@OnSelectedDateRangeChanged"/>
+    </div>
     }
   </div>
   
@@ -46,6 +46,7 @@
   private string _dateRangePickerDisplay = "none";
   private string _applyButtonDisplay = "inline-block";
   private IReadOnlyList<DateRangeSelectOption> _options;
+  private DateRangeOption _selecteDateRangeOption = DateRangeOption.ThisMonth;
   private DateTime? _startDate;
   private DateTime? _endDate;
   private bool _dataIsLoaded = true;
@@ -74,52 +75,52 @@
       new DateRangeSelectOption
       {
         Caption = $"Last refresh ({MaxDate:yyyy-MM-dd})",
+        Option = $"{DateRangeOption.LastRefresh}",
         DateRange = new DateRange(MaxDate, MaxDate)
       },
       new DateRangeSelectOption
       {
         Caption = "This Month",
-        Selected = true,
+        Option = $"{DateRangeOption.ThisMonth}",
         DateRange = new DateRange(monthStart, MaxDate)
       },
       new DateRangeSelectOption
       {
         // allowing partial 'last month'
         Caption = "Last Month",
+        Option = $"{DateRangeOption.LastMonth}",
         DateRange = new DateRange(lastMonth.IsSameMonthYear(MinDate) ? MinDate : lastMonth, monthStart.AddMonths(-1).GetEndOfMonth())
       },
       new DateRangeSelectOption
       {
         Caption = "Past 3 Months",
+        Option = $"{DateRangeOption.Past3Months}",
         DateRange = new DateRange(MaxDate.AddMonths(-3), MaxDate)
       },
       new DateRangeSelectOption
       {
         Caption = "Past 6 Months",
+        Option = $"{DateRangeOption.Past6Months}",
         DateRange = new DateRange(MaxDate.AddMonths(-6), MaxDate)
       },
       new DateRangeSelectOption
       {
         Caption = "Past Year",
+        Option = $"{DateRangeOption.PastYear}",
         DateRange = new DateRange(MaxDate.AddYears(-1), MaxDate)
       },
       new DateRangeSelectOption
       {
         Caption = $"Since {MinDate:yyyy-MM-dd}",
+        Option = $"{DateRangeOption.SinceStart}",
         DateRange = new DateRange(MinDate, MaxDate)
       },
       new DateRangeSelectOption
       {
         Caption = "Custom",
-        IsCustom = true
+        Option = $"{DateRangeOption.Custom}"
       }
     };
-  }
-
-  private void UpdateStyles(DateRangeSelectOption option)
-  {
-    _dateRangePickerDisplay = option.IsCustom ? "inline-block" : "none";
-    _applyButtonDisplay = option.IsCustom ? "none" : "inline-block";
   }
 
   private async Task ApplyCustomDateRange()
@@ -153,7 +154,7 @@
     {
       _dataIsLoaded = false;
 
-      var dateRange = _options.Single(item => item.Selected).DateRange;
+      var dateRange = _options.Single(item => item.Option == $"{_selecteDateRangeOption}").DateRange;
 
       if (dateRange.StartDateTime < MinDate)
       {
@@ -166,5 +167,11 @@
     {
       _dataIsLoaded = true;
     }
+  }
+
+  private void OnSelectedDateRangeChanged()
+  {
+    _dateRangePickerDisplay = _selecteDateRangeOption == DateRangeOption.Custom ? "inline-block" : "none";
+    _applyButtonDisplay = _selecteDateRangeOption == DateRangeOption.Custom ? "none" : "inline-block";
   }
 }

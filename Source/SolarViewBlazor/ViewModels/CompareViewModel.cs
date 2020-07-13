@@ -1,10 +1,10 @@
 ﻿using AllOverIt.Extensions;
 using AllOverIt.Helpers;
+using SolarView.Client.Common.Models;
 using SolarView.Client.Common.Services.SolarView;
 using SolarView.Common.Models;
 using SolarViewBlazor.Cache;
 using SolarViewBlazor.Charts;
-using SolarViewBlazor.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;

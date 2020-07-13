@@ -1,4 +1,4 @@
-﻿using SolarViewBlazor.Models;
+﻿using SolarView.Client.Common.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

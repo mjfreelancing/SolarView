@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
-using SolarViewBlazor.Models;
+using SolarView.Client.Common.Models;
 using System.Collections.Generic;
 
 namespace SolarViewBlazor.Charts

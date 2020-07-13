@@ -1,8 +1,7 @@
-﻿using SolarView.Client.Common.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace SolarViewBlazor.Models
+namespace SolarView.Client.Common.Models
 {
   public class ChartData
   {

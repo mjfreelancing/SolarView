@@ -1,4 +1,5 @@
-﻿using SolarViewBlazor.Components.Charts;
+﻿using SolarView.Client.Common.Models;
+using SolarViewBlazor.Components.Charts;
 using System;
 using System.Collections.Generic;
 

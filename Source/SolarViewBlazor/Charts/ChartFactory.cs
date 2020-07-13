@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
+using SolarView.Client.Common.Models;
 using SolarViewBlazor.Charts.Descriptors;
-using SolarViewBlazor.Models;
 using System.Collections.Generic;
 
 namespace SolarViewBlazor.Charts

@@ -21,7 +21,7 @@
                 {
                   @foreach (var selection in _chartSelection)
                   {
-                    <SfCheckBox CssClass="mr-4" Label=@selection.ChartDescriptor.Description @bind-Checked="selection.Selected" />
+                    <SfCheckBox CssClass="mr-4" TChecked="bool" Label=@selection.ChartDescriptor.Description @bind-Checked="selection.Selected" />
                   }
                 }
               </div>

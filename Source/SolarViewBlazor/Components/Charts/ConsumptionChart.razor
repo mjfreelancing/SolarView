@@ -71,18 +71,6 @@
       Purchased = watts.Purchased;
       SelfConsumption = watts.SelfConsumption;
     }
-
-    //public double GetMaxValue()
-    //{
-    //  return new[]
-    //  {
-    //    Consumption,
-    //    Purchased,
-    //    SelfConsumption,
-    //    FeedIn,
-    //    Production
-    //  }.Max();
-    //}
   }
 
   public enum PowerUnit
@@ -109,30 +97,10 @@
     new DisplayUnit(PowerUnit.WattHour, "Watt-Hour"),
   };
 
-  private PowerUnit _selectedUnit = PowerUnit.Watts;
-
-  //private double _maxWatts;
-  //private double _interval;
   private bool _cumulativeMode;
-
+  private PowerUnit _selectedUnit = PowerUnit.WattHour;
   private string _axisFormat => GetAxisFormat();
-
   private IReadOnlyList<TimeWatts> _timeWatts;
-
-  //protected override void OnParametersSet()
-  //{
-  //  base.OnParametersSet();
-
-  //  if (Parent == null)
-  //  {
-  //    throw new InvalidOperationException($"The {nameof(Parent)} parameter must be initialized");
-  //  }
-
-  //  if (ChartData?.Power == null)
-  //  {
-  //    throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
-  //  }
-  //}
 
   protected override void OnInitialized()
   {
@@ -173,17 +141,7 @@
         })
         .AsReadOnlyList();
     }
-
-    //CalculateChartLimits();
   }
-
-  //private void CalculateChartLimits()
-  //{
-  //  var maxWatts = _timeWatts.Max(watts => watts.GetMaxValue());
-
-  //  _maxWatts = (1 + Math.Floor(maxWatts / 10d)) * 10d;
-  //  _interval = _maxWatts / 8;
-  //}
 
   private string GetAxisFormat()
   {

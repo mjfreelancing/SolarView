@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SolarViewBlazor.Charts
+namespace SolarView.Client.Common.Models
 {
   public interface IChartDescriptor
   {

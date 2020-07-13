@@ -1,6 +1,5 @@
-﻿using SolarView.Common.Models;
-using SolarViewBlazor.Charts;
-using SolarViewBlazor.Models;
+﻿using SolarView.Client.Common.Models;
+using SolarView.Common.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

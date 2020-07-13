@@ -1,6 +1,6 @@
 ﻿using AllOverIt.Helpers;
 using Blazored.LocalStorage;
-using SolarViewBlazor.Models;
+using SolarView.Client.Common.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;

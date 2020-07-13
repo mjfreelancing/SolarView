@@ -20,7 +20,6 @@
     <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
                        IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
 
-    @*Minimum=@_minFeedIn Maximum=@_maxFeedIn Interval="500"*@
     <ChartPrimaryYAxis LabelFormat="@_axisFormat" />
 
     <ChartTooltipSettings Enable="true" />
@@ -74,34 +73,11 @@
     new DisplayUnit(PowerUnit.WattHour, "Watt-Hour"),
   };
 
-  private PowerUnit _selectedUnit = PowerUnit.Watts;
+  private PowerUnit _selectedUnit = PowerUnit.WattHour;
 
-  //private double _minFeedIn;
-  //private double _maxFeedIn;
   private bool _cumulativeMode;
   private string _axisFormat => GetAxisFormat();
   private IReadOnlyList<TimeFeedIn> _timeFeedIn;
-
-  //protected override void OnParametersSet()
-  //{
-  //  base.OnParametersSet();
-
-  //  if (Parent == null)
-  //  {
-  //    throw new InvalidOperationException($"The {nameof(Parent)} parameter must be initialized");
-  //  }
-
-  //  if (ChartData?.Power == null)
-  //  {
-  //    throw new InvalidOperationException($"The {nameof(ChartData)} parameter must be initialized with power data");
-  //  }
-
-  //  _timeFeedIn = ChartData.Power
-  //    .Select(item => new TimeFeedIn(item.Time, item.Watts.FeedIn))
-  //    .AsReadOnlyList();
-
-  //  CalculateChartLimits();
-  //}
 
   protected override void OnInitialized()
   {
@@ -141,18 +117,7 @@
         })
         .AsReadOnlyList();
     }
-
-    //CalculateChartLimits()
   }
-
-  //private void CalculateChartLimits()
-  //{
-  //  var minFeedIn = _timeFeedIn.Min(item => item.FeedIn);
-  //  var maxFeedIn = _timeFeedIn.Max(item => item.FeedIn);
-
-  //  _minFeedIn = Math.Floor(minFeedIn / 500d) * 500d;
-  //  _maxFeedIn = (1 + Math.Floor(maxFeedIn / 500d)) * 500d;
-  //}
 
   private string GetAxisFormat()
   {
@@ -164,12 +129,6 @@
       (PowerUnit.WattHour, false) => "{value}Wh",
       (_, _) => throw new InvalidOperationException($"Unknown Unit/Mode combination: {_selectedUnit}/{_cumulativeMode}")
     };
-
-    //return _cumulativeMode switch
-    //{
-    //  true => "{value}KW",
-    //  false => "{value}W"
-    //};
   }
 
   private async Task DeleteChart()
