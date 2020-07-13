@@ -2,7 +2,7 @@
 @using SolarViewBlazor.Charts.ViewModels
 
 <div class="p-2 d-flex align-items-center">
-  <SfCheckBox Label="Cumulative" @bind-Checked="@_isCumulative" @onchange="CalculateChartData" />
+  <SfCheckBox Label="Cumulative" @bind-Checked="@_isCumulative" TChecked="bool" ValueChange="CalculateChartData" />
   <div class="ml-4" style="width: 120px">
     <SfDropDownList TValue="PowerUnit" TItem="DisplayPowerUnit" Placeholder="Units" PopupHeight="100" Value="@_powerUnit"
                     DataSource="@_displayPowerUnits">
@@ -10,7 +10,7 @@
       <DropDownListEvents TValue="PowerUnit" ValueChange="OnUnitChange" />
     </SfDropDownList>
   </div>
-  <button class="ml-auto" @onclick="DeleteChart">Remove</button>
+  <button class="ml-auto" @onclick="@(async () => await DeleteChart())">Remove</button>
 </div>
 <div>
   <SfChart Title=@($"Period: {ChartData.StartDate:yyyy-MM-dd} to {ChartData.EndDate:yyyy-MM-dd}")>
@@ -23,8 +23,8 @@
 
     <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
                        IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
-    
-    <ChartPrimaryYAxis LabelFormat="@_yAxisLabel" Minimum="0" />
+
+    <ChartPrimaryYAxis LabelFormat="@YAxisLabel" Minimum="0" />
 
     <ChartTooltipSettings Enable="true" />
 
@@ -49,15 +49,17 @@
 </div>
 
 @code {
-  [Inject] public IConsumptionChartViewModel ConsumptionViewModel { get; set; }
+  [Inject] private IConsumptionChartViewModel ConsumptionViewModel { get; set; }
+
   [CascadingParameter] public ChartContainer Parent { get; set; }
+
   [Parameter] public ChartData ChartData { get; set; }
 
   private readonly IReadOnlyList<DisplayPowerUnit> _displayPowerUnits = ChartHelpers.GetDisplayPowerUnits();
 
-  private bool _isCumulative;
+  private bool _isCumulative = false;
   private PowerUnit _powerUnit = PowerUnit.WattHour;
-  private string _yAxisLabel => ChartHelpers.GetYAxisLabel(_powerUnit, _isCumulative);
+  private string YAxisLabel => ChartHelpers.GetYAxisLabel(_powerUnit, _isCumulative);
   private IReadOnlyList<TimeWatts> _timeWatts;
 
   protected override void OnInitialized()

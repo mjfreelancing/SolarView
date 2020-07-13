@@ -1,8 +1,9 @@
 ﻿@using SolarViewBlazor.Charts.Models
 @using SolarViewBlazor.Charts.ViewModels
+
 <div class="p-2 d-flex">
-  <SfCheckBox Label="Cumulative" @bind-Checked="@_isCumulative" @onchange="CalculateChartData" />
-  <button class="ml-auto" @onclick="DeleteChart">Remove</button>
+  <SfCheckBox Label="Cumulative" @bind-Checked="@_isCumulative" TChecked="bool" ValueChange="CalculateChartData" />
+  <button class="ml-auto" @onclick="@(async () => await DeleteChart())">Remove</button>
 </div>
 <div>
   <SfChart Title=@($"Period: {ChartData.StartDate:yyyy-MM-dd} to {ChartData.EndDate:yyyy-MM-dd}")>
@@ -32,7 +33,7 @@
 </div>
 
 @code {
-  [Inject] public ICostBenefitChartViewModel CostBenefitViewModel { get; set; }
+  [Inject] private ICostBenefitChartViewModel CostBenefitViewModel { get; set; }
 
   [CascadingParameter] public ChartContainer Parent { get; set; }
 
@@ -41,7 +42,7 @@
   [Parameter] public double FeedInCostPerW { get; set; }
   [Parameter] public double FixedCostPerQuarterHour { get; set; }
 
-  private bool _isCumulative;
+  private bool _isCumulative = false;
   private IReadOnlyList<PowerCost> _costData;
 
   protected override void OnInitialized()

@@ -2,26 +2,27 @@
 
   @foreach (var chartFragment in _chartFragments.Values)
   {
-    @*<div @key="chartFragment">
+    <div @key="chartFragment">
       @chartFragment
-    </div>*@
+    </div>
 
-    @chartFragment
+    @*@chartFragment*@
   }
 
 </CascadingValue>
 
 @code {
-  [Inject] IChartFactory ChartFactory { get; set; }
+  [Inject] private IChartFactory ChartFactory { get; set; }
+
   [Parameter] public IChartDescriptor ChartDescriptor { get; set; }
   [Parameter] public IReadOnlyList<ChartData> ChartData { get; set; }
   [Parameter] public EventCallback<string> ChartDeleted { get; set; }
 
   private readonly IDictionary<string, RenderFragment> _chartFragments = new Dictionary<string, RenderFragment>();
 
-  protected override void OnParametersSet()
+  protected override void OnInitialized()
   {
-    base.OnParametersSet();
+    base.OnInitialized();
 
     foreach (var chartData in ChartData)
     {
