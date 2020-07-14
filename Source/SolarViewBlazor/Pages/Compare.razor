@@ -18,12 +18,9 @@
             <HeaderTemplate>Add a new chart</HeaderTemplate>
             <ContentTemplate>
               <div class="p-2">
-                @if (!_chartSelection.IsNullOrEmpty())
+                @foreach (var selection in _chartSelection)
                 {
-                  @foreach (var selection in _chartSelection)
-                  {
-                    <SfCheckBox CssClass="mr-4" TChecked="bool" Label=@selection.ChartDescriptor.Description @bind-Checked="selection.Selected" />
-                  }
+                  <SfCheckBox CssClass="mr-4" TChecked="bool" Label=@selection.ChartDescriptor.Description @bind-Checked="selection.Selected" />
                 }
               </div>
               <hr />
@@ -61,6 +58,18 @@
     <a href="">You need to provide a Site Id</a>
   </SiteNotAvailable>
 </SiteView>
+
+<style>
+
+  .e-accordion .e-acrdn-item > .e-acrdn-header:hover .e-acrdn-header-content {
+    text-decoration: none;
+  }
+
+  .e-accordion .e-acrdn-item.e-select > .e-acrdn-header:hover .e-acrdn-header-content,
+  .e-accordion .e-acrdn-item.e-select > .e-acrdn-header:focus .e-acrdn-header-content {
+    text-decoration: none;
+  }
+</style>
 
 @code {
   [Inject] private ISiteViewModel SiteViewModel { get; set; }

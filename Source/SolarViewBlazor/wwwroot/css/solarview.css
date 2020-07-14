@@ -27,6 +27,6 @@
   column-width: 14em;
 }
 
-.chart-accordion .e-acrdn-header-content {
+.chart-accordion-item .e-acrdn-header-content {
   width: 100%
 }

@@ -2,16 +2,14 @@
 {
   var chartId = chartParameters.ChartData.Id;
 
-  <div class="chart-accordion" @key="chartId">
+  <div @key="chartId">
     <SfAccordion>
       <AccordionItems>
-        <AccordionItem Expanded="true">
+        <AccordionItem CssClass="chart-accordion-item" Expanded="true">
           <HeaderTemplate>
-            <div class="col-12">
-              <div class="d-flex">
-                <span>@($"{chartParameters.ChartData.StartDate:yyyy-MM-dd}") - @($"{chartParameters.ChartData.EndDate:yyyy-MM-dd}")</span>
-                <span class="oi oi-delete m-0 mt-1 ml-auto mr-4" @onclick="@(async () => await DeleteChart(chartId))"/>
-              </div>
+            <div class="col-12 d-flex">
+              <span>@($"{chartParameters.ChartData.StartDate:yyyy-MM-dd}") - @($"{chartParameters.ChartData.EndDate:yyyy-MM-dd}")</span>
+              <span class="oi oi-delete m-0 mt-1 ml-auto mr-4" @onclick="@(async () => await DeleteChart(chartId))" />
             </div>
           </HeaderTemplate>
           <ContentTemplate>
@@ -38,7 +36,7 @@
       ChartData = chartData;
 
       Parameters = new Dictionary<string, object>(parameters)
-  {
+      {
         {nameof(ChartData), chartData}
       };
     }
