@@ -1,4 +1,4 @@
-/*fixed width*/
+/* fixed width */
 .btn-width-medium {
   width: 120px;
 }
@@ -25,4 +25,8 @@
 .chart-date-options {
   column-count: 2;
   column-width: 14em;
+}
+
+.chart-accordion .e-acrdn-header-content {
+  width: 100%
 }

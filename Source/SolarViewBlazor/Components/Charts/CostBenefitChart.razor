@@ -3,10 +3,9 @@
 
 <div class="p-2 d-flex">
   <SfCheckBox Label="Cumulative" @bind-Checked="@_isCumulative" TChecked="bool" ValueChange="CalculateChartData" />
-  <button class="ml-auto" @onclick="@(async () => await DeleteChart())">Remove</button>
 </div>
 <div>
-  <SfChart Title=@($"Period: {ChartData.StartDate:yyyy-MM-dd} to {ChartData.EndDate:yyyy-MM-dd}")>
+  <SfChart>
     <ChartArea>
       <ChartAreaBorder Width="1" />
     </ChartArea>
@@ -34,8 +33,6 @@
 
 @code {
   [Inject] private ICostBenefitChartViewModel CostBenefitViewModel { get; set; }
-
-  [CascadingParameter] public ChartContainer Parent { get; set; }
 
   [Parameter] public ChartData ChartData { get; set; }
   [Parameter] public double PurchaseCostPerW { get; set; }
@@ -65,10 +62,5 @@
   private void CalculateChartData()
   {
     _costData = CostBenefitViewModel.CalculateData(ChartData.Power, _isCumulative);
-  }
-
-  private async Task DeleteChart()
-  {
-    await Parent.DeleteChart(ChartData.Id);
   }
 }

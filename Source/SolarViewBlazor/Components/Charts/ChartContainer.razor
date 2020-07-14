@@ -1,16 +1,27 @@
-﻿@using Syncfusion.Blazor.Diagrams
-<CascadingValue Value="this">
+﻿@foreach (var chartParameters in OrderedCharts)
+{
+  var chartId = chartParameters.ChartData.Id;
 
-  @foreach (var chartParameters in OrderedCharts)
-  {
-    var chartId = chartParameters.ChartData.Id;
-
-    <div @key="chartId">
-      <DynamicComponent ComponentType="@ChartDescriptor.ChartType" Parameters="@(chartParameters.Parameters)" />
-    </div>
-  }
-
-</CascadingValue>
+  <div class="chart-accordion" @key="chartId">
+    <SfAccordion>
+      <AccordionItems>
+        <AccordionItem Expanded="true">
+          <HeaderTemplate>
+            <div class="col-12">
+              <div class="d-flex">
+                <span>@($"{chartParameters.ChartData.StartDate:yyyy-MM-dd}") - @($"{chartParameters.ChartData.EndDate:yyyy-MM-dd}")</span>
+                <span class="oi oi-delete m-0 mt-1 ml-auto mr-4" @onclick="@(async () => await DeleteChart(chartId))"/>
+              </div>
+            </div>
+          </HeaderTemplate>
+          <ContentTemplate>
+            <DynamicComponent ComponentType="@ChartDescriptor.ChartType" Parameters="@(chartParameters.Parameters)" />
+          </ContentTemplate>
+        </AccordionItem>
+      </AccordionItems>
+    </SfAccordion>
+  </div>
+}
 
 @code {
   [Parameter] public IChartDescriptor ChartDescriptor { get; set; }
@@ -27,7 +38,7 @@
       ChartData = chartData;
 
       Parameters = new Dictionary<string, object>(parameters)
-      {
+  {
         {nameof(ChartData), chartData}
       };
     }

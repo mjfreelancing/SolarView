@@ -10,10 +10,9 @@
       <DropDownListEvents TValue="PowerUnit" ValueChange="OnUnitChange" />
     </SfDropDownList>
   </div>
-  <button class="ml-auto" @onclick="@(async () => await DeleteChart())">Remove</button>
 </div>
 <div>
-  <SfChart Title=@($"Period: {ChartData.StartDate:yyyy-MM-dd} to {ChartData.EndDate:yyyy-MM-dd}")>
+  <SfChart>
 
     @*<ChartZoomSettings EnableMouseWheelZooming="true" EnablePinchZooming="true" EnableSelectionZooming="true"/>*@
 
@@ -51,8 +50,6 @@
 @code {
   [Inject] private IConsumptionChartViewModel ConsumptionViewModel { get; set; }
 
-  [CascadingParameter] public ChartContainer Parent { get; set; }
-
   [Parameter] public ChartData ChartData { get; set; }
 
   private readonly IReadOnlyList<DisplayPowerUnit> _displayPowerUnits = ChartHelpers.GetDisplayPowerUnits();
@@ -71,11 +68,6 @@
   private void CalculateChartData()
   {
     _timeWatts = ConsumptionViewModel.CalculateData(ChartData.Power, _powerUnit, _isCumulative);
-  }
-
-  private async Task DeleteChart()
-  {
-    await Parent.DeleteChart(ChartData.Id);
   }
 
   private void OnUnitChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<PowerUnit> args)
