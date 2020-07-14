@@ -1,7 +1,10 @@
-﻿<CascadingValue Value="this">
+﻿@using Syncfusion.Blazor.Diagrams
+<CascadingValue Value="this">
 
-  @foreach (var (chartId, chartParameters) in _renderedCharts)
+  @foreach (var chartParameters in OrderedCharts)
   {
+    var chartId = chartParameters.ChartData.Id;
+
     <div @key="chartId">
       <DynamicComponent ComponentType="@ChartDescriptor.ChartType" Parameters="@(chartParameters.Parameters)" />
     </div>
@@ -16,10 +19,13 @@
 
   private class ChartParameters
   {
+    public ChartData ChartData { get; }   // mostly used for adding the charts in date order
     public IDictionary<string, object> Parameters { get; }
 
     public ChartParameters(ChartData chartData, IDictionary<string, object> parameters)
     {
+      ChartData = chartData;
+
       Parameters = new Dictionary<string, object>(parameters)
       {
         {nameof(ChartData), chartData}
@@ -27,20 +33,39 @@
     }
   }
 
-  private IDictionary<string, ChartParameters> _renderedCharts;
+  private IReadOnlyList<ChartData> _chartData;
+  private readonly IDictionary<string, ChartParameters> _renderedCharts = new Dictionary<string, ChartParameters>();
 
-  protected override void OnInitialized()
+  private IEnumerable<ChartParameters> OrderedCharts => _renderedCharts.Values
+    .OrderBy(item => item.ChartData.StartDate)
+    .ThenBy(item => item.ChartData.EndDate);
+
+  protected override void OnParametersSet()
   {
-    base.OnInitialized();
+    base.OnParametersSet();
 
-    _renderedCharts = new Dictionary<string, ChartParameters>();
+    // Cannot use OnInitialized() as ChartData will be updated when another chart is added/removed
+    UpdateCharts();
+  }
 
-    foreach (var chartData in ChartData)
+  private void UpdateCharts()
+  {
+    _chartData = ChartData;
+
+    foreach (var chartData in _chartData)
     {
-      var chartParameters = new ChartParameters(chartData, ChartDescriptor.Parameters);
-
-      _renderedCharts.Add(chartData.Id, chartParameters);
+      if (!_renderedCharts.ContainsKey(chartData.Id))
+      {
+        AddChart(chartData);
+      }
     }
+  }
+
+  private void AddChart(ChartData chartData)
+  {
+    var chartParameters = new ChartParameters(chartData, ChartDescriptor.Parameters);
+
+    _renderedCharts.Add(chartData.Id, chartParameters);
   }
 
   public async Task DeleteChart(string chartId)
