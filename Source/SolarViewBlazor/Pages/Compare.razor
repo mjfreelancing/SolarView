@@ -64,7 +64,7 @@
 @code {
   [Inject] private ISiteViewModel SiteViewModel { get; set; }
   [Inject] IEventAggregator EventAggregator { get; set; }
-  [Inject] private IChartFactory ChartFactory { get; set; }
+  [Inject] private IChartRegistry ChartRegistry { get; set; }
   [Inject] private ICompareViewModel CompareViewModel { get; set; }
 
   // a list of possible charts the user can select
@@ -79,7 +79,7 @@
   {
     base.OnInitialized();
 
-    _chartSelection = ChartFactory.ChartDescriptors
+    _chartSelection = ChartRegistry.ChartDescriptors
       .Select(descriptor => new ChartSelection
       {
         Selected = true,

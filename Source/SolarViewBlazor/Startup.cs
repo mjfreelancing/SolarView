@@ -13,6 +13,7 @@ using SolarView.Client.Common.Services.Site;
 using SolarView.Client.Common.Services.SolarView;
 using SolarViewBlazor.Cache;
 using SolarViewBlazor.Charts;
+using SolarViewBlazor.Charts.Descriptors;
 using SolarViewBlazor.Charts.ViewModels;
 using SolarViewBlazor.Configuration;
 using SolarViewBlazor.Events;
@@ -67,7 +68,18 @@ namespace SolarViewBlazor
       services.AddScoped<IKeyVaultConfiguration, KeyVaultConfiguration>();
       services.AddScoped<ISolarViewServiceConfiguration, SolarViewServiceConfiguration>();
       services.AddScoped<IKeyVaultCache, KeyVaultCache>();
-      services.AddScoped<IChartFactory, ChartFactory>(); 
+
+      services.AddSingleton<IChartRegistry>(provider =>
+      {
+        var registry = new ChartRegistry();
+
+        registry.RegisterDescriptor(new ConsumptionChartDescriptor());
+        registry.RegisterDescriptor(new CostBenefitChartDescriptor());
+        registry.RegisterDescriptor(new FeedInChartDescriptor());
+
+        return registry;
+      });
+
       services.AddScoped<IChartDataCache, ChartDataCache>();
       services.AddScoped<IEventAggregator, EventAggregator>();
       services.AddScoped<ISiteService, SiteService>();

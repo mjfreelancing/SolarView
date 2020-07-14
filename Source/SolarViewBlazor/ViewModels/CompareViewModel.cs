@@ -17,7 +17,7 @@ namespace SolarViewBlazor.ViewModels
     private bool _cacheIsLoaded;
     private readonly ISiteViewModel _siteViewModel;
     private readonly ISolarViewService _solarViewService;
-    private readonly IChartFactory _chartFactory;
+    private readonly IChartRegistry _chartRegistry;
     private readonly IChartDataCache _chartDataCache;
 
     // groups of chart descriptors used to build the different chart types, mapped to one or more date ranges and associated power data
@@ -29,11 +29,11 @@ namespace SolarViewBlazor.ViewModels
     // a collection of all charts (key is the chart Id) and their associated descriptor / data
     private IDictionary<string, DescriptorData> _chartDescriptorData = new Dictionary<string, DescriptorData>();
 
-    public CompareViewModel(ISiteViewModel siteViewModel, ISolarViewService solarViewService, IChartFactory chartFactory, IChartDataCache chartDataCache)
+    public CompareViewModel(ISiteViewModel siteViewModel, ISolarViewService solarViewService, IChartRegistry chartRegistry, IChartDataCache chartDataCache)
     {
       _siteViewModel = siteViewModel.WhenNotNull(nameof(siteViewModel));
       _solarViewService = solarViewService.WhenNotNull(nameof(solarViewService));
-      _chartFactory = chartFactory.WhenNotNull(nameof(chartFactory));
+      _chartRegistry = chartRegistry.WhenNotNull(nameof(chartRegistry));
       _chartDataCache = chartDataCache.WhenNotNull(nameof(chartDataCache));
     }
 
@@ -50,7 +50,7 @@ namespace SolarViewBlazor.ViewModels
           var powerData = _chartPowerData[chartDataId];
 
           var descriptorId = descriptorData.DescriptorId;
-          var chartDescriptor = _chartFactory.ChartDescriptors.Single(item => item.Id == descriptorId);
+          var chartDescriptor = _chartRegistry.ChartDescriptors.Single(item => item.Id == descriptorId);
 
           var chartData = new ChartData
           {
