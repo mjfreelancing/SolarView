@@ -4,9 +4,9 @@
 }
 
 /* tables in the 'info' components within the settings page */
-.table-settings-info {
+.table-settings {
   margin-bottom: 0;
-  width: 100%
+  width: 100%;
 }
 
 .settings-card {
@@ -19,7 +19,7 @@
 }
 
 .chart-date-range-picker {
-  width: 100%
+  width: 100%;
 }
 
 .chart-date-options {

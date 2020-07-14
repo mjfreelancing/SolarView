@@ -5,31 +5,41 @@
 
 <h1>Settings</h1>
 
-<LoadedView IsLoaded="@_isLoaded">
+<SiteView>
   <Loading>
-    <!--  prevent flickering if coming back to this page after the data has been loaded for the session -->
-    @if (SiteViewModel.CurrentSite == null)
-    {
-      <LoadingView/>
-    }
+    <LoadingView />
   </Loading>
-  <Loaded>
+  <SiteAvailable>
     <div class="mb-4">
-      <div class="content border border-primary settings-card mt-4">
-        <UserInfo/>
-      </div>
+      <SfAccordion ExpandMode="ExpandMode.Single">
+        <AccordionItems>
+          <AccordionItem Expanded="true">
+            <HeaderTemplate>Site Info</HeaderTemplate>
+            <ContentTemplate>
+              <div class="content border border-primary settings-card">
+                <SiteInfo Site="@CurrentSite" />
+              </div>
+            </ContentTemplate>
+          </AccordionItem>
+          <AccordionItem Expanded="false">
+            <HeaderTemplate>User Info</HeaderTemplate>
+            <ContentTemplate>
+              <div class="content border border-primary settings-card">
+                <UserInfo />
+              </div>
+            </ContentTemplate>
+          </AccordionItem>
+        </AccordionItems>
+      </SfAccordion>
 
-      @if (CurrentSite != null)
-      {
-        <div class="content border border-primary settings-card mt-4">
-          <SiteInfo Site="@CurrentSite"/>
-        </div>
-
-        <button class="btn btn-outline-primary btn-width-medium mt-4 mr-2" @onclick="ClearLocalStorage">Clear Cache</button>
-      }
+      <button class="btn btn-outline-primary btn-width-medium mt-4 mr-2" @onclick="ClearLocalStorage">Clear Cache</button>
     </div>
-  </Loaded>
-</LoadedView>
+  </SiteAvailable>
+  <SiteNotAvailable>
+    <p class="mt-4 mb-4">You should not have landed here, There's no data to display.</p>
+    <a href="">You need to provide a Site Id</a>
+  </SiteNotAvailable>
+</SiteView>
 
 @code {
   [Inject] private ISiteViewModel SiteViewModel { get; set; }
@@ -37,7 +47,6 @@
   [Inject] IChartDataCache ChartDataCache { get; set; }
   [Inject] private NavigationManager NavigationManager { get; set; }
 
-  private bool _isLoaded;
   private ISiteInfo CurrentSite => SiteViewModel.CurrentSite;
 
   public void Dispose()
@@ -50,25 +59,6 @@
     base.OnInitialized();
 
     EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
-  }
-
-  protected override async Task OnAfterRenderAsync(bool firstRender)
-  {
-    await base.OnAfterRenderAsync(firstRender);
-
-    if (firstRender)
-    {
-      // will be null on first load or during a page refresh
-      if (CurrentSite == null)
-      {
-        // loads from local storage - refreshes the data if previously cached
-        // also publishes a SiteChanged event
-        await SiteViewModel.LoadCurrentSite(true);
-      }
-
-      _isLoaded = true;
-      StateHasChanged();
-    }
   }
 
   private void HandleSiteChanged(SiteChanged message)
