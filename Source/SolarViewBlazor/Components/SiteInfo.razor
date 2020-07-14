@@ -1,0 +1,54 @@
+﻿<h3>Site</h3>
+
+<table class="table table-settings-info mt-4">
+  <tbody>
+    <tr class="row">
+      <th scope="row" class="col-sm-6 col-md-3">Site Id</th>
+      <td class="col-sm-6 col-md-9">@Site.SiteId</td>
+    </tr>
+    <tr class="row">
+      <th scope="row" class="col-sm-6 col-md-3">Start Date</th>
+      <td class="col-sm-6 col-md-9">@Site.StartDate</td>
+    </tr>
+    <tr class="row">
+      <th scope="row" class="col-sm-6 col-md-3">Contact</th>
+      <td class="col-sm-6 col-md-9">@Site.ContactName</td>
+    </tr>
+    <tr class="row">
+      <th scope="row" class="col-sm-6 col-md-3">Email</th>
+      <td class="col-sm-6 col-md-9">@Site.ContactEmail</td>
+    </tr>
+    <tr class="row">
+      <th scope="row" class="col-sm-6 col-md-3">TimeZone</th>
+      <td class="col-sm-6 col-md-9">@Site.TimeZoneId</td>
+    </tr>
+    <tr class="row">
+      <th scope="row" class="col-sm-6 col-md-3">Last Refresh</th>
+      <td class="col-sm-6 col-md-9">@Site.LastRefreshDateTime</td>
+    </tr>
+    <tr class="row">
+      <th scope="row" class="col-sm-6 col-md-3">Last Aggregation</th>
+      <td class="col-sm-6 col-md-9">@Site.LastAggregationDate</td>
+    </tr>
+    <tr class="row">
+      <th scope="row" class="col-sm-6 col-md-3">Last Summary Email</th>
+      <td class="col-sm-6 col-md-9">@Site.LastSummaryDate</td>
+    </tr>
+    <tr class="row">
+      <td colspan="2" class="col-12">
+        <button class="btn btn-outline-primary btn-width-medium mt-2" @onclick="RefreshSiteInfo">Refresh</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+@code {
+  [Inject] private ISolarViewService SolarViewService { get; set; }
+  [Parameter] public ISiteInfo Site { get; set; }
+
+  private async Task RefreshSiteInfo()
+  {
+    _ = await SolarViewService.GetSiteDetails(Site.SiteId);
+    StateHasChanged();
+  }
+}

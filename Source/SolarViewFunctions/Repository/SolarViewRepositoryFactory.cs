@@ -3,7 +3,7 @@ using SolarViewFunctions.Repository.Power;
 using SolarViewFunctions.Repository.PowerMonthly;
 using SolarViewFunctions.Repository.PowerUpdateHistory;
 using SolarViewFunctions.Repository.PowerYearly;
-using SolarViewFunctions.Repository.Sites;
+using SolarViewFunctions.Repository.Site;
 using System;
 using System.Collections.Generic;
 
@@ -14,7 +14,7 @@ namespace SolarViewFunctions.Repository
     private static readonly IDictionary<string, Func<CloudTable, ISolarViewRepository>> RepositoryRegistry
       = new Dictionary<string, Func<CloudTable, ISolarViewRepository>>
       {
-        {Constants.Table.Sites, table => new SitesRepository(table)},
+        {Constants.Table.Sites, table => new SiteRepository(table)},
         {Constants.Table.Power, table => new PowerRepository(table)},
         {Constants.Table.PowerMonthly, table => new PowerMonthlyRepository(table)},
         {Constants.Table.PowerYearly, table => new PowerYearlyRepository(table)},

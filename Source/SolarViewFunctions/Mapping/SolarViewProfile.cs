@@ -1,8 +1,12 @@
 using AutoMapper;
-using SolarViewFunctions.Dto;
+using SolarView.Common.Models;
+using SolarViewFunctions.Dto.Request;
+using SolarViewFunctions.Dto.Response;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
+using SolarViewFunctions.Models.SolarEdgeData;
+using SolarViewFunctions.SolarEdge.Dto.Response;
 using System;
 
 namespace SolarViewFunctions.Mapping
@@ -15,7 +19,7 @@ namespace SolarViewFunctions.Mapping
         .ForMember(dest => dest.StartDateTime, opt => opt.MapFrom(src => src.StartDate))
         .ForMember(dest => dest.EndDateTime, opt => opt.MapFrom(src => src.EndDate))
         .ForMember(dest => dest.TriggerDateTime, opt => opt.Ignore())
-        .ForMember(dest => dest.Trigger, opt => opt.Ignore())
+        .ForMember(dest => dest.TriggerType, opt => opt.Ignore())
         .AfterMap((src, dest) =>
         {
           // Force the update to use full day boundaries to ensure docs are not partially replaced.
@@ -29,7 +33,7 @@ namespace SolarViewFunctions.Mapping
 
       CreateMap<TriggeredPowerQuery, PowerQuery>();
 
-      CreateMap<PowerUpdatedMessage, PowerUpdate>()
+      CreateMap<PowerUpdatedMessage, PowerUpdateEntity>()
         .ForMember(dest => dest.Status, opt => opt.MapFrom(src => $"{src.Status}"))
         .ForMember(dest => dest.PartitionKey, opt => opt.Ignore())
         .ForMember(dest => dest.RowKey, opt => opt.Ignore())
@@ -42,6 +46,27 @@ namespace SolarViewFunctions.Mapping
           dest.PartitionKey = $"{src.SiteId}_{src.TriggerDateTime.Substring(0, 10)}";
           dest.RowKey = $"{Guid.NewGuid()}";
         });
+      
+      CreateMap<AggregatePowerRequest, SiteRefreshAggregationRequest>()
+        .ForMember(dest => dest.SiteStartDate, opt => opt.Ignore())
+        .ForMember(dest => dest.TriggerType, opt => opt.Ignore());
+
+      CreateMap<SiteEntity, SecretSiteInfo>();
+      CreateMap<SiteEntity, SiteInfoResponse>();
+
+      // SolarEdge raw DTO data to SolarView models (nullable to non-nullable meter values)
+      CreateMap<PowerDataDto, SolarData>()
+        .ForMember(dest => dest.MeterValues, opt => opt.MapFrom(src => src.PowerDetails));
+
+      CreateMap<EnergyDataDto, SolarData>()
+        .ForMember(dest => dest.MeterValues, opt => opt.MapFrom(src => src.EnergyDetails));
+
+      CreateMap<PowerDetailsDto, MeterValues>();
+      CreateMap<EnergyDetailsDto, MeterValues>();
+      CreateMap<MeterDto, Meter>();
+
+      CreateMap<MeterValueDto, MeterValue>()
+        .ForMember(dest => dest.Value, opt => opt.NullSubstitute(0.0d));
     }
   }
 }

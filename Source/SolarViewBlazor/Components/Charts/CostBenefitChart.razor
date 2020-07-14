@@ -1,0 +1,74 @@
+﻿@using SolarViewBlazor.Charts.Models
+@using SolarViewBlazor.Charts.ViewModels
+
+<div class="p-2 d-flex">
+  <SfCheckBox Label="Cumulative" @bind-Checked="@_isCumulative" TChecked="bool" ValueChange="CalculateChartData" />
+  <button class="ml-auto" @onclick="@(async () => await DeleteChart())">Remove</button>
+</div>
+<div>
+  <SfChart Title=@($"Period: {ChartData.StartDate:yyyy-MM-dd} to {ChartData.EndDate:yyyy-MM-dd}")>
+    <ChartArea>
+      <ChartAreaBorder Width="1" />
+    </ChartArea>
+
+    <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
+                       IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
+
+    <ChartPrimaryYAxis LabelFormat="c" />
+
+    <ChartTooltipSettings Enable="true" />
+
+    <ChartSeriesCollection>
+      <ChartSeries DataSource=@_costData Name="Without Solar" Type="ChartSeriesType.Line" Width="2" Fill="#640000"
+                   XName=@nameof(PowerCost.Time) YName=@nameof(PowerCost.WithoutSolarCost) />
+
+      <ChartSeries DataSource=@_costData Name="With Solar" Type="ChartSeriesType.Line" Width="2" Fill="#006400"
+                   XName=@nameof(PowerCost.Time) YName=@nameof(PowerCost.WithSolarCost) />
+
+      <ChartSeries DataSource=@_costData Name="Saving" Type="ChartSeriesType.Line" Width="2" Fill="#ff6400"
+                   XName=@nameof(PowerCost.Time) YName=@nameof(PowerCost.Saving) />
+    </ChartSeriesCollection>
+    <ChartLegendSettings Visible="true" />
+  </SfChart>
+</div>
+
+@code {
+  [Inject] private ICostBenefitChartViewModel CostBenefitViewModel { get; set; }
+
+  [CascadingParameter] public ChartContainer Parent { get; set; }
+
+  [Parameter] public ChartData ChartData { get; set; }
+  [Parameter] public double PurchaseCostPerW { get; set; }
+  [Parameter] public double FeedInCostPerW { get; set; }
+  [Parameter] public double FixedCostPerQuarterHour { get; set; }
+
+  private bool _isCumulative = false;
+  private IReadOnlyList<PowerCost> _costData;
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+
+    // todo: this could be injected as a singleton
+    var costConfiguration = new PowerCostConfiguration
+    {
+      PurchaseCostPerW = PurchaseCostPerW,
+      FeedInCostPerW = FeedInCostPerW,
+      FixedCostPerQuarterHour = FixedCostPerQuarterHour
+    };
+
+    CostBenefitViewModel.SetCostConfiguration(costConfiguration);
+
+    CalculateChartData();
+  }
+
+  private void CalculateChartData()
+  {
+    _costData = CostBenefitViewModel.CalculateData(ChartData.Power, _isCumulative);
+  }
+
+  private async Task DeleteChart()
+  {
+    await Parent.DeleteChart(ChartData.Id);
+  }
+}

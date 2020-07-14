@@ -1,11 +1,12 @@
 using AllOverIt.Helpers;
+using AutoMapper;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using SolarViewFunctions.Entities;
+using SolarView.Common.Models;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Repository;
-using SolarViewFunctions.Repository.Sites;
+using SolarViewFunctions.Repository.Site;
 using SolarViewFunctions.Tracking;
 using System.Threading.Tasks;
 
@@ -13,16 +14,18 @@ namespace SolarViewFunctions.Functions
 {
   public class GetSiteInfo : FunctionBase
   {
+    private readonly IMapper _mapper;
     private readonly ISolarViewRepositoryFactory _repositoryFactory;
 
-    public GetSiteInfo(ITracker tracker, ISolarViewRepositoryFactory repositoryFactory)
+    public GetSiteInfo(ITracker tracker, IMapper mapper, ISolarViewRepositoryFactory repositoryFactory)
       : base(tracker)
     {
+      _mapper = mapper.WhenNotNull(nameof(mapper));
       _repositoryFactory = repositoryFactory.WhenNotNull(nameof(repositoryFactory));
     }
 
     [FunctionName(nameof(GetSiteInfo))]
-    public Task<SiteInfo> Run(
+    public async Task<SecretSiteInfo> Run(
       [ActivityTrigger] IDurableActivityContext context,
       [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable)
     {
@@ -34,7 +37,9 @@ namespace SolarViewFunctions.Functions
 
       Tracker.TrackInfo($"Getting info for SiteId {siteId}");
 
-      return _repositoryFactory.Create<ISitesRepository>(sitesTable).GetSiteAsync(siteId);
+      var siteInfo = await _repositoryFactory.Create<ISiteRepository>(sitesTable).GetSiteAsync(siteId);
+
+      return _mapper.Map<SecretSiteInfo>(siteInfo);
     }
   }
 }

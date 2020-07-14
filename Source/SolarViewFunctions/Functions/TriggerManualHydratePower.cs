@@ -6,14 +6,15 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Newtonsoft.Json;
-using SolarViewFunctions.Dto;
+using SolarView.Common.Extensions;
+using SolarViewFunctions.Dto.Request;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Exceptions;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.HttpResults;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository;
-using SolarViewFunctions.Repository.Sites;
+using SolarViewFunctions.Repository.Site;
 using SolarViewFunctions.Tracking;
 using SolarViewFunctions.Validators;
 using System;
@@ -37,7 +38,7 @@ namespace SolarViewFunctions.Functions
 
     [FunctionName(nameof(TriggerManualHydratePower))]
     public async Task<HttpResponseMessage> Run(
-      [HttpTrigger(AuthorizationLevel.Function, "post", Route = "hydrate/{siteId}")] HttpRequestMessage request, string siteId,
+      [HttpTrigger(AuthorizationLevel.Function, "post", Route = "site/{siteId}/hydrate")] HttpRequestMessage request, string siteId,
       [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable,
       [CosmosDB(Constants.Cosmos.SolarDatabase, Constants.Cosmos.ExceptionCollection,
         ConnectionStringSetting = Constants.ConnectionStringNames.SolarViewCosmos)] IAsyncCollector<ExceptionDocument> exceptionDocuments,
@@ -56,14 +57,28 @@ namespace SolarViewFunctions.Functions
 
         Tracker.TrackEvent(nameof(TriggerManualHydratePower));
 
-        var siteRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
+        var siteRepository = _repositoryFactory.Create<ISiteRepository>(sitesTable);
 
         ValidateRequest(hydrateRequest);
-        var siteInfo = await hydrateRequest.GetValidatedSiteInfo(siteRepository);
+
+        var siteInfo = await siteRepository.GetSiteAsync(hydrateRequest.SiteId);
+
+        if (siteInfo == null)
+        {
+          return new ForbiddenResponse();
+        }
+
+        var triggerLocalTime = siteInfo.UtcToLocalTime(triggerDateTime);
 
         var triggeredPowerQuery = _mapper.Map<TriggeredPowerQuery>(hydrateRequest);
-        triggeredPowerQuery.TriggerDateTime = siteInfo.UtcToLocalTime(triggerDateTime).GetSolarDateTimeString();
-        triggeredPowerQuery.Trigger = RefreshTriggerType.Manual;
+        triggeredPowerQuery.TriggerDateTime = triggerLocalTime.GetSolarDateTimeString();
+        triggeredPowerQuery.TriggerType = RefreshTriggerType.Manual;
+
+        // cap the end date/time to the hour of the current time (will be inline with time triggered refreshes)
+        if (triggeredPowerQuery.EndDateTime.ParseSolarDateTime() > triggerLocalTime)
+        {
+          triggeredPowerQuery.EndDateTime = triggerLocalTime.TrimToHour().GetSolarDateTimeString();
+        }
 
         var instanceId = await orchestrationClient.StartNewAsync(nameof(HydratePowerOrchestrator), triggeredPowerQuery).ConfigureAwait(false);
 
@@ -101,9 +116,9 @@ namespace SolarViewFunctions.Functions
       }
     }
 
-    private static void ValidateRequest(HydratePowerRequest request)
+    private static void ValidateRequest(SitePeriodRequestBase request)
     {
-      var validator = new HydratePowerRequestValidator();
+      var validator = new SitePeriodRequestValidator();
       var validationResult = validator.Validate(request);
 
       if (!validationResult.IsValid)

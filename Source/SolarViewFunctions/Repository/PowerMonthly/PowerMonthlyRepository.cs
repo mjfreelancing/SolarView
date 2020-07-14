@@ -1,26 +1,26 @@
 using Microsoft.Azure.Cosmos.Table;
+using SolarView.Common.Models;
 using SolarViewFunctions.Entities;
-using SolarViewFunctions.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Repository.PowerMonthly
 {
-  public class PowerMonthlyRepository : CloudTableRepository<MeterPowerMonth>, IPowerMonthlyRepository
+  public class PowerMonthlyRepository : CloudTableRepository<MeterPowerMonthEntity>, IPowerMonthlyRepository
   {
     public PowerMonthlyRepository(CloudTable table)
       : base(table)
     {
     }
 
-    public IAsyncEnumerable<MeterPowerMonth> GetMeterData(string siteId, int year, int month, MeterType meterType)
+    public IAsyncEnumerable<MeterPowerMonthEntity> GetMeterData(string siteId, int year, int month, MeterType meterType)
     {
       var partitionKey = $"{siteId}_{year}{month:D2}_{meterType}";
 
       return GetAllAsyncEnumerable(partitionKey);
     }
 
-    public Task UpsertAsync(IEnumerable<MeterPowerMonth> entities)
+    public Task UpsertMonthlyPowerAsync(IEnumerable<MeterPowerMonthEntity> entities)
     {
       return BatchInsertOrReplaceAsync(entities);
     }

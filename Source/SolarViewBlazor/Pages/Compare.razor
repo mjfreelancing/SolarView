@@ -1,0 +1,143 @@
+﻿@page "/compare"
+@attribute [Authorize]
+@implements IDisposable
+@using DateRange = SolarView.Common.Models.DateRange
+
+<h1>Power Comparisons</h1>
+
+<SiteView>
+  <Loading>
+    <LoadingView />
+  </Loading>
+  <SiteAvailable>
+    <div class="mb-2">
+      <SfAccordion ExpandMode="ExpandMode.Single">
+        <AccordionItems>
+          <AccordionItem Expanded="false">
+            <HeaderTemplate>Add a new chart</HeaderTemplate>
+            <ContentTemplate>
+              <div class="p-2">
+                @if (!_chartSelection.IsNullOrEmpty())
+                {
+                  @foreach (var selection in _chartSelection)
+                  {
+                    <SfCheckBox CssClass="mr-4" TChecked="bool" Label=@selection.ChartDescriptor.Description @bind-Checked="selection.Selected" />
+                  }
+                }
+              </div>
+              <hr />
+              <ChartDateSelector MinDate="@SiteViewModel.CurrentSite.StartDate.ParseSolarDate()"
+                                 MaxDate="@SiteViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
+                                 OnApplyDateRange="@(async dateRange => await ApplyDateRange(dateRange))" />
+            </ContentTemplate>
+          </AccordionItem>
+        </AccordionItems>
+      </SfAccordion>
+    </div>
+
+    @foreach (var descriptor in CompareViewModel.GetDescriptors())
+    {
+      var chartData = CompareViewModel.GetDescriptorData(descriptor);
+
+      <!-- 'key' is required to ensure the DOM is compared correctly if items are swapped or removed from anywhere other than the end -->
+      <div class="mb-2" @key="descriptor">
+        <SfAccordion ExpandMode="ExpandMode.Multiple">
+          <AccordionItems>
+            <AccordionItem Expanded="false">
+              <HeaderTemplate>@descriptor.Description (@chartData.Count)</HeaderTemplate>
+              <ContentTemplate>
+                <ChartContainer ChartDescriptor="@descriptor" ChartData="@chartData" ChartDeleted="@(async chartId => await OnChartDeleted(chartId))" />
+              </ContentTemplate>
+            </AccordionItem>
+          </AccordionItems>
+        </SfAccordion>
+      </div>
+    }
+
+  </SiteAvailable>
+  <SiteNotAvailable>
+    <p class="mt-4 mb-4">You should not have landed here, There's no data to display.</p>
+    <a href="">You need to provide a Site Id</a>
+  </SiteNotAvailable>
+</SiteView>
+
+@code {
+  [Inject] private ISiteViewModel SiteViewModel { get; set; }
+  [Inject] IEventAggregator EventAggregator { get; set; }
+  [Inject] private IChartRegistry ChartRegistry { get; set; }
+  [Inject] private ICompareViewModel CompareViewModel { get; set; }
+
+  // a list of possible charts the user can select
+  private IReadOnlyList<ChartSelection> _chartSelection;
+
+  public void Dispose()
+  {
+    EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+  }
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+
+    _chartSelection = ChartRegistry.ChartDescriptors
+      .Select(descriptor => new ChartSelection
+      {
+        Selected = true,
+        ChartDescriptor = descriptor
+      })
+      .OrderBy(item => item.ChartDescriptor.Description)
+      .ToList();
+
+    EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
+  }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await base.OnAfterRenderAsync(firstRender);
+
+    if (firstRender)
+    {
+      if (SiteViewModel.CurrentSite != null)
+      {
+        await LoadCharts();
+      }
+
+      StateHasChanged();
+    }
+  }
+
+  private async Task HandleSiteChanged(SiteChanged message)
+  {
+    if (SiteViewModel.CurrentSite != null)
+    {
+      await LoadCharts();
+    }
+
+    StateHasChanged();
+  }
+
+  private async Task LoadCharts()
+  {
+    await CompareViewModel.LoadFromCacheAsync();
+    StateHasChanged();
+  }
+
+  private async Task ApplyDateRange(DateRange dateRange)
+  {
+    var selectedCharts = _chartSelection
+      .Where(item => item.Selected)
+      .Select(item => item.ChartDescriptor);
+
+    var added = await CompareViewModel.AddChartsAsync(dateRange, selectedCharts);
+
+    if (added)
+    {
+      StateHasChanged();
+    }
+  }
+
+  private async Task OnChartDeleted(string chartId)
+  {
+    await CompareViewModel.DeleteChartAsync(chartId);
+  }
+}

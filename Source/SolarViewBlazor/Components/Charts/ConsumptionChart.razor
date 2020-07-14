@@ -1,0 +1,86 @@
+﻿@using SolarViewBlazor.Charts.Models
+@using SolarViewBlazor.Charts.ViewModels
+
+<div class="p-2 d-flex align-items-center">
+  <SfCheckBox Label="Cumulative" @bind-Checked="@_isCumulative" TChecked="bool" ValueChange="CalculateChartData" />
+  <div class="ml-4" style="width: 120px">
+    <SfDropDownList TValue="PowerUnit" TItem="DisplayPowerUnit" Placeholder="Units" PopupHeight="100" Value="@_powerUnit"
+                    DataSource="@_displayPowerUnits">
+      <DropDownListFieldSettings Value="@nameof(DisplayPowerUnit.Id)" Text="@nameof(DisplayPowerUnit.Text)" />
+      <DropDownListEvents TValue="PowerUnit" ValueChange="OnUnitChange" />
+    </SfDropDownList>
+  </div>
+  <button class="ml-auto" @onclick="@(async () => await DeleteChart())">Remove</button>
+</div>
+<div>
+  <SfChart Title=@($"Period: {ChartData.StartDate:yyyy-MM-dd} to {ChartData.EndDate:yyyy-MM-dd}")>
+
+    @*<ChartZoomSettings EnableMouseWheelZooming="true" EnablePinchZooming="true" EnableSelectionZooming="true"/>*@
+
+    <ChartArea>
+      <ChartAreaBorder Width="1" />
+    </ChartArea>
+
+    <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
+                       IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
+
+    <ChartPrimaryYAxis LabelFormat="@YAxisLabel" Minimum="0" />
+
+    <ChartTooltipSettings Enable="true" />
+
+    <ChartSeriesCollection>
+      @*red*@
+      <ChartSeries DataSource=@_timeWatts Opacity="0.8" Fill="#d12e2e" Name="Consumption"
+                   XName=@nameof(PowerData.Time) YName=@nameof(TimeWatts.Consumption) Type="ChartSeriesType.SplineArea">
+      </ChartSeries>
+
+      @*green*@
+      <ChartSeries DataSource=@_timeWatts Opacity="0.8" Fill="#2bab4d" Name="Production"
+                   XName=@nameof(PowerData.Time) YName=@nameof(TimeWatts.Production) Type="ChartSeriesType.SplineArea">
+      </ChartSeries>
+
+      @*blue*@
+      <ChartSeries DataSource=@_timeWatts Opacity="0.6" Fill="#316bde" Name="Self Consumption"
+                   XName=@nameof(PowerData.Time) YName=@nameof(TimeWatts.SelfConsumption) Type="ChartSeriesType.SplineArea">
+      </ChartSeries>
+    </ChartSeriesCollection>
+    <ChartLegendSettings Visible="true" />
+  </SfChart>
+</div>
+
+@code {
+  [Inject] private IConsumptionChartViewModel ConsumptionViewModel { get; set; }
+
+  [CascadingParameter] public ChartContainer Parent { get; set; }
+
+  [Parameter] public ChartData ChartData { get; set; }
+
+  private readonly IReadOnlyList<DisplayPowerUnit> _displayPowerUnits = ChartHelpers.GetDisplayPowerUnits();
+
+  private bool _isCumulative = false;
+  private PowerUnit _powerUnit = PowerUnit.WattHour;
+  private string YAxisLabel => ChartHelpers.GetYAxisLabel(_powerUnit, _isCumulative);
+  private IReadOnlyList<TimeWatts> _timeWatts;
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    CalculateChartData();
+  }
+
+  private void CalculateChartData()
+  {
+    _timeWatts = ConsumptionViewModel.CalculateData(ChartData.Power, _powerUnit, _isCumulative);
+  }
+
+  private async Task DeleteChart()
+  {
+    await Parent.DeleteChart(ChartData.Id);
+  }
+
+  private void OnUnitChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<PowerUnit> args)
+  {
+    _powerUnit = args.Value;
+    CalculateChartData();
+  }
+}

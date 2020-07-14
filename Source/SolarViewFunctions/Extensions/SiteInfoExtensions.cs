@@ -1,12 +1,13 @@
 using AllOverIt.Extensions;
-using SolarViewFunctions.Entities;
+using SolarView.Common.Extensions;
+using SolarView.Common.Models;
 using System;
 
 namespace SolarViewFunctions.Extensions
 {
   public static class SiteInfoExtensions
   {
-    public static DateTime GetLastAggregationDate(this SiteInfo siteInfo)
+    public static DateTime GetLastAggregationDate(this ISiteInfo siteInfo)
     {
       // returns in site's local date
       return siteInfo.LastAggregationDate.IsNullOrEmpty()
@@ -14,7 +15,7 @@ namespace SolarViewFunctions.Extensions
         : siteInfo.LastAggregationDate.ParseSolarDate();
     }
 
-    public static DateTime GetLastRefreshDateTime(this SiteInfo siteInfo)
+    public static DateTime GetLastRefreshDateTime(this ISiteInfo siteInfo)
     {
       // returns in site's local date
       return siteInfo.LastRefreshDateTime.IsNullOrEmpty()
@@ -22,18 +23,12 @@ namespace SolarViewFunctions.Extensions
         : siteInfo.LastRefreshDateTime.ParseSolarDateTime().TrimToHour();
     }
 
-    public static DateTime GetLastSummaryDate(this SiteInfo siteInfo)
+    public static DateTime GetLastSummaryDate(this ISiteInfo siteInfo)
     {
       // returns in site's local date
       return siteInfo.LastSummaryDate.IsNullOrEmpty() 
         ? siteInfo.StartDate.ParseSolarDate()
         : siteInfo.LastSummaryDate.ParseSolarDate();
-    }
-
-    public static DateTime UtcToLocalTime(this SiteInfo siteInfo, DateTime utcTime)
-    {
-      var tzi = TimeZoneInfo.FindSystemTimeZoneById(siteInfo.TimeZoneId);
-      return TimeZoneInfo.ConvertTimeFromUtc(utcTime, tzi);
     }
   }
 }

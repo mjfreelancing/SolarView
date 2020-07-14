@@ -1,0 +1,68 @@
+﻿@implements IDisposable
+
+<div class="top-row pl-4 navbar navbar-dark">
+  <a class="navbar-brand" href="">SolarView</a>
+  <button class="navbar-toggler" @onclick="ToggleNavMenu">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+  <ul class="nav flex-column">
+    <AuthorizeView>
+      <Authorized>
+        <li class="nav-item px-3">
+          <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            <span class="oi oi-home" aria-hidden="true"></span> Home
+          </NavLink>
+        </li>
+
+        @if (_currentSite != null)
+        {
+          <li class="nav-item px-3">
+            <NavLink class="nav-link" href="compare">
+              <span class="oi oi-graph" aria-hidden="true"></span> Compare
+            </NavLink>
+          </li>
+
+          <li class="nav-item px-3">
+            <NavLink class="nav-link" href="settings">
+              <span class="oi oi-cog" aria-hidden="true"></span> Settings
+            </NavLink>
+          </li>
+        }
+      </Authorized>
+    </AuthorizeView>
+  </ul>
+</div>
+
+@code {
+  [Inject] IEventAggregator EventAggregator { get; set; }
+
+  private ISiteInfo _currentSite;
+  private bool _collapseNavMenu = true;
+  private string NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
+
+  public void Dispose()
+  {
+    EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+  }
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+
+    EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
+  }
+
+  private void HandleSiteChanged(SiteChanged message)
+  {
+    _currentSite = message.SiteInfo;
+    StateHasChanged();
+  }
+
+  private void ToggleNavMenu()
+  {
+    _collapseNavMenu = !_collapseNavMenu;
+  }
+}

@@ -3,12 +3,14 @@ using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.ServiceBus.Core;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.ServiceBus;
+using SolarView.Common.Extensions;
+using SolarView.Common.Models;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Helpers;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository;
-using SolarViewFunctions.Repository.Sites;
+using SolarViewFunctions.Repository.Site;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Threading.Tasks;
@@ -39,7 +41,7 @@ namespace SolarViewFunctions.Functions
 
         Tracker.TrackEvent(nameof(TriggerSendPowerSummaryEmail));
 
-        var sitesRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
+        var sitesRepository = _repositoryFactory.Create<ISiteRepository>(sitesTable);
 
         await foreach (var site in sitesRepository.GetAllSitesAsyncEnumerable())
         {
@@ -54,7 +56,7 @@ namespace SolarViewFunctions.Functions
       }
     }
 
-    private async Task ProcessSiteSummaryEmailRequest(DateTime currentTimeUtc, SiteInfo siteInfo, ISenderClient summaryQueue,
+    private async Task ProcessSiteSummaryEmailRequest(DateTime currentTimeUtc, ISiteInfo siteInfo, ISenderClient summaryQueue,
       IAsyncCollector<ExceptionDocument> exceptionDocuments)
     {
       SiteSummaryEmailRequest request = null;

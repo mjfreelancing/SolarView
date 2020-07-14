@@ -1,0 +1,102 @@
+﻿@page "/"
+@implements IDisposable
+@attribute [Authorize]
+
+<h1>SolarView</h1>
+
+<SiteView>
+  <Loading>
+    <!--  prevent flickering if coming back to this page after the data has been loaded for the session -->
+    @if (SiteViewModel.CurrentSite == null)
+    {
+      <LoadingView/>
+    }
+  </Loading>
+  <SiteNotAvailable>
+    <SfTextBox @bind-Value="@_siteId" Placeholder='Enter your site Id' FloatLabelType='@FloatLabelType.Auto' />
+    <button class="btn btn-primary btn-width-medium mt-2" @onclick="@LoadSiteInfo">Load</button>
+  </SiteNotAvailable>
+  <SiteAvailable>
+    <table class="table">
+      <tbody>
+        <tr class="row">
+          <th scope="row" class="col-sm-6 col-md-3">Site Id</th>
+          <td class="col-sm-6 col-md-9">@CurrentSite.SiteId</td>
+        </tr>
+        <tr class="row">
+          <th scope="row" class="col-sm-6 col-md-3">Last Refresh</th>
+          <td class="col-sm-6 col-md-9">@CurrentSite.LastRefreshDateTime</td>
+        </tr>
+        <tr class="row">
+          <th scope="row" class="col-sm-6 col-md-3">Last Aggregation</th>
+          <td class="col-sm-6 col-md-9">@CurrentSite.LastAggregationDate</td>
+        </tr>
+        <tr class="row">
+          <th scope="row" class="col-sm-6 col-md-3">Last Summary Email</th>
+          <td class="col-sm-6 col-md-9">@CurrentSite.LastSummaryDate</td>
+        </tr>
+        <tr class="row">
+          <td colspan="2" class="col-12">
+            <button class="btn btn-outline-primary btn-width-medium" @onclick="RefreshSiteInfo">Refresh</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </SiteAvailable>
+</SiteView>
+
+<SfDialog @bind-Visible="@_showUnknownSiteDialog" Width="330px" ShowCloseIcon="false" IsModal="true">
+  <DialogTemplates>
+    <Content>Details for the requested Site could not be found</Content>
+  </DialogTemplates>
+  <DialogButtons>
+    <DialogButton Content="OK" IsPrimary="true" OnClick="() => _showUnknownSiteDialog = false"/>
+  </DialogButtons>
+</SfDialog>
+
+@code {
+  [Inject] private ISiteViewModel SiteViewModel { get; set; }
+  [Inject] IEventAggregator EventAggregator { get; set; }
+
+  private bool _showUnknownSiteDialog;
+  private string _siteId;
+  private ISiteInfo CurrentSite => SiteViewModel.CurrentSite;
+
+  public void Dispose()
+  {
+    EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+  }
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+
+    EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
+  }
+
+  private void HandleSiteChanged(SiteChanged message)
+  {
+    StateHasChanged();
+  }
+
+  private async Task LoadSiteInfo()
+  {
+    // todo: better to disable the button until text is entered
+    if (!_siteId.IsNullOrEmpty())
+    {
+      if (!await SiteViewModel.ChangeSite(_siteId))
+      {
+        // notify user the site does not exist
+        _showUnknownSiteDialog = true;
+      }
+
+      _siteId = null;    // not needed anymore, may as well release it
+    }
+  }
+
+  private async Task RefreshSiteInfo()
+  {
+    await SiteViewModel.RefreshCurrentSite();
+    StateHasChanged();
+  }
+}

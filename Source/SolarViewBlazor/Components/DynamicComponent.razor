@@ -1,0 +1,39 @@
+﻿@using Microsoft.AspNetCore.Components.Rendering
+
+<div class="@(CssClass ?? "")">
+  @_fragment
+</div>
+
+@code {
+  [Parameter] public string CssClass { get; set; }
+  [Parameter] public Type ComponentType { get; set; }
+  [Parameter] public IDictionary<string, object> Parameters { get; set; }
+
+  private RenderFragment _fragment;
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+
+    _fragment = CreateComponent();
+  }
+
+  private RenderFragment CreateComponent()
+  {
+    void CreateFragment(RenderTreeBuilder builder)
+    {
+      var i = 0;
+
+      builder.OpenComponent(i++, ComponentType);
+
+      foreach (var (key, value) in Parameters)
+      {
+        builder.AddAttribute(i++, key, value);
+      }
+
+      builder.CloseComponent();
+    }
+
+    return CreateFragment;
+  }
+}

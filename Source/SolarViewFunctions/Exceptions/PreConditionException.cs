@@ -16,11 +16,21 @@ namespace SolarViewFunctions.Exceptions
     public int ErrorCount { get; }
 
     public PreConditionException(IEnumerable<ValidationFailure> failures)
+      : this(failures.Select(failure => new ValidationError(failure)))
     {
-      var errors = failures.Select(failure => new ValidationError(failure)).AsReadOnlyList();
+    }
 
-      Errors = errors;
+    public PreConditionException(IEnumerable<ValidationError> validationErrors)
+    {
+      var errors = validationErrors.AsReadOnlyList();
+
+      Errors = errors.AsReadOnlyList();
       ErrorCount = errors.Count;
+    }
+
+    public PreConditionException(ValidationError error)
+      : this(new[] { error })
+    {
     }
 
     private string GetMessage()
@@ -31,7 +41,7 @@ namespace SolarViewFunctions.Exceptions
 
       foreach (var error in Errors)
       {
-        stringBuilder.Append(error.Message); 
+        stringBuilder.Append(error.Message);
       }
 
       return $"{stringBuilder}";

@@ -3,6 +3,7 @@ using AllOverIt.Helpers;
 using AutoMapper;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using SolarView.Common.Extensions;
 using SolarViewFunctions.Exceptions;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Factories;
@@ -63,13 +64,22 @@ namespace SolarViewFunctions.Functions
               nameof(HydratePowerPeriodSubOrchestrator),
               GetDefaultRetryOptions(exception =>
               {
-                // don't bother retrying if unable to get the solar data
-                if (exception.UnwrapFunctionException() is SolarEdgeResponseException solarEdgeResponse)
+                var unwrappedException = exception.UnwrapFunctionException();
+
+                if (unwrappedException is SolarEdgeResponseException solarEdgeResponse)
                 {
-                  return solarEdgeResponse.StatusCode != HttpStatusCode.Forbidden && 
-                         solarEdgeResponse.StatusCode != HttpStatusCode.TooManyRequests;
+                  // don't bother retrying if unable to get the solar data for these status codes
+                  var abortProcessing = solarEdgeResponse.StatusCode == HttpStatusCode.Forbidden ||
+                                        solarEdgeResponse.StatusCode == HttpStatusCode.TooManyRequests;
+
+                  Tracker.TrackWarn($"Error while obtaining solar data, aborting = {abortProcessing}", unwrappedException);
+
+                  return !abortProcessing;
                 }
 
+                Tracker.TrackWarn("Error while obtaining solar data, will retry", unwrappedException);
+
+                // try again
                 return true;
               }),
               dateRangeRequest);
@@ -84,7 +94,7 @@ namespace SolarViewFunctions.Functions
 
         return await NotifyPowerUpdated(context, PowerUpdatedStatus.Completed, triggeredPowerQuery);
       }
-      catch (Exception exception)
+      catch (Exception exception)   // could be SolarEdgeResponseException
       {
         var trackedException = exception.UnwrapFunctionException();
 
@@ -111,7 +121,7 @@ namespace SolarViewFunctions.Functions
       var message = _mapper.Map<PowerUpdatedMessage>(triggeredPowerQuery);
       message.Status = status;
 
-      Tracker.TrackInfo($"Sending '{status}' status notification for SiteId {message.SiteId}, Trigger {message.Trigger}");
+      Tracker.TrackInfo($"Sending '{status}' status notification for SiteId {message.SiteId}, TriggerType {message.TriggerType}");
 
       return context.CallActivityWithRetryAsync<PowerUpdatedStatus>(nameof(NotifyPowerUpdatedMessage), GetDefaultRetryOptions(), message);
     }

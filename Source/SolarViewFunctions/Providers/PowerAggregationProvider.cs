@@ -2,6 +2,7 @@ using AllOverIt.Extensions;
 using AllOverIt.Helpers;
 using AllOverIt.Tasks;
 using Microsoft.Azure.Cosmos.Table;
+using SolarView.Common.Models;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Power;
@@ -19,8 +20,9 @@ namespace SolarViewFunctions.Providers
   {
     private static readonly DateRange ExcludedNoDates = new DateRange(DateTime.MaxValue, DateTime.MinValue);
 
-    private static readonly IDictionary<string, IList<(int DayCount, double Watts)>> EmptyMeterReadings =
-      new Dictionary<string, IList<(int DayCount, double Watts)>>();
+    // creates a new instance - avoid any possibility of something being added later that affects logic
+    private static IDictionary<string, IList<(int DayCount, double Watts, double WattHour)>> EmptyMeterReadings =>
+      new Dictionary<string, IList<(int DayCount, double Watts, double WattHour)>>();
 
     private static readonly CultureInfo CultureInfo = new CultureInfo(Constants.AggregationOptions.CultureName);
     private static Calendar Calendar => CultureInfo.Calendar;
@@ -74,9 +76,9 @@ namespace SolarViewFunctions.Providers
     }
 
     private static IEnumerable<TimeWatts> GetMeterReadings(
-      IDictionary<string, IList<(int DayCount, double Watts)>> daily,
-      IDictionary<string, IList<(int DayCount, double Watts)>> monthly, 
-      IDictionary<string, IList<(int DayCount, double Watts)>> yearly)
+      IDictionary<string, IList<(int DayCount, double Watts, double WattHour)>> daily,
+      IDictionary<string, IList<(int DayCount, double Watts, double WattHour)>> monthly, 
+      IDictionary<string, IList<(int DayCount, double Watts, double WattHour)>> yearly)
     {
       var meterReadings = new List<TimeWatts>();
 
@@ -85,7 +87,7 @@ namespace SolarViewFunctions.Providers
         var timespan = TimeSpan.FromMinutes(minutes);
         var time = $"{timespan.Hours:D2}{timespan.Minutes:D2}";
 
-        var wattValues = new List<(int DayCount, double Watts)>();
+        var wattValues = new List<(int DayCount, double Watts, double WattHour)>();
 
         if (daily.ContainsKey(time))
         {
@@ -104,31 +106,39 @@ namespace SolarViewFunctions.Providers
 
         var totalDays = 0;
         var totalWatts = 0.0d;
+        var totalWattHour = 0.0d;
 
-        foreach (var (dayCount, watts) in wattValues)
+        foreach (var (dayCount, watts, wattHour) in wattValues)
         {
           totalDays += dayCount;
           totalWatts += watts;
+          totalWattHour += wattHour;
         }
 
         var formattedTime = $"{timespan.Hours:D2}:{timespan.Minutes:D2}";
         var averageWatts = totalDays == 0 ? 0.0d : totalWatts / totalDays;
+        var averageWattHour = totalDays == 0 ? 0.0d : totalWattHour / totalDays;
 
-        meterReadings.Add(new TimeWatts(formattedTime, Math.Round(averageWatts, 6, MidpointRounding.AwayFromZero)));
+        var timeWatts = new TimeWatts(
+          formattedTime,
+          Math.Round(averageWatts, 6, MidpointRounding.AwayFromZero),
+          Math.Round(averageWattHour, 6, MidpointRounding.AwayFromZero));
+
+        meterReadings.Add(timeWatts);
       }
 
       return meterReadings;
     }
 
-    private async Task<IDictionary<string, IList<(int DayCount, double Watts)>>> GetDailyReadings(string siteId, MeterType meterType,
-      IReadOnlyCollection<DateRange> dayPeriods)
+    private async Task<IDictionary<string, IList<(int DayCount, double Watts, double WattHour)>>> GetDailyReadings(string siteId,
+      MeterType meterType, IReadOnlyCollection<DateRange> dayPeriods)
     {
       if (dayPeriods.Count == 0)
       {
         return EmptyMeterReadings;
       }
 
-      var meterReadings = new Dictionary<string, IList<(int DayCount, double Watts)>>();
+      var meterReadings = new Dictionary<string, IList<(int DayCount, double Watts, double WattHour)>>();
 
       var dailyRepository = _repositoryFactory.Create<IPowerRepository>(PowerTable);
 
@@ -140,10 +150,10 @@ namespace SolarViewFunctions.Providers
           {
             if (!meterReadings.ContainsKey(powerItem.Time))
             {
-              meterReadings.Add(powerItem.Time, new List<(int, double)>());
+              meterReadings.Add(powerItem.Time, new List<(int, double, double)>());
             }
 
-            meterReadings[powerItem.Time].Add((1, powerItem.Watts));
+            meterReadings[powerItem.Time].Add((1, powerItem.Watts, powerItem.WattHour));
           }
         }
       }
@@ -151,15 +161,15 @@ namespace SolarViewFunctions.Providers
       return meterReadings;
     }
 
-    private async Task<IDictionary<string, IList<(int DayCount, double Watts)>>> GetMonthlyReadings(string siteId, MeterType meterType,
-      IReadOnlyCollection<AggregationMonth> monthPeriods)
+    private async Task<IDictionary<string, IList<(int DayCount, double Watts, double WattHour)>>> GetMonthlyReadings(string siteId,
+      MeterType meterType, IReadOnlyCollection<AggregationMonth> monthPeriods)
     {
       if (monthPeriods.Count == 0)
       {
         return EmptyMeterReadings;
       }
 
-      var meterReadings = new Dictionary<string, IList<(int DayCount, double Watts)>>();
+      var meterReadings = new Dictionary<string, IList<(int DayCount, double Watts, double WattHour)>>();
       var monthlyRepository = _repositoryFactory.Create<IPowerMonthlyRepository>(PowerMonthlyTable);
 
       foreach (var monthPeriod in monthPeriods)
@@ -168,25 +178,25 @@ namespace SolarViewFunctions.Providers
         {
           if (!meterReadings.ContainsKey(powerItem.Time))
           {
-            meterReadings.Add(powerItem.Time, new List<(int, double)>());
+            meterReadings.Add(powerItem.Time, new List<(int, double, double)>());
           }
 
-          meterReadings[powerItem.Time].Add((powerItem.DayCount, powerItem.Watts));
+          meterReadings[powerItem.Time].Add((powerItem.DayCount, powerItem.Watts, powerItem.WattHour));
         }
       }
 
       return meterReadings;
     }
 
-    private async Task<IDictionary<string, IList<(int DayCount, double Watts)>>> GetYearlyReadings(string siteId, MeterType meterType,
-      IReadOnlyCollection<AggregationYear> yearPeriods)
+    private async Task<IDictionary<string, IList<(int DayCount, double Watts, double WattHour)>>> GetYearlyReadings(string siteId,
+      MeterType meterType, IReadOnlyCollection<AggregationYear> yearPeriods)
     {
       if (yearPeriods.Count == 0)
       {
         return EmptyMeterReadings;
       }
 
-      var meterReadings = new Dictionary<string, IList<(int DayCount, double Watts)>>();
+      var meterReadings = new Dictionary<string, IList<(int DayCount, double Watts, double WattHour)>>();
       var yearlyRepository = _repositoryFactory.Create<IPowerYearlyRepository>(PowerYearlyTable);
 
       foreach (var yearPeriod in yearPeriods)
@@ -195,10 +205,10 @@ namespace SolarViewFunctions.Providers
         {
           if (!meterReadings.ContainsKey(powerItem.Time))
           {
-            meterReadings.Add(powerItem.Time, new List<(int, double)>());
+            meterReadings.Add(powerItem.Time, new List<(int, double, double)>());
           }
 
-          meterReadings[powerItem.Time].Add((powerItem.DayCount, powerItem.Watts));
+          meterReadings[powerItem.Time].Add((powerItem.DayCount, powerItem.Watts, powerItem.WattHour));
         }
       }
 

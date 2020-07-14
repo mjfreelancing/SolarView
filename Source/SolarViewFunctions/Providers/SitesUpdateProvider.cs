@@ -1,8 +1,8 @@
-using System.Threading.Tasks;
 using AllOverIt.Helpers;
 using Microsoft.Azure.Cosmos.Table;
 using SolarViewFunctions.Repository;
-using SolarViewFunctions.Repository.Sites;
+using SolarViewFunctions.Repository.Site;
+using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Providers
 {
@@ -20,7 +20,7 @@ namespace SolarViewFunctions.Providers
       var entity = new DynamicTableEntity(Constants.Table.SitesPartitionKey, siteId);
       entity.Properties.Add(propertyName, new EntityProperty(value));
 
-      var sitesRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
+      var sitesRepository = _repositoryFactory.Create<ISiteRepository>(sitesTable);
       return sitesRepository.MergeAsync(entity);
     }
   }

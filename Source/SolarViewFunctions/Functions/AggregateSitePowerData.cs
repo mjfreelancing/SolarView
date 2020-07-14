@@ -2,7 +2,8 @@ using AllOverIt.Helpers;
 using AutoMapper;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using SolarViewFunctions.Entities;
+using SolarView.Common.Extensions;
+using SolarView.Common.Models;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Factories;
 using SolarViewFunctions.Models;
@@ -37,15 +38,22 @@ namespace SolarViewFunctions.Functions
       MakeTrackerReplaySafe(context);
       Tracker.AppendDefaultProperties(context.GetTrackingProperties());
 
-      Tracker.TrackEvent(nameof(AggregateSitePowerData));
-
       var request = context.GetInput<SiteRefreshAggregationRequest>();
+
+      Tracker.TrackEvent(nameof(AggregateSitePowerData), request);
 
       var tasks = GetAggregationTasks(context, request);
 
       await Task.WhenAll(tasks);
 
-      await UpdateLastAggregationEndDate(context, request.SiteId, request.EndDate);
+      if (request.TriggerType == RefreshTriggerType.Timed)
+      {
+        await UpdateLastAggregationEndDate(context, request.SiteId, request.EndDate);
+      }
+      else
+      {
+        Tracker.TrackInfo("Not updating last aggregation end date - the aggregation was triggered manually");
+      }
     }
 
     private IEnumerable<Task> GetAggregationTasks(IDurableOrchestrationContext context, SiteRefreshAggregationRequest request)
@@ -87,8 +95,8 @@ namespace SolarViewFunctions.Functions
 
       var siteUpdates = new Dictionary<string, string>
       {
-        {nameof(SiteInfo.SiteId), siteId},
-        {nameof(SiteInfo.LastAggregationDate), endDate}
+        {nameof(ISiteInfo.SiteId), siteId},
+        {nameof(ISiteInfo.LastAggregationDate), endDate}
       };
 
       await context.CallActivityWithRetryAsync(nameof(UpdateSitesTable), GetDefaultRetryOptions(), siteUpdates);

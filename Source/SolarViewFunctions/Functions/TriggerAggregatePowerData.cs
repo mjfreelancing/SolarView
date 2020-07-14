@@ -2,11 +2,13 @@ using AllOverIt.Helpers;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using SolarView.Common.Extensions;
+using SolarView.Common.Models;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository;
-using SolarViewFunctions.Repository.Sites;
+using SolarViewFunctions.Repository.Site;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Threading.Tasks;
@@ -36,7 +38,7 @@ namespace SolarViewFunctions.Functions
         var currentTimeUtc = DateTime.UtcNow;
         Tracker.TrackEvent(nameof(TriggerAggregatePowerData));
 
-        var siteRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
+        var siteRepository = _repositoryFactory.Create<ISiteRepository>(sitesTable);
 
         var allSites = siteRepository.GetAllSitesAsyncEnumerable();
 
@@ -53,7 +55,7 @@ namespace SolarViewFunctions.Functions
       }
     }
 
-    private async Task ProcessAggregatePowerRequest(DateTime currentTimeUtc, SiteInfo siteInfo, IDurableOrchestrationClient orchestrationClient,
+    private async Task ProcessAggregatePowerRequest(DateTime currentTimeUtc, ISiteInfo siteInfo, IDurableOrchestrationClient orchestrationClient,
       IAsyncCollector<ExceptionDocument> exceptionDocuments)
     {
       try
@@ -73,7 +75,8 @@ namespace SolarViewFunctions.Functions
               SiteId = siteInfo.SiteId,
               SiteStartDate = siteInfo.StartDate,
               StartDate = lastAggregationDate.GetSolarDateString(),
-              EndDate = nextEndDate.GetSolarDateString()
+              EndDate = nextEndDate.GetSolarDateString(),
+              TriggerType = RefreshTriggerType.Timed
             };
 
             // sequentially performs monthly then yearly aggregation
@@ -81,7 +84,7 @@ namespace SolarViewFunctions.Functions
 
             Tracker.TrackInfo(
               $"Power data aggregation for SiteId {siteInfo.SiteId} has been scheduled for {request.StartDate} to {request.EndDate}",
-              new {Request = request, InstanceId = instanceId});
+              new { Request = request, InstanceId = instanceId });
           }
         }
       }

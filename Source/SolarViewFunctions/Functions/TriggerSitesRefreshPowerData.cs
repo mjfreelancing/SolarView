@@ -3,12 +3,14 @@ using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.ServiceBus.Core;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.ServiceBus;
+using SolarView.Common.Extensions;
+using SolarView.Common.Models;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Helpers;
 using SolarViewFunctions.Models;
 using SolarViewFunctions.Repository;
-using SolarViewFunctions.Repository.Sites;
+using SolarViewFunctions.Repository.Site;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Threading.Tasks;
@@ -39,7 +41,7 @@ namespace SolarViewFunctions.Functions
 
         Tracker.TrackEvent(nameof(TriggerSitesRefreshPowerData));
 
-        var sitesRepository = _repositoryFactory.Create<ISitesRepository>(sitesTable);
+        var sitesRepository = _repositoryFactory.Create<ISiteRepository>(sitesTable);
 
         await foreach (var site in sitesRepository.GetAllSitesAsyncEnumerable())
         {
@@ -54,7 +56,7 @@ namespace SolarViewFunctions.Functions
       }
     }
 
-    private async Task ProcessSiteRefreshPowerRequest(DateTime currentTimeUtc, SiteInfo siteInfo, ISenderClient refreshQueue,
+    private async Task ProcessSiteRefreshPowerRequest(DateTime currentTimeUtc, ISiteInfo siteInfo, ISenderClient refreshQueue,
       IAsyncCollector<ExceptionDocument> exceptionDocuments)
     {
       SiteRefreshPowerRequest request = null;
@@ -81,6 +83,7 @@ namespace SolarViewFunctions.Functions
             $"Sending a {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, from {request.StartDateTime} to {request.EndDateTime}",
             new {siteInfo.SiteId});
 
+          // using a message queue only from a design perspective (there could be thousands of sites)
           await refreshQueue.SendAsync(message).ConfigureAwait(false);
         }
       }

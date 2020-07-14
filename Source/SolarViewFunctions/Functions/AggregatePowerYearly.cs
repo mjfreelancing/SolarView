@@ -2,6 +2,8 @@ using AllOverIt.Helpers;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using SolarView.Common.Extensions;
+using SolarView.Common.Models;
 using SolarViewFunctions.Entities;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Models;
@@ -83,10 +85,10 @@ namespace SolarViewFunctions.Functions
       Tracker.TrackInfo($"Yearly power data aggregation is complete for SiteId {request.SiteId}");
     }
 
-    private static async Task PersistAggregatedMeterValues(IPowerRepository powerRepository, IPowerYearlyRepository powerYearlyRepository, string siteId, MeterType meterType,
-      DateTime startDate, int daysToCollect)
+    private static async Task PersistAggregatedMeterValues(IPowerRepository powerRepository, IPowerYearlyRepository powerYearlyRepository,
+      string siteId, MeterType meterType, DateTime startDate, int daysToCollect)
     {
-      var timeWatts = new Dictionary<string, double>();
+      var timeWatts = new Dictionary<string, (double Watts, double WattHour)>();
 
       for (var dayOffset = 0; dayOffset < daysToCollect; dayOffset++)
       {
@@ -95,8 +97,19 @@ namespace SolarViewFunctions.Functions
 
         await foreach (var entity in meterEntities)
         {
-          var totalWatts = timeWatts.GetValueOrDefault(entity.Time) + entity.Watts;
-          timeWatts[entity.Time] = totalWatts;
+          // Note: can't seem to use TryGetValue() or GetValueOrDefault() with tuples without
+          // complaining about possible null reference
+          var (watts, wattHour) = (0.0d, 0.0d);
+
+          if (timeWatts.ContainsKey(entity.Time))
+          {
+            (watts, wattHour) = timeWatts[entity.Time];
+          }
+
+          var totalWatts = watts + entity.Watts;
+          var totalWattHour = wattHour + entity.WattHour;
+
+          timeWatts[entity.Time] = (totalWatts, totalWattHour);
         }
       }
 
@@ -104,12 +117,14 @@ namespace SolarViewFunctions.Functions
       var endDate = startDate.AddDays(daysToCollect - 1);
 
       var aggregatedEntities = timeWatts.Select(kvp =>
-        {
-          var (time, watts) = kvp;
-          return new MeterPowerYear(siteId, startDate, endDate, time, meterType, watts);
-        });
+      {
+        var time = kvp.Key;
+        var (watts, wattHour) = kvp.Value;
 
-      await powerYearlyRepository.UpsertAsync(aggregatedEntities).ConfigureAwait(false);
+        return new MeterPowerYearEntity(siteId, startDate, endDate, time, meterType, watts, wattHour);
+      });
+
+      await powerYearlyRepository.UpsertYearlyPowerAsync(aggregatedEntities).ConfigureAwait(false);
     }
   }
 }

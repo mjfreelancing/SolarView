@@ -1,0 +1,169 @@
+﻿@using DateRange = SolarView.Common.Models.DateRange
+
+<div class="chart-date-selector mb-2">
+  <div class="chart-date-options">
+    @foreach (var option in _options)
+    {
+      // DateRange is null for the custom option
+      var disabled = option.DateRange != null &&
+                     option.DateRange.StartDateTime < MinDate;
+
+    <div class="p-1">
+      <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@_selecteDateRangeOption" Disabled="@disabled"
+                     Value="@option.Option" TChecked="DateRangeOption" ValueChange="@OnSelectedDateRangeChanged"/>
+    </div>
+    }
+  </div>
+  
+  <LoadedView IsLoaded="@_dataIsLoaded">
+    <Loading>
+      <div class="ml-2 mt-4">
+        <h5>Loading power data...</h5>
+      </div>
+    </Loading>
+    <Loaded>
+      <div class="p-0 mt-2 chart-date-range-picker" style="display: @_dateRangePickerDisplay">
+        <SfDateRangePicker Min="@MinDate" Max="@MaxDate" Format="yyyy-MM-dd"
+                           @bind-StartDate="@_startDate" @bind-EndDate="@_endDate"
+                           StrictMode="true" Placeholder="Add a new range"
+                           ValueChanged="ApplyCustomDateRange" />
+
+
+      </div>
+      <button class="btn btn-outline-primary btn-width-medium mt-2" style="display: @_applyButtonDisplay"
+              @onclick="DateRangeSelected">
+        Apply
+      </button>
+    </Loaded>
+  </LoadedView>
+</div>
+
+@code {
+  [Parameter] public Func<DateRange, Task> OnApplyDateRange { get; set; }
+  [Parameter] public DateTime MinDate { get; set; }
+  [Parameter] public DateTime MaxDate { get; set; }
+
+  private string _dateRangePickerDisplay = "none";
+  private string _applyButtonDisplay = "inline-block";
+  private IReadOnlyList<DateRangeSelectOption> _options;
+  private DateRangeOption _selecteDateRangeOption = DateRangeOption.ThisMonth;
+  private DateTime? _startDate;
+  private DateTime? _endDate;
+  private bool _dataIsLoaded = true;
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    _options = InitialiseOptions();
+  }
+
+  private IReadOnlyList<DateRangeSelectOption> InitialiseOptions()
+  {
+    var monthStart = new DateTime(MaxDate.Year, MaxDate.Month, 1);
+    var lastMonth = monthStart.AddMonths(-1);
+
+    return new List<DateRangeSelectOption>
+    {
+      new DateRangeSelectOption
+      {
+        Caption = $"Last refresh ({MaxDate:yyyy-MM-dd})",
+        Option = $"{DateRangeOption.LastRefresh}",
+        DateRange = new DateRange(MaxDate, MaxDate)
+      },
+      new DateRangeSelectOption
+      {
+        Caption = "This Month",
+        Option = $"{DateRangeOption.ThisMonth}",
+        DateRange = new DateRange(monthStart, MaxDate)
+      },
+      new DateRangeSelectOption
+      {
+        // allowing partial 'last month'
+        Caption = "Last Month",
+        Option = $"{DateRangeOption.LastMonth}",
+        DateRange = new DateRange(lastMonth.IsSameMonthYear(MinDate) ? MinDate : lastMonth, monthStart.AddMonths(-1).GetEndOfMonth())
+      },
+      new DateRangeSelectOption
+      {
+        Caption = "Past 3 Months",
+        Option = $"{DateRangeOption.Past3Months}",
+        DateRange = new DateRange(MaxDate.AddMonths(-3), MaxDate)
+      },
+      new DateRangeSelectOption
+      {
+        Caption = "Past 6 Months",
+        Option = $"{DateRangeOption.Past6Months}",
+        DateRange = new DateRange(MaxDate.AddMonths(-6), MaxDate)
+      },
+      new DateRangeSelectOption
+      {
+        Caption = "Past Year",
+        Option = $"{DateRangeOption.PastYear}",
+        DateRange = new DateRange(MaxDate.AddYears(-1), MaxDate)
+      },
+      new DateRangeSelectOption
+      {
+        Caption = $"Since {MinDate:yyyy-MM-dd}",
+        Option = $"{DateRangeOption.SinceStart}",
+        DateRange = new DateRange(MinDate, MaxDate)
+      },
+      new DateRangeSelectOption
+      {
+        Caption = "Custom",
+        Option = $"{DateRangeOption.Custom}"
+      }
+    };
+  }
+
+  private async Task ApplyCustomDateRange()
+  {
+    if (!_startDate.HasValue || !_endDate.HasValue)
+    {
+      return;
+    }
+
+    try
+    {
+      _dataIsLoaded = false;
+
+      var dateRange = new DateRange(_startDate.Value, _endDate.Value);
+
+      await OnApplyDateRange.Invoke(dateRange);
+    }
+    finally
+    {
+      _dataIsLoaded = true;
+
+      // clear any manually entered dates
+      _startDate = default;
+      _endDate = default;
+    }
+  }
+
+  private async Task DateRangeSelected()
+  {
+    try
+    {
+      _dataIsLoaded = false;
+
+      var dateRange = _options.Single(item => item.Option == $"{_selecteDateRangeOption}").DateRange;
+
+      if (dateRange.StartDateTime < MinDate)
+      {
+        dateRange = new DateRange(MinDate, dateRange.EndDateTime);
+      }
+
+      await OnApplyDateRange.Invoke(dateRange);
+    }
+    finally
+    {
+      _dataIsLoaded = true;
+    }
+  }
+
+  private void OnSelectedDateRangeChanged()
+  {
+    _dateRangePickerDisplay = _selecteDateRangeOption == DateRangeOption.Custom ? "inline-block" : "none";
+    _applyButtonDisplay = _selecteDateRangeOption == DateRangeOption.Custom ? "none" : "inline-block";
+  }
+}

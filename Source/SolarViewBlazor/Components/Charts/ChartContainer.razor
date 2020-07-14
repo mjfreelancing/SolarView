@@ -1,0 +1,54 @@
+﻿<CascadingValue Value="this">
+
+  @foreach (var (chartId, chartParameters) in _renderedCharts)
+  {
+    <div @key="chartId">
+      <DynamicComponent ComponentType="@ChartDescriptor.ChartType" Parameters="@(chartParameters.Parameters)" />
+    </div>
+  }
+
+</CascadingValue>
+
+@code {
+  [Parameter] public IChartDescriptor ChartDescriptor { get; set; }
+  [Parameter] public IReadOnlyList<ChartData> ChartData { get; set; }
+  [Parameter] public EventCallback<string> ChartDeleted { get; set; }
+
+  private class ChartParameters
+  {
+    public IDictionary<string, object> Parameters { get; }
+
+    public ChartParameters(ChartData chartData, IDictionary<string, object> parameters)
+    {
+      Parameters = new Dictionary<string, object>(parameters)
+      {
+        {nameof(ChartData), chartData}
+      };
+    }
+  }
+
+  private IDictionary<string, ChartParameters> _renderedCharts;
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+
+    _renderedCharts = new Dictionary<string, ChartParameters>();
+
+    foreach (var chartData in ChartData)
+    {
+      var chartParameters = new ChartParameters(chartData, ChartDescriptor.Parameters);
+
+      _renderedCharts.Add(chartData.Id, chartParameters);
+    }
+  }
+
+  public async Task DeleteChart(string chartId)
+  {
+    // remove the fragment associated with the chart Id
+    _renderedCharts.Remove(chartId);
+
+    // notify the parent
+    await ChartDeleted.InvokeAsync(chartId);
+  }
+}
