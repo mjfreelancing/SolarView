@@ -148,7 +148,10 @@ namespace SolarViewBlazor.ViewModels
 
     public IReadOnlyList<IChartDescriptor> GetDescriptors()
     {
-      return _chartsToRender.Keys.AsReadOnlyList();
+      // make sure the view adds them in a consistent order
+      return _chartsToRender.Keys
+        .OrderBy(item => item.Description)
+        .AsReadOnlyList();
     }
 
     public IReadOnlyList<ChartData> GetDescriptorData(IChartDescriptor descriptor)
