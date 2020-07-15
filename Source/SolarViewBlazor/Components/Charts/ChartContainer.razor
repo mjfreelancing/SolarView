@@ -7,7 +7,7 @@
       <AccordionItems>
         <AccordionItem CssClass="chart-accordion-item" Expanded="true">
           <HeaderTemplate>
-            <div class="col-12 d-flex">
+            <div class="col col-12 d-flex">
               <span>@($"{chartParameters.ChartData.StartDate:yyyy-MM-dd}") - @($"{chartParameters.ChartData.EndDate:yyyy-MM-dd}")</span>
               <span class="oi oi-delete m-0 mt-1 ml-auto mr-4" @onclick="@(async () => await DeleteChart(chartId))" />
             </div>
@@ -20,6 +20,14 @@
     </SfAccordion>
   </div>
 }
+
+<style>
+
+  .chart-accordion-item .e-acrdn-header-content {
+    width: 100%
+  }
+
+</style>
 
 @code {
   [Parameter] public IChartDescriptor ChartDescriptor { get; set; }

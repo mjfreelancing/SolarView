@@ -8,10 +8,10 @@
       var disabled = option.DateRange != null &&
                      option.DateRange.StartDateTime < MinDate;
 
-    <div class="p-1">
-      <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@_selecteDateRangeOption" Disabled="@disabled"
-                     Value="@option.Option" TChecked="DateRangeOption" ValueChange="@OnSelectedDateRangeChanged"/>
-    </div>
+      <div class="p-1">
+        <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@_selecteDateRangeOption" Disabled="@disabled"
+                       Value="@option.Option" TChecked="DateRangeOption" ValueChange="@OnSelectedDateRangeChanged"/>
+      </div>
     }
   </div>
   
@@ -37,6 +37,21 @@
     </Loaded>
   </LoadedView>
 </div>
+
+<style>
+  .chart-date-selector {
+    max-width: 30em;
+  }
+
+  .chart-date-range-picker {
+    width: 100%;
+  }
+
+  .chart-date-options {
+    column-count: 2;
+    column-width: 14em;
+  }
+</style>
 
 @code {
   [Parameter] public Func<DateRange, Task> OnApplyDateRange { get; set; }
