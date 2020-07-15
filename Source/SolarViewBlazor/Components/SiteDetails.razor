@@ -42,13 +42,11 @@
 
 @code {
   [Inject] private ISiteViewModel SiteViewModel { get; set; }
-  [Inject] private ISolarViewService SolarViewService { get; set; }
 
   private ISiteInfo CurrentSite => SiteViewModel.CurrentSite;
 
   private async Task RefreshSiteInfo()
   {
-    _ = await SolarViewService.GetSiteDetails(CurrentSite.SiteId);
-    StateHasChanged();
+    await SiteViewModel.RefreshCurrentSite();
   }
 }
