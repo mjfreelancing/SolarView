@@ -1,7 +1,5 @@
 ﻿@using System.Security.Claims
 
-<h3>User</h3>
-
 <table class="table table-settings">
   <tbody>
     <tr class="row">
@@ -17,13 +15,12 @@
   </tbody>
 </table>
 
-
 @code {
-  private const string SignOutUrl = "AzureAD/Account/SignOut";
-
   [CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; }
 
   [Inject] private NavigationManager NavigationManager { get; set; }
+
+  private const string SignOutUrl = "AzureAD/Account/SignOut";
 
   private string _userPrincipleName;
 

@@ -13,25 +13,19 @@
     <div class="mb-4">
       <SfAccordion ExpandMode="ExpandMode.Single">
         <AccordionItems>
-          <AccordionItem Expanded="true">
-            <HeaderTemplate>Site Info</HeaderTemplate>
-            <ContentTemplate>
-              <div class="content border border-primary settings-card">
-                <SiteInfo />
-              </div>
-            </ContentTemplate>
-          </AccordionItem>
-          <AccordionItem Expanded="false">
-            <HeaderTemplate>User Info</HeaderTemplate>
-            <ContentTemplate>
-              <div class="content border border-primary settings-card">
-                <UserInfo />
-              </div>
-            </ContentTemplate>
-          </AccordionItem>
+          @foreach (var (title, fragmentType) in _fragmentTypes)
+          {
+            var expanded = fragmentType == typeof(SiteDetails);
+
+            <AccordionItem Expanded="@expanded">
+              <HeaderTemplate>@title</HeaderTemplate>
+              <ContentTemplate>
+                <DynamicComponent CssClass="content border border-primary settings-card" ComponentType="@fragmentType"/>
+              </ContentTemplate>
+            </AccordionItem>
+          }
         </AccordionItems>
       </SfAccordion>
-
       <button class="btn btn-outline-primary btn-width-medium mt-4 mr-2" @onclick="ClearLocalStorage">Clear Cache</button>
     </div>
   </SiteAvailable>
@@ -46,6 +40,13 @@
   [Inject] IEventAggregator EventAggregator { get; set; }
   [Inject] IChartDataCache ChartDataCache { get; set; }
   [Inject] private NavigationManager NavigationManager { get; set; }
+
+  private readonly IDictionary<string, Type> _fragmentTypes = new Dictionary<string, Type>
+  {
+    {"Site Details", typeof(SiteDetails)},
+    {"User Details", typeof(UserDetails)},
+    {"Energy Costs", typeof(EnergyCosts)}
+  };
 
   private ISiteInfo CurrentSite => SiteViewModel.CurrentSite;
 
