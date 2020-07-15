@@ -26,9 +26,12 @@
 
       builder.OpenComponent(i++, ComponentType);
 
-      foreach (var (key, value) in Parameters)
+      if (!Parameters.IsNullOrEmpty())
       {
-        builder.AddAttribute(i++, key, value);
+        foreach (var (key, value) in Parameters)
+        {
+          builder.AddAttribute(i++, key, value);
+        }
       }
 
       builder.CloseComponent();
