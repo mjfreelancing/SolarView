@@ -4,35 +4,35 @@
   <tbody>
     <tr class="row">
       <th scope="row" class="col-sm-6 col-md-3">Site Id</th>
-      <td class="col-sm-6 col-md-9">@Site.SiteId</td>
+      <td class="col-sm-6 col-md-9">@CurrentSite.SiteId</td>
     </tr>
     <tr class="row">
       <th scope="row" class="col-sm-6 col-md-3">Start Date</th>
-      <td class="col-sm-6 col-md-9">@Site.StartDate</td>
+      <td class="col-sm-6 col-md-9">@CurrentSite.StartDate</td>
     </tr>
     <tr class="row">
       <th scope="row" class="col-sm-6 col-md-3">Contact</th>
-      <td class="col-sm-6 col-md-9">@Site.ContactName</td>
+      <td class="col-sm-6 col-md-9">@CurrentSite.ContactName</td>
     </tr>
     <tr class="row">
       <th scope="row" class="col-sm-6 col-md-3">Email</th>
-      <td class="col-sm-6 col-md-9">@Site.ContactEmail</td>
+      <td class="col-sm-6 col-md-9">@CurrentSite.ContactEmail</td>
     </tr>
     <tr class="row">
       <th scope="row" class="col-sm-6 col-md-3">TimeZone</th>
-      <td class="col-sm-6 col-md-9">@Site.TimeZoneId</td>
+      <td class="col-sm-6 col-md-9">@CurrentSite.TimeZoneId</td>
     </tr>
     <tr class="row">
       <th scope="row" class="col-sm-6 col-md-3">Last Refresh</th>
-      <td class="col-sm-6 col-md-9">@Site.LastRefreshDateTime</td>
+      <td class="col-sm-6 col-md-9">@CurrentSite.LastRefreshDateTime</td>
     </tr>
     <tr class="row">
       <th scope="row" class="col-sm-6 col-md-3">Last Aggregation</th>
-      <td class="col-sm-6 col-md-9">@Site.LastAggregationDate</td>
+      <td class="col-sm-6 col-md-9">@CurrentSite.LastAggregationDate</td>
     </tr>
     <tr class="row">
       <th scope="row" class="col-sm-6 col-md-3">Last Summary Email</th>
-      <td class="col-sm-6 col-md-9">@Site.LastSummaryDate</td>
+      <td class="col-sm-6 col-md-9">@CurrentSite.LastSummaryDate</td>
     </tr>
     <tr class="row">
       <td colspan="2" class="col-12">
@@ -43,12 +43,14 @@
 </table>
 
 @code {
+  [Inject] private ISiteViewModel SiteViewModel { get; set; }
   [Inject] private ISolarViewService SolarViewService { get; set; }
-  [Parameter] public ISiteInfo Site { get; set; }
+
+  private ISiteInfo CurrentSite => SiteViewModel.CurrentSite;
 
   private async Task RefreshSiteInfo()
   {
-    _ = await SolarViewService.GetSiteDetails(Site.SiteId);
+    _ = await SolarViewService.GetSiteDetails(CurrentSite.SiteId);
     StateHasChanged();
   }
 }
