@@ -13,3 +13,9 @@
   padding: 1rem;
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
 }
+
+/* remove underline decoration from bootstrap4 theme when hovering / selecting accordion header items */
+.e-accordion .e-acrdn-item.e-select > .e-acrdn-header:hover .e-acrdn-header-content,
+.e-accordion .e-acrdn-item.e-select > .e-acrdn-header:focus .e-acrdn-header-content {
+  text-decoration: none !important;
+}

@@ -59,14 +59,6 @@
   </SiteNotAvailable>
 </SiteView>
 
-<style>
-  /* remove underline decoration from bootstrap4 theme when hovering / selecting accordion header items */
-  .e-accordion .e-acrdn-item.e-select > .e-acrdn-header:hover .e-acrdn-header-content,
-  .e-accordion .e-acrdn-item.e-select > .e-acrdn-header:focus .e-acrdn-header-content {
-    text-decoration: none;
-  }
-</style>
-
 @code {
   [Inject] private ISiteViewModel SiteViewModel { get; set; }
   [Inject] IEventAggregator EventAggregator { get; set; }
