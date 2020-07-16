@@ -9,7 +9,7 @@
                      option.DateRange.StartDateTime < MinDate;
 
       <div class="p-1">
-        <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@_selecteDateRangeOption" Disabled="@disabled"
+        <SfRadioButton Label="@option.Caption" Name="DateRange" @bind-Checked="@_selectedDateRangeOption" Disabled="@disabled"
                        Value="@option.Option" TChecked="DateRangeOption" ValueChange="@OnSelectedDateRangeChanged"/>
       </div>
     }
@@ -61,7 +61,7 @@
   private string _dateRangePickerDisplay = "none";
   private string _applyButtonDisplay = "inline-block";
   private IReadOnlyList<DateRangeSelectOption> _options;
-  private DateRangeOption _selecteDateRangeOption = DateRangeOption.ThisMonth;
+  private DateRangeOption _selectedDateRangeOption = DateRangeOption.ThisMonth;
   private DateTime? _startDate;
   private DateTime? _endDate;
   private bool _dataIsLoaded = true;
@@ -161,7 +161,7 @@
     {
       _dataIsLoaded = false;
 
-      var dateRange = _options.Single(item => item.Option == $"{_selecteDateRangeOption}").DateRange;
+      var dateRange = _options.Single(item => item.Option == $"{_selectedDateRangeOption}").DateRange;
 
       if (dateRange.StartDateTime < MinDate)
       {
@@ -178,7 +178,7 @@
 
   private void OnSelectedDateRangeChanged()
   {
-    _dateRangePickerDisplay = _selecteDateRangeOption == DateRangeOption.Custom ? "inline-block" : "none";
-    _applyButtonDisplay = _selecteDateRangeOption == DateRangeOption.Custom ? "none" : "inline-block";
+    _dateRangePickerDisplay = _selectedDateRangeOption == DateRangeOption.Custom ? "inline-block" : "none";
+    _applyButtonDisplay = _selectedDateRangeOption == DateRangeOption.Custom ? "none" : "inline-block";
   }
 }

@@ -1,3 +1,4 @@
+using AutoMapper;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.AzureAD.UI;
@@ -64,6 +65,8 @@ namespace SolarViewBlazor
 
       //services.AddApplicationInsightsTelemetry(Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
 
+      services.AddAutoMapper(typeof(Startup));
+
       services.AddScoped<ISolarViewService, SolarViewService>();
       services.AddScoped<IKeyVaultConfiguration, KeyVaultConfiguration>();
       services.AddScoped<ISolarViewServiceConfiguration, SolarViewServiceConfiguration>();
@@ -94,8 +97,10 @@ namespace SolarViewBlazor
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IMapper mapper)
     {
+      mapper.ConfigurationProvider.AssertConfigurationIsValid();
+
       if (env.IsDevelopment())
       {
         app.UseDeveloperExceptionPage();
