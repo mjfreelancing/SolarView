@@ -16,7 +16,7 @@ namespace SolarViewFunctions.Validation.Validators
 
     protected override bool IsValid(PropertyValidatorContext context)
     {
-      return _predicate.Invoke((TType)context.Instance);
+      return _predicate.Invoke((TType)context.InstanceToValidate);
     }
   }
 }

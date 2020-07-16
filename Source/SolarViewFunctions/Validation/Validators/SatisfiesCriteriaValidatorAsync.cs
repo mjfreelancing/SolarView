@@ -1,8 +1,8 @@
+using FluentValidation.Resources;
+using FluentValidation.Validators;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentValidation.Resources;
-using FluentValidation.Validators;
 
 namespace SolarViewFunctions.Validation.Validators
 {
@@ -18,7 +18,7 @@ namespace SolarViewFunctions.Validation.Validators
 
     protected override Task<bool> IsValidAsync(PropertyValidatorContext context, CancellationToken cancellation)
     {
-      return _predicateAsync.Invoke((TType)context.Instance);
+      return _predicateAsync.Invoke((TType)context.InstanceToValidate);
     }
   }
 }
