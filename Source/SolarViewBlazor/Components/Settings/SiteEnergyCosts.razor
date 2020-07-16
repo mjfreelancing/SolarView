@@ -1,36 +1,44 @@
 ﻿<table class="table table-settings">
   <tbody>
-    <tr class="row">
-      <th scope="row" class="col-sm-6 col-md-4">Cost per kWh (Peak)</th>
-      <td class="col-sm-6 col-md-8">
-        <SfNumericTextBox TValue="double" @bind-Value="@_costPerKWhPeak" Min="0.1" Step="0.01" Format="c8" />
-      </td>
-    </tr>
-    <tr class="row">
-      <th scope="row" class="col-sm-6 col-md-4">Cost per kWh (Off Peak)</th>
-      <td class="col-sm-6 col-md-8">
-        <SfNumericTextBox TValue="double" @bind-Value="@_costPerKWhOffPeak" Min="0.1" Step="0.01" Format="c8" />
-      </td>
-    </tr>
-    <tr class="row">
-      <th scope="row" class="col-sm-6 col-md-4">Solar Buy Back</th>
-      <td class="col-sm-6 col-md-8">
-        <SfNumericTextBox TValue="double" @bind-Value="@_solarBuyBack" Min="0.1" Step="0.01" Format="c8" />
-      </td>
-    </tr>
-    <tr class="row">
-      <td colspan="2" class="col-12">
-        <button class="btn btn-outline-primary btn-width-medium mt-2" @onclick="Update">Update</button>
-      </td>
-    </tr>
+  <tr class="row">
+    <th scope="row" class="col-sm-6 col-md-4">Cost per kWh (Peak)</th>
+    <td class="col-sm-6 col-md-8 numeric-entry">
+      <SfNumericTextBox TValue="double" @bind-Value="@_costPerKWhPeak" Min="0.1" Step="0.01" Format="c8" />
+    </td>
+  </tr>
+  <tr class="row">
+    <th scope="row" class="col-sm-6 col-md-4">Cost per kWh (Off Peak)</th>
+    <td class="col-sm-6 col-md-8 numeric-entry">
+      <SfNumericTextBox TValue="double" @bind-Value="@_costPerKWhOffPeak" Min="0.1" Step="0.01" Format="c8"/>
+    </td>
+  </tr>
+  <tr class="row">
+    <th scope="row" class="col-sm-6 col-md-4">Solar Buy Back</th>
+    <td class="col-sm-6 col-md-8 numeric-entry">
+      <SfNumericTextBox TValue="double" @bind-Value="@_solarBuyBack" Min="0.1" Step="0.01" Format="c8" />
+    </td>
+  </tr>
+  <tr class="row">
+    <td colspan="2" class="col-12">
+      <button class="btn btn-outline-primary btn-width-medium mt-2" @onclick="Update">Update</button>
+    </td>
+  </tr>
   </tbody>
 </table>
+
+<style>
+  .numeric-entry {
+    max-width: 200px
+  }
+</style>
 
 @code {
   [Inject] ISiteViewModel SiteViewModel { get; set; }
   [Inject] ISiteEnergyCostsViewModel EnergyCostsViewModel { get; set; }
 
+  // todo: fields should be non-editable - need to put into edit mode
   // todo: disable the button when no data has changed (treat null as editable)
+  // todo: add a cancel button to restore the last stored values and disable everything
   private IEnergyCosts _energyCosts;
   private double _costPerKWhPeak;       // 0.3283379
   private double _costPerKWhOffPeak;    // 0.1774256

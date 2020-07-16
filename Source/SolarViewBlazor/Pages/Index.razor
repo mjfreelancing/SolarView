@@ -17,23 +17,23 @@
     <button class="btn btn-primary btn-width-medium mt-2" @onclick="@LoadSiteInfo">Load</button>
   </SiteNotAvailable>
   <SiteAvailable>
-    <table class="table">
+    <table class="table table-settings">
       <tbody>
         <tr class="row">
-          <th scope="row" class="col-sm-6 col-md-3">Site Id</th>
-          <td class="col-sm-6 col-md-9">@CurrentSite.SiteId</td>
+          <th scope="row" class="col-sm-6 col-md-4">Site Id</th>
+          <td class="col-sm-6 col-md-8">@CurrentSite.SiteId</td>
         </tr>
         <tr class="row">
-          <th scope="row" class="col-sm-6 col-md-3">Last Refresh</th>
-          <td class="col-sm-6 col-md-9">@CurrentSite.LastRefreshDateTime</td>
+          <th scope="row" class="col-sm-6 col-md-4">Last Refresh</th>
+          <td class="col-sm-6 col-md-8">@CurrentSite.LastRefreshDateTime</td>
         </tr>
         <tr class="row">
-          <th scope="row" class="col-sm-6 col-md-3">Last Aggregation</th>
-          <td class="col-sm-6 col-md-9">@CurrentSite.LastAggregationDate</td>
+          <th scope="row" class="col-sm-6 col-md-4">Last Aggregation</th>
+          <td class="col-sm-6 col-md-8">@CurrentSite.LastAggregationDate</td>
         </tr>
         <tr class="row">
-          <th scope="row" class="col-sm-6 col-md-3">Last Summary Email</th>
-          <td class="col-sm-6 col-md-9">@CurrentSite.LastSummaryDate</td>
+          <th scope="row" class="col-sm-6 col-md-4">Last Summary Email</th>
+          <td class="col-sm-6 col-md-8">@CurrentSite.LastSummaryDate</td>
         </tr>
         <tr class="row">
           <td colspan="2" class="col-12">
