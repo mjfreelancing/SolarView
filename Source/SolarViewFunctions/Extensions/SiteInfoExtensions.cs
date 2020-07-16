@@ -7,28 +7,28 @@ namespace SolarViewFunctions.Extensions
 {
   public static class SiteInfoExtensions
   {
-    public static DateTime GetLastAggregationDate(this ISiteInfo siteInfo)
+    public static DateTime GetLastAggregationDate(this ISiteDetails siteDetails)
     {
       // returns in site's local date
-      return siteInfo.LastAggregationDate.IsNullOrEmpty()
-        ? siteInfo.StartDate.ParseSolarDate().Date
-        : siteInfo.LastAggregationDate.ParseSolarDate();
+      return siteDetails.LastAggregationDate.IsNullOrEmpty()
+        ? siteDetails.StartDate.ParseSolarDate().Date
+        : siteDetails.LastAggregationDate.ParseSolarDate();
     }
 
-    public static DateTime GetLastRefreshDateTime(this ISiteInfo siteInfo)
+    public static DateTime GetLastRefreshDateTime(this ISiteDetails siteDetails)
     {
       // returns in site's local date
-      return siteInfo.LastRefreshDateTime.IsNullOrEmpty()
-        ? siteInfo.StartDate.ParseSolarDate().Date
-        : siteInfo.LastRefreshDateTime.ParseSolarDateTime().TrimToHour();
+      return siteDetails.LastRefreshDateTime.IsNullOrEmpty()
+        ? siteDetails.StartDate.ParseSolarDate().Date
+        : siteDetails.LastRefreshDateTime.ParseSolarDateTime().TrimToHour();
     }
 
-    public static DateTime GetLastSummaryDate(this ISiteInfo siteInfo)
+    public static DateTime GetLastSummaryDate(this ISiteDetails siteDetails)
     {
       // returns in site's local date
-      return siteInfo.LastSummaryDate.IsNullOrEmpty() 
-        ? siteInfo.StartDate.ParseSolarDate()
-        : siteInfo.LastSummaryDate.ParseSolarDate();
+      return siteDetails.LastSummaryDate.IsNullOrEmpty() 
+        ? siteDetails.StartDate.ParseSolarDate()
+        : siteDetails.LastSummaryDate.ParseSolarDate();
     }
   }
 }

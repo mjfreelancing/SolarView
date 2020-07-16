@@ -58,7 +58,7 @@ namespace SolarViewFunctions.Functions
 
         Tracker.TrackEvent(nameof(ProcessPowerSummaryEmailMessage), request);
 
-        var siteInfo = await _repositoryFactory.Create<ISiteRepository>(sitesTable).GetSiteAsync(request.SiteId);
+        var siteInfo = await _repositoryFactory.Create<ISiteDetailsRepository>(sitesTable).GetSiteAsync(request.SiteId);
 
         var updateHistoryRepository = _repositoryFactory.Create<IPowerUpdateHistoryRepository>(updateHistoryTable);
 
@@ -74,7 +74,8 @@ namespace SolarViewFunctions.Functions
         await sendGridCollector.FlushAsync().ConfigureAwait(false);
 
         // update the sites table to indicate when the last summary email was sent
-        await _sitesUpdateProvider.UpdateSiteAttributeAsync(sitesTable, siteInfo.SiteId, nameof(ISiteInfo.LastSummaryDate), request.EndDate);
+        var updateProperties = new Dictionary<string, object> {{nameof(ISiteDetails.LastSummaryDate), request.EndDate}};
+        await _sitesUpdateProvider.UpdateSiteAttributeAsync(sitesTable, siteInfo.SiteId, updateProperties);
       }
       catch (Exception exception)
       {

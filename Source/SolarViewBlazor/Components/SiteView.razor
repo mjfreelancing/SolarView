@@ -22,7 +22,7 @@
   [Inject] private ISiteViewModel SiteViewModel { get; set; }
 
   private bool _isLoaded;
-  private ISiteInfo CurrentSite => SiteViewModel.CurrentSite;
+  private ISiteDetails CurrentSite => SiteViewModel.CurrentSite;
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {

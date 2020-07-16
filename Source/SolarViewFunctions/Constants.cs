@@ -20,7 +20,8 @@
     public static class Table
     {
       public const string Sites = "Sites";
-      public const string SitesPartitionKey = "SiteId";
+      public const string SiteDetailsPartitionKey = "Details";
+      public const string SiteEnergyCostsPartitionKey = "EnergyCosts";
       public const string Power = "Power";
       public const string PowerMonthly = "PowerMonthly";
       public const string PowerYearly = "PowerYearly";

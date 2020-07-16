@@ -5,6 +5,6 @@ namespace SolarViewFunctions.SendGrid
 {
   public interface ISendGridEmailCreator
   {
-    SendGridMessage CreateMessage(ISiteInfo siteInfo, string subject, string mimeType, string content);
+    SendGridMessage CreateMessage(ISiteDetails siteDetails, string subject, string mimeType, string content);
   }
 }

@@ -93,10 +93,10 @@ namespace SolarViewFunctions.Functions
     {
       Tracker.TrackInfo($"Updating last aggregation end date to {endDate}");
 
-      var siteUpdates = new Dictionary<string, string>
+      var siteUpdates = new Dictionary<string, object>
       {
-        {nameof(ISiteInfo.SiteId), siteId},
-        {nameof(ISiteInfo.LastAggregationDate), endDate}
+        {nameof(ISiteDetails.SiteId), siteId},
+        {nameof(ISiteDetails.LastAggregationDate), endDate}
       };
 
       await context.CallActivityWithRetryAsync(nameof(UpdateSitesTable), GetDefaultRetryOptions(), siteUpdates);

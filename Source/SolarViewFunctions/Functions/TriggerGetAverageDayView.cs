@@ -20,6 +20,7 @@ using SolarViewFunctions.Validators;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using NotFoundResult = SolarViewFunctions.HttpResults.NotFoundResult;
 
 namespace SolarViewFunctions.Functions
 {
@@ -64,13 +65,13 @@ namespace SolarViewFunctions.Functions
 
         ValidateRequest(averageDayRequest);
 
-        var siteRepository = _repositoryFactory.Create<ISiteRepository>(sitesTable);
+        var siteRepository = _repositoryFactory.Create<ISiteDetailsRepository>(sitesTable);
 
         var siteInfo = await siteRepository.GetSiteAsync(averageDayRequest.SiteId);
 
         if (siteInfo == null)
         {
-          return new ForbiddenResult(null);
+          return new NotFoundResult(null);
         }
 
         _powerAggregationProvider.PowerTable = powerTable;

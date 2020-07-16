@@ -6,11 +6,11 @@ namespace SolarViewBlazor.Messaging
 
   public class SiteChanged 
   {
-    public ISiteInfo SiteInfo { get; }
+    public ISiteDetails SiteDetails { get; }
 
-    public SiteChanged(ISiteInfo siteInfo)
+    public SiteChanged(ISiteDetails siteDetails)
     {
-      SiteInfo = siteInfo;
+      SiteDetails = siteDetails;
     }
   }
 

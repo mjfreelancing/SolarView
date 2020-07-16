@@ -2,6 +2,7 @@ using AllOverIt.Helpers;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using SolarView.Common.Models;
 using SolarViewFunctions.Extensions;
 using SolarViewFunctions.Providers;
 using SolarViewFunctions.Tracking;
@@ -30,16 +31,20 @@ namespace SolarViewFunctions.Functions
 
       Tracker.AppendDefaultProperties(context.GetTrackingProperties());
 
-      var siteProperties = context.GetInput<Dictionary<string, string>>();
+      var siteProperties = context.GetInput<Dictionary<string, object>>();
 
-      var siteId = siteProperties[Constants.Table.SitesPartitionKey];
+      var siteId = (string)siteProperties[nameof(ISiteDetails.SiteId)];
 
       Tracker.TrackInfo($"Updating info for SiteId {siteId}");
 
-      foreach (var (name, value) in siteProperties.Where(item => item.Key != Constants.Table.SitesPartitionKey))
+      var updateProperties = new Dictionary<string, object>();
+
+      foreach (var (name, value) in siteProperties.Where(item => item.Key != nameof(ISiteDetails.SiteId)))
       {
-        await _sitesUpdateProvider.UpdateSiteAttributeAsync(sitesTable, siteId, name, value).ConfigureAwait(false);
+        updateProperties.Add(name, value);
       }
+
+      await _sitesUpdateProvider.UpdateSiteAttributeAsync(sitesTable, siteId, updateProperties).ConfigureAwait(false);
     }
   }
 }

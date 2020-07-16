@@ -10,7 +10,7 @@ namespace SolarViewBlazor.Charts.Descriptors
     // todo: to be injected
     private const double PurchaseCostPerW = 0.3283379d / 1000.0d;
     private const double FeedInCostPerW = 0.105d / 1000.0d;
-    private const double FixedCostPerQuarterHour = 0.99d / 24.0d / 4.0d;
+    private const double FixedCostPerQuarterHour = 1.107513d / 24.0d / 4.0d;
 
     public string Id => nameof(CostBenefitChartDescriptor);
     public string Description => "Cost Benefit";

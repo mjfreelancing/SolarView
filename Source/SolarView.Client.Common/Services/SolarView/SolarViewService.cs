@@ -24,7 +24,7 @@ namespace SolarView.Client.Common.Services.SolarView
       _functionsUrl = serviceConfiguration.FunctionsUrl;
     }
 
-    public async Task<ISiteInfo> GetSiteDetails(string siteId)
+    public async Task<ISiteDetails> GetSiteDetails(string siteId)
     {
       var url = new Url(_functionsUrl)
         .AppendPathSegments("site", siteId)
@@ -36,11 +36,11 @@ namespace SolarView.Client.Common.Services.SolarView
 
       try
       {
-        return await url.GetJsonAsync<SiteInfo>();
+        return await url.GetJsonAsync<SiteDetails>();
       }
       catch (FlurlHttpException exception)
       {
-        if (exception.Call.HttpStatus.HasValue && exception.Call.HttpStatus == HttpStatusCode.Forbidden)
+        if (exception.Call.HttpStatus.HasValue && exception.Call.HttpStatus == HttpStatusCode.NotFound)
         {
           // unknown site Id
           return null;
@@ -50,7 +50,33 @@ namespace SolarView.Client.Common.Services.SolarView
       }
     }
 
-    public async Task<IEnumerable<PowerData>> CollectData(string siteId, DateTime startDate, DateTime endDate)
+    public async Task<IEnergyCosts> GetEnergyCosts(string siteId)
+    {
+      var url = new Url(_functionsUrl)
+        .AppendPathSegments("site", siteId, "energyCosts")
+        .WithHeaders(new
+        {
+          content_type = "application/json",
+          x_functions_key = _functionsKey
+        });
+
+      try
+      {
+        return await url.GetJsonAsync<EnergyCosts>();
+      }
+      catch (FlurlHttpException exception)
+      {
+        if (exception.Call.HttpStatus.HasValue && exception.Call.HttpStatus == HttpStatusCode.NotFound)
+        {
+          // unknown site Id
+          return null;
+        }
+
+        throw;
+      }
+    }
+
+    public async Task<IEnumerable<PowerData>> GetPowerData(string siteId, DateTime startDate, DateTime endDate)
     {
       var requests =
         from meterType in EnumHelper.GetEnumValues<MeterType>()

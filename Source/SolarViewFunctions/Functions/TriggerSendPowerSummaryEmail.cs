@@ -41,7 +41,7 @@ namespace SolarViewFunctions.Functions
 
         Tracker.TrackEvent(nameof(TriggerSendPowerSummaryEmail));
 
-        var sitesRepository = _repositoryFactory.Create<ISiteRepository>(sitesTable);
+        var sitesRepository = _repositoryFactory.Create<ISiteDetailsRepository>(sitesTable);
 
         await foreach (var site in sitesRepository.GetAllSitesAsyncEnumerable())
         {
@@ -56,26 +56,26 @@ namespace SolarViewFunctions.Functions
       }
     }
 
-    private async Task ProcessSiteSummaryEmailRequest(DateTime currentTimeUtc, ISiteInfo siteInfo, ISenderClient summaryQueue,
+    private async Task ProcessSiteSummaryEmailRequest(DateTime currentTimeUtc, ISiteDetails siteDetails, ISenderClient summaryQueue,
       IAsyncCollector<ExceptionDocument> exceptionDocuments)
     {
       SiteSummaryEmailRequest request = null;
 
       try
       {
-        var siteLocalTime = siteInfo.UtcToLocalTime(currentTimeUtc);
+        var siteLocalTime = siteDetails.UtcToLocalTime(currentTimeUtc);
 
         // check subsequent hours in case a trigger was missed
         if (siteLocalTime.Hour >= Constants.RefreshHour.SummaryEmail)
         {
-          var lastSummaryDate = siteInfo.GetLastSummaryDate();
+          var lastSummaryDate = siteDetails.GetLastSummaryDate();
           var nextEndDate = siteLocalTime.Date.AddDays(-1);         // not reporting the current day as it is not yet over
 
           if (nextEndDate > lastSummaryDate)
           {
             request = new SiteSummaryEmailRequest
             {
-              SiteId = siteInfo.SiteId,
+              SiteId = siteDetails.SiteId,
               StartDate = lastSummaryDate.AddDays(1).GetSolarDateString(),
               EndDate = nextEndDate.GetSolarDateString()
             };
@@ -95,13 +95,13 @@ namespace SolarViewFunctions.Functions
       {
         var notification = new
         {
-          siteInfo.SiteId,
+          siteDetails.SiteId,
           Request = request
         };
 
         Tracker.TrackException(exception, notification);
 
-        await exceptionDocuments.AddNotificationAsync<TriggerSendPowerSummaryEmail>(siteInfo.SiteId, exception, notification).ConfigureAwait(false);
+        await exceptionDocuments.AddNotificationAsync<TriggerSendPowerSummaryEmail>(siteDetails.SiteId, exception, notification).ConfigureAwait(false);
       }
     }
   }

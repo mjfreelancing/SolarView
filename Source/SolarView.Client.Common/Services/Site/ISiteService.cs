@@ -5,7 +5,7 @@ namespace SolarView.Client.Common.Services.Site
 {
   public interface ISiteService
   {
-    Task<ISiteInfo> GetCurrentSite();
-    Task SetCurrentSite(ISiteInfo siteInfo);
+    Task<ISiteDetails> GetCurrentSite();
+    Task SetCurrentSite(ISiteDetails siteDetails);
   }
 }

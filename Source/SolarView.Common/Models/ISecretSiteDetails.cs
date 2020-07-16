@@ -1,6 +1,6 @@
 namespace SolarView.Common.Models
 {
-  public interface ISecretSiteInfo
+  public interface ISecretSiteDetails
   {
     string ApiKey { get; }
   }

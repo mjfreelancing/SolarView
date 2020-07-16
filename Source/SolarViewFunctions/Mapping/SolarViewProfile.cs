@@ -15,6 +15,8 @@ namespace SolarViewFunctions.Mapping
   {
     public SolarViewProfile()
     {
+      // todo: split into discrete profiles based on functionality or 'domain'
+
       CreateMap<HydratePowerRequest, TriggeredPowerQuery>()
         .ForMember(dest => dest.StartDateTime, opt => opt.MapFrom(src => src.StartDate))
         .ForMember(dest => dest.EndDateTime, opt => opt.MapFrom(src => src.EndDate))
@@ -51,8 +53,9 @@ namespace SolarViewFunctions.Mapping
         .ForMember(dest => dest.SiteStartDate, opt => opt.Ignore())
         .ForMember(dest => dest.TriggerType, opt => opt.Ignore());
 
-      CreateMap<SiteEntity, SecretSiteInfo>();
-      CreateMap<SiteEntity, SiteInfoResponse>();
+      CreateMap<SiteDetailsEntity, SecretSiteDetails>();
+      CreateMap<SiteDetailsEntity, SiteDetailsResponse>();
+      CreateMap<SiteEnergyCostsEntity, SiteEnergyCostsResponse>();
 
       // SolarEdge raw DTO data to SolarView models (nullable to non-nullable meter values)
       CreateMap<PowerDataDto, SolarData>()

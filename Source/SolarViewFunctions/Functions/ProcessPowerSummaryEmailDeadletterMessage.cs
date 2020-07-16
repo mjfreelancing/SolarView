@@ -48,7 +48,7 @@ namespace SolarViewFunctions.Functions
 
         request = queueMessage.DeserializeFromMessage<SiteSummaryEmailRequest>();
 
-        var siteInfo = await _repositoryFactory.Create<ISiteRepository>(sitesTable).GetSiteAsync(request.SiteId);
+        var siteInfo = await _repositoryFactory.Create<ISiteDetailsRepository>(sitesTable).GetSiteAsync(request.SiteId);
 
         // just sending the model in the email for now
         var content = JsonConvert.SerializeObject(request, Formatting.Indented);

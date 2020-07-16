@@ -45,7 +45,7 @@ namespace SolarViewFunctions.Functions
         {
           ExceptionDocument exceptionDocument = (dynamic)document;
 
-          var siteInfo = await _repositoryFactory.Create<ISiteRepository>(sitesTable).GetSiteAsync(exceptionDocument.SiteId);
+          var siteInfo = await _repositoryFactory.Create<ISiteDetailsRepository>(sitesTable).GetSiteAsync(exceptionDocument.SiteId);
 
           var emailContent = BuildHtml(exceptionDocument);
           var email = _emailCreator.CreateMessage(siteInfo, "SolarView Exception Report", "text/html", emailContent);

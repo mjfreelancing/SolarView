@@ -34,7 +34,7 @@ namespace SolarViewFunctions.Functions
 
         Tracker.TrackInfo($"Processing a {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, between {request.StartDateTime} and {request.EndDateTime}");
 
-        var siteInfo = await context.CallActivityWithRetryAsync<SecretSiteInfo>(nameof(GetSiteInfo), GetDefaultRetryOptions(), request.SiteId);
+        var siteInfo = await context.CallActivityWithRetryAsync<SecretSiteDetails>(nameof(GetSiteInfo), GetDefaultRetryOptions(), request.SiteId);
 
         // next refresh time is in the site's timezone
         Tracker.TrackInfo(siteInfo.LastRefreshDateTime.IsNullOrEmpty()
@@ -65,7 +65,7 @@ namespace SolarViewFunctions.Functions
       }
     }
 
-    private async Task RefreshSite(IDurableOrchestrationContext context, SecretSiteInfo siteInfo, DateTime startDateTime, DateTime endDateTime)
+    private async Task RefreshSite(IDurableOrchestrationContext context, SecretSiteDetails siteDetails, DateTime startDateTime, DateTime endDateTime)
     {
       // ignore any message received that is earlier than the site's 'LastRefreshEnd'
       if (endDateTime < startDateTime)
@@ -79,13 +79,13 @@ namespace SolarViewFunctions.Functions
       }
 
       Tracker.TrackInfo(
-        $"Determined the next refresh period for SiteId {siteInfo.SiteId} is between " +
+        $"Determined the next refresh period for SiteId {siteDetails.SiteId} is between " +
         $"{startDateTime.GetSolarDateTimeString()} and {endDateTime.GetSolarDateTimeString()}"
       );
 
-      var triggeredPowerQuery = new TriggeredPowerQuery(siteInfo.UtcToLocalTime(context.CurrentUtcDateTime), RefreshTriggerType.Timed)
+      var triggeredPowerQuery = new TriggeredPowerQuery(siteDetails.UtcToLocalTime(context.CurrentUtcDateTime), RefreshTriggerType.Timed)
       {
-        SiteId = siteInfo.SiteId,
+        SiteId = siteDetails.SiteId,
         StartDateTime = startDateTime.GetSolarDateTimeString(),
         EndDateTime = endDateTime.GetSolarDateTimeString()
       };
@@ -94,12 +94,12 @@ namespace SolarViewFunctions.Functions
 
       if (status == PowerUpdatedStatus.Completed)
       {
-        siteInfo.LastRefreshDateTime = triggeredPowerQuery.EndDateTime;
-        await UpdateSiteLastRefreshTime(context, siteInfo);
+        siteDetails.LastRefreshDateTime = triggeredPowerQuery.EndDateTime;
+        await UpdateSiteLastRefreshTime(context, siteDetails);
       }
       else
       {
-        Tracker.TrackWarn($"Power refresh for SiteId {siteInfo.SiteId} failed. Not updating last refresh timestamp.");
+        Tracker.TrackWarn($"Power refresh for SiteId {siteDetails.SiteId} failed. Not updating last refresh timestamp.");
       }
     }
 
@@ -114,14 +114,14 @@ namespace SolarViewFunctions.Functions
       return context.CallSubOrchestratorWithRetryAsync<PowerUpdatedStatus>(nameof(HydratePowerOrchestrator), GetDefaultRetryOptions(), powerQuery);
     }
 
-    private Task UpdateSiteLastRefreshTime(IDurableOrchestrationContext context, ISiteInfo siteInfo)
+    private Task UpdateSiteLastRefreshTime(IDurableOrchestrationContext context, ISiteDetails siteDetails)
     {
-      Tracker.TrackInfo($"Initiating a request to update SiteId {siteInfo.SiteId} with a last refresh date of {siteInfo.LastRefreshDateTime}");
+      Tracker.TrackInfo($"Initiating a request to update SiteId {siteDetails.SiteId} with a last refresh date of {siteDetails.LastRefreshDateTime}");
 
-      var siteUpdates = new Dictionary<string, string>
+      var siteUpdates = new Dictionary<string, object>
       {
-        {nameof(ISiteInfo.SiteId), siteInfo.SiteId},
-        {nameof(ISiteInfo.LastRefreshDateTime), siteInfo.LastRefreshDateTime}
+        {nameof(ISiteDetails.SiteId), siteDetails.SiteId},
+        {nameof(ISiteDetails.LastRefreshDateTime), siteDetails.LastRefreshDateTime}
       };
 
       return context.CallActivityWithRetryAsync(nameof(UpdateSitesTable), GetDefaultRetryOptions(), siteUpdates);

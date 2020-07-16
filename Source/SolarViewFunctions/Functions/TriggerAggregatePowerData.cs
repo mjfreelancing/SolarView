@@ -38,7 +38,7 @@ namespace SolarViewFunctions.Functions
         var currentTimeUtc = DateTime.UtcNow;
         Tracker.TrackEvent(nameof(TriggerAggregatePowerData));
 
-        var siteRepository = _repositoryFactory.Create<ISiteRepository>(sitesTable);
+        var siteRepository = _repositoryFactory.Create<ISiteDetailsRepository>(sitesTable);
 
         var allSites = siteRepository.GetAllSitesAsyncEnumerable();
 
@@ -55,25 +55,25 @@ namespace SolarViewFunctions.Functions
       }
     }
 
-    private async Task ProcessAggregatePowerRequest(DateTime currentTimeUtc, ISiteInfo siteInfo, IDurableOrchestrationClient orchestrationClient,
+    private async Task ProcessAggregatePowerRequest(DateTime currentTimeUtc, ISiteDetails siteDetails, IDurableOrchestrationClient orchestrationClient,
       IAsyncCollector<ExceptionDocument> exceptionDocuments)
     {
       try
       {
-        var siteLocalTime = siteInfo.UtcToLocalTime(currentTimeUtc);
+        var siteLocalTime = siteDetails.UtcToLocalTime(currentTimeUtc);
 
         // check subsequent hours in case a trigger was missed
         if (siteLocalTime.Hour >= Constants.RefreshHour.Aggregation)
         {
-          var lastAggregationDate = siteInfo.GetLastAggregationDate();
+          var lastAggregationDate = siteDetails.GetLastAggregationDate();
           var nextEndDate = siteLocalTime.Date.AddDays(-1);         // not reporting the current day as it is not yet over
 
           if (nextEndDate > lastAggregationDate)
           {
             var request = new SiteRefreshAggregationRequest
             {
-              SiteId = siteInfo.SiteId,
-              SiteStartDate = siteInfo.StartDate,
+              SiteId = siteDetails.SiteId,
+              SiteStartDate = siteDetails.StartDate,
               StartDate = lastAggregationDate.GetSolarDateString(),
               EndDate = nextEndDate.GetSolarDateString(),
               TriggerType = RefreshTriggerType.Timed
@@ -83,7 +83,7 @@ namespace SolarViewFunctions.Functions
             var instanceId = await orchestrationClient.StartNewAsync(nameof(AggregateSitePowerData), request).ConfigureAwait(false);
 
             Tracker.TrackInfo(
-              $"Power data aggregation for SiteId {siteInfo.SiteId} has been scheduled for {request.StartDate} to {request.EndDate}",
+              $"Power data aggregation for SiteId {siteDetails.SiteId} has been scheduled for {request.StartDate} to {request.EndDate}",
               new { Request = request, InstanceId = instanceId });
           }
         }
@@ -92,7 +92,7 @@ namespace SolarViewFunctions.Functions
       {
         Tracker.TrackException(exception);
 
-        await exceptionDocuments.AddNotificationAsync<TriggerAggregatePowerData>(siteInfo.SiteId, exception, null).ConfigureAwait(false);
+        await exceptionDocuments.AddNotificationAsync<TriggerAggregatePowerData>(siteDetails.SiteId, exception, null).ConfigureAwait(false);
         await exceptionDocuments.FlushAsync().ConfigureAwait(false);
       }
     }

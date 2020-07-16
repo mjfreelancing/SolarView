@@ -57,7 +57,7 @@ namespace SolarViewFunctions.Functions
 
         Tracker.TrackEvent(nameof(TriggerManualHydratePower));
 
-        var siteRepository = _repositoryFactory.Create<ISiteRepository>(sitesTable);
+        var siteRepository = _repositoryFactory.Create<ISiteDetailsRepository>(sitesTable);
 
         ValidateRequest(hydrateRequest);
 
@@ -65,7 +65,7 @@ namespace SolarViewFunctions.Functions
 
         if (siteInfo == null)
         {
-          return new ForbiddenResponse();
+          return new NotFoundResponse();
         }
 
         var triggerLocalTime = siteInfo.UtcToLocalTime(triggerDateTime);

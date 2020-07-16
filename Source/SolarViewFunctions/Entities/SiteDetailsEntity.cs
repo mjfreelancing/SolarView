@@ -3,9 +3,9 @@ using SolarView.Common.Models;
 
 namespace SolarViewFunctions.Entities
 {
-  public class SiteEntity : TableEntity, ISiteInfo, ISecretSiteInfo
+  public class SiteDetailsEntity : TableEntity, ISiteDetails, ISecretSiteDetails
   {
-    // PartitionKey == "SiteId"  (Constants.Table.SitesPartitionKey)
+    // PartitionKey == "Details"  (Constants.Table.SiteDetailsPartitionKey)
     // RowKey => value of SiteId
     public string SiteId { get; set; }
     public string StartDate { get; set; }                   // first full day where all meter data is available (yyyy-MM-dd)

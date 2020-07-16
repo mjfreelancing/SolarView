@@ -1,1 +1,20 @@
 ﻿<h5><em>Loading...</em></h5>
+
+@*@using Syncfusion.Blazor.Spinner
+
+<div id="container"></div>
+<SfSpinner CssClass="e-customClass" @ref="SpinnerObj" Target="#container" Label="Loading...." />
+
+@code {
+  private SfSpinner SpinnerObj;
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await base.OnAfterRenderAsync(firstRender);
+
+    if (firstRender)
+    {
+      SpinnerObj.ShowSpinner("#container");
+    }
+  }
+}*@

@@ -1,6 +1,6 @@
 namespace SolarView.Common.Models
 {
-  public interface ISiteInfo
+  public interface ISiteDetails
   {
     string SiteId { get; }
     string StartDate { get; }                   // first full day where all meter data is available (yyyy-MM-dd)

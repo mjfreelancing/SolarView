@@ -39,7 +39,7 @@
 @code {
   [Inject] IEventAggregator EventAggregator { get; set; }
 
-  private ISiteInfo _currentSite;
+  private ISiteDetails _currentSite;
   private bool _collapseNavMenu = true;
   private string NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
 
@@ -57,7 +57,7 @@
 
   private void HandleSiteChanged(SiteChanged message)
   {
-    _currentSite = message.SiteInfo;
+    _currentSite = message.SiteDetails;
     StateHasChanged();
   }
 

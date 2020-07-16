@@ -47,7 +47,7 @@ namespace SolarViewFunctions.Functions
 
         request = queueMessage.DeserializeFromMessage<PowerUpdatedMessage>();
 
-        var siteInfo = await _repositoryFactory.Create<ISiteRepository>(sitesTable).GetSiteAsync(request.SiteId);
+        var siteInfo = await _repositoryFactory.Create<ISiteDetailsRepository>(sitesTable).GetSiteAsync(request.SiteId);
 
         // todo: update to load a specific razor template - just send the content in the email for now
         var content = JsonConvert.SerializeObject(request);

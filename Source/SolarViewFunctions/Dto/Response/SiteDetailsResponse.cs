@@ -2,7 +2,7 @@ using SolarView.Common.Models;
 
 namespace SolarViewFunctions.Dto.Response
 {
-  public class SiteInfoResponse : ISiteInfo
+  public class SiteDetailsResponse : ISiteDetails
   {
     public string SiteId { get; set; }
     public string StartDate { get; set; }

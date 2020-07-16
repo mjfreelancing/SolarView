@@ -55,7 +55,7 @@ namespace SolarViewFunctions.Functions
 
         Tracker.TrackEvent(nameof(TriggerManualAggregatePower));
 
-        var siteRepository = _repositoryFactory.Create<ISiteRepository>(sitesTable);
+        var siteRepository = _repositoryFactory.Create<ISiteDetailsRepository>(sitesTable);
 
         ValidateRequest(aggregateRequest);
 
@@ -63,7 +63,7 @@ namespace SolarViewFunctions.Functions
 
         if (siteInfo == null)
         {
-          return new ForbiddenResponse();
+          return new NotFoundResponse();
         }
 
         var refreshRequest = _mapper.Map<SiteRefreshAggregationRequest>(aggregateRequest);

@@ -41,7 +41,7 @@ namespace SolarViewFunctions.Functions
 
         Tracker.TrackEvent(nameof(TriggerSitesRefreshPowerData));
 
-        var sitesRepository = _repositoryFactory.Create<ISiteRepository>(sitesTable);
+        var sitesRepository = _repositoryFactory.Create<ISiteDetailsRepository>(sitesTable);
 
         await foreach (var site in sitesRepository.GetAllSitesAsyncEnumerable())
         {
@@ -56,23 +56,23 @@ namespace SolarViewFunctions.Functions
       }
     }
 
-    private async Task ProcessSiteRefreshPowerRequest(DateTime currentTimeUtc, ISiteInfo siteInfo, ISenderClient refreshQueue,
+    private async Task ProcessSiteRefreshPowerRequest(DateTime currentTimeUtc, ISiteDetails siteDetails, ISenderClient refreshQueue,
       IAsyncCollector<ExceptionDocument> exceptionDocuments)
     {
       SiteRefreshPowerRequest request = null;
 
       try
       {
-        var siteLocalTime = siteInfo.UtcToLocalTime(currentTimeUtc);
+        var siteLocalTime = siteDetails.UtcToLocalTime(currentTimeUtc);
 
-        var lastRefreshDateTime = siteInfo.GetLastRefreshDateTime();
+        var lastRefreshDateTime = siteDetails.GetLastRefreshDateTime();
         var nextRefreshDue = lastRefreshDateTime.AddHours(1);
 
         if (siteLocalTime > nextRefreshDue)
         {
           request = new SiteRefreshPowerRequest
           {
-            SiteId = siteInfo.SiteId,
+            SiteId = siteDetails.SiteId,
             StartDateTime = lastRefreshDateTime.GetSolarDateTimeString(),
             EndDateTime = siteLocalTime.TrimToHour().GetSolarDateTimeString()
           };
@@ -81,7 +81,7 @@ namespace SolarViewFunctions.Functions
 
           Tracker.TrackInfo(
             $"Sending a {nameof(SiteRefreshPowerRequest)} message for SiteId {request.SiteId}, from {request.StartDateTime} to {request.EndDateTime}",
-            new {siteInfo.SiteId});
+            new {siteDetails.SiteId});
 
           // using a message queue only from a design perspective (there could be thousands of sites)
           await refreshQueue.SendAsync(message).ConfigureAwait(false);
@@ -91,13 +91,13 @@ namespace SolarViewFunctions.Functions
       {
         var notification = new
         {
-          siteInfo.SiteId,
+          siteDetails.SiteId,
           Request = request
         };
 
         Tracker.TrackException(exception, notification);
 
-        await exceptionDocuments.AddNotificationAsync<TriggerSitesRefreshPowerData>(siteInfo.SiteId, exception, notification).ConfigureAwait(false);
+        await exceptionDocuments.AddNotificationAsync<TriggerSitesRefreshPowerData>(siteDetails.SiteId, exception, notification).ConfigureAwait(false);
       }
     }
   }

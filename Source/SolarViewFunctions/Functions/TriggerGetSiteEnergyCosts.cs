@@ -16,38 +16,38 @@ using NotFoundResult = SolarViewFunctions.HttpResults.NotFoundResult;
 
 namespace SolarViewFunctions.Functions
 {
-  public class TriggerGetSiteDetails : FunctionBase
+  public class TriggerGetSiteEnergyCosts : FunctionBase
   {
     private readonly IMapper _mapper;
     private readonly ISolarViewRepositoryFactory _repositoryFactory;
 
-    public TriggerGetSiteDetails(ITracker tracker, IMapper mapper, ISolarViewRepositoryFactory repositoryFactory)
+    public TriggerGetSiteEnergyCosts(ITracker tracker, IMapper mapper, ISolarViewRepositoryFactory repositoryFactory)
       : base(tracker)
     {
       _mapper = mapper.WhenNotNull(nameof(mapper));
       _repositoryFactory = repositoryFactory.WhenNotNull(nameof(repositoryFactory));
     }
 
-    [FunctionName(nameof(TriggerGetSiteDetails))]
+    [FunctionName(nameof(TriggerGetSiteEnergyCosts))]
     public async Task<IActionResult> Run(
-      [HttpTrigger(AuthorizationLevel.Function, "get", Route = "site/{siteId}")] HttpRequest request, string siteId,
+      [HttpTrigger(AuthorizationLevel.Function, "get", Route = "site/{siteId}/energyCosts")] HttpRequest request, string siteId,
       [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable)
     {
       Tracker.AppendDefaultProperties(new { SiteId = siteId });
-      Tracker.TrackEvent(nameof(TriggerGetSiteDetails));
+      Tracker.TrackEvent(nameof(TriggerGetSiteEnergyCosts));
 
       try
       {
-        var sitesRepository = _repositoryFactory.Create<ISiteDetailsRepository>(sitesTable);
+        var sitesRepository = _repositoryFactory.Create<ISiteEnergyCostsRepository>(sitesTable);
 
-        var siteEntity = await sitesRepository.GetSiteAsync(siteId).ConfigureAwait(false);
+        var energyCostsEntity = await sitesRepository.GetEnergyCosts(siteId).ConfigureAwait(false);
 
-        if (siteEntity == null)
+        if (energyCostsEntity == null)
         {
           return new NotFoundResult(null);
         }
 
-        var siteInfo = _mapper.Map<SiteDetailsResponse>(siteEntity);
+        var siteInfo = _mapper.Map<SiteEnergyCostsResponse>(energyCostsEntity);
 
         return new OkObjectResult(siteInfo);
       }

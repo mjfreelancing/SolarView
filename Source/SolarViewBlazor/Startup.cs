@@ -80,16 +80,17 @@ namespace SolarViewBlazor
         return registry;
       });
 
+      // there's no state - these only transform / aggregate data for charts
+      services.AddSingleton<IConsumptionChartViewModel, ConsumptionChartViewModel>();
+      services.AddSingleton<ICostBenefitChartViewModel, CostBenefitChartViewModel>();
+      services.AddSingleton<IFeedInChartViewModel, FeedInChartViewModel>();
+
       services.AddScoped<IChartDataCache, ChartDataCache>();
       services.AddScoped<IEventAggregator, EventAggregator>();
       services.AddScoped<ISiteService, SiteService>();
       services.AddScoped<ISiteViewModel, SiteViewModel>();
+      services.AddScoped<ISiteEnergyCostsViewModel, SiteEnergyCostsViewModel>();
       services.AddScoped<ICompareViewModel, CompareViewModel>();
-
-      // there's no state - these only transform / aggregate data for charts
-      services.AddSingleton<IFeedInChartViewModel, FeedInChartViewModel>();
-      services.AddSingleton<IConsumptionChartViewModel, ConsumptionChartViewModel>();
-      services.AddSingleton<ICostBenefitChartViewModel, CostBenefitChartViewModel>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

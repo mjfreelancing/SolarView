@@ -1,3 +1,4 @@
+using AllOverIt.Extensions;
 using Microsoft.Azure.Cosmos.Table;
 using SolarViewFunctions.Repository.Power;
 using SolarViewFunctions.Repository.PowerMonthly;
@@ -11,14 +12,53 @@ namespace SolarViewFunctions.Repository
 {
   public class SolarViewRepositoryFactory : ISolarViewRepositoryFactory
   {
-    private static readonly IDictionary<string, Func<CloudTable, ISolarViewRepository>> RepositoryRegistry
-      = new Dictionary<string, Func<CloudTable, ISolarViewRepository>>
+    private class RepositoryKey
+    {
+      public static readonly RepositoryKeyEqualityComparer Comparer = new RepositoryKeyEqualityComparer();
+
+      public string TableName { get; }
+      public Type InterfaceType { get; }
+
+      public RepositoryKey(string tableName, Type interfaceType)
       {
-        {Constants.Table.Sites, table => new SiteRepository(table)},
-        {Constants.Table.Power, table => new PowerRepository(table)},
-        {Constants.Table.PowerMonthly, table => new PowerMonthlyRepository(table)},
-        {Constants.Table.PowerYearly, table => new PowerYearlyRepository(table)},
-        {Constants.Table.PowerUpdateHistory, table => new PowerUpdateHistoryRepository(table)}
+        TableName = tableName;
+        InterfaceType = interfaceType;
+      }
+    }
+
+    private sealed class RepositoryKeyEqualityComparer : IEqualityComparer<RepositoryKey>
+    {
+      public bool Equals(RepositoryKey lhs, RepositoryKey rhs)
+      {
+        if (lhs == null && rhs == null)
+        {
+          return true;
+        }
+
+        if (lhs == null || rhs == null)
+        {
+          return false;
+        }
+
+        return lhs.TableName == rhs.TableName &&
+               lhs.InterfaceType == rhs.InterfaceType;
+      }
+
+      public int GetHashCode(RepositoryKey obj)
+      {
+        return obj.CalculateHashCode();
+      }
+    }
+
+    private static readonly IDictionary<RepositoryKey, Func<CloudTable, ISolarViewRepository>> RepositoryRegistry
+      = new Dictionary<RepositoryKey, Func<CloudTable, ISolarViewRepository>>(RepositoryKey.Comparer)
+      {
+        {new RepositoryKey(Constants.Table.Sites, typeof(ISiteDetailsRepository)), table => new SiteDetailsRepository(table)},
+        {new RepositoryKey(Constants.Table.Sites, typeof(ISiteEnergyCostsRepository)), table => new SiteEnergyCostsRepository(table)},
+        {new RepositoryKey(Constants.Table.Power, typeof(IPowerRepository)), table => new PowerRepository(table)},
+        {new RepositoryKey(Constants.Table.PowerMonthly, typeof(IPowerMonthlyRepository)), table => new PowerMonthlyRepository(table)},
+        {new RepositoryKey(Constants.Table.PowerYearly, typeof(IPowerYearlyRepository)), table => new PowerYearlyRepository(table)},
+        {new RepositoryKey(Constants.Table.PowerUpdateHistory, typeof(IPowerUpdateHistoryRepository)), table => new PowerUpdateHistoryRepository(table)}
       };
 
     public TRepository Create<TRepository>(CloudTable table) where TRepository : ISolarViewRepository
@@ -28,7 +68,9 @@ namespace SolarViewFunctions.Repository
 
     private static TRepository CreateRepository<TRepository>(CloudTable table)
     {
-      if (RepositoryRegistry.TryGetValue(table.Name, out var factory))
+      var repositoryKey = new RepositoryKey(table.Name, typeof(TRepository));
+
+      if (RepositoryRegistry.TryGetValue(repositoryKey, out var factory))
       {
         var repository = factory.Invoke(table);
 

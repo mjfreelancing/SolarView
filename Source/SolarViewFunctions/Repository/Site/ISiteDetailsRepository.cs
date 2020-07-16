@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Repository.Site
 {
-  public interface ISiteRepository : ISolarViewRepository
+  public interface ISiteDetailsRepository : ISolarViewRepository
   {
-    Task<SiteEntity> GetSiteAsync(string siteId);
-    IAsyncEnumerable<SiteEntity> GetAllSitesAsyncEnumerable();
+    IAsyncEnumerable<SiteDetailsEntity> GetAllSitesAsyncEnumerable();
+    Task<SiteDetailsEntity> GetSiteAsync(string siteId);
     Task<TableResult> MergeAsync(ITableEntity entity);
   }
 }

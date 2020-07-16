@@ -15,7 +15,7 @@ namespace SolarViewBlazor.ViewModels
     private readonly ISiteService _siteService;
     private readonly ISolarViewService _solarViewService;
 
-    public ISiteInfo CurrentSite { get; private set; }
+    public ISiteDetails CurrentSite { get; private set; }
 
     public SiteViewModel(ISiteService siteService, ISolarViewService solarViewService, IEventAggregator eventAggregator)
     {

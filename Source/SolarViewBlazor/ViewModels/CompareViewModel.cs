@@ -197,7 +197,7 @@ namespace SolarViewBlazor.ViewModels
       }
       else
       {
-        var powerData = (await _solarViewService.CollectData(_siteViewModel.CurrentSite.SiteId, startDate, endDate)).AsReadOnlyList();
+        var powerData = (await _solarViewService.GetPowerData(_siteViewModel.CurrentSite.SiteId, startDate, endDate)).AsReadOnlyList();
 
         chartDataId = $"{Guid.NewGuid()}";
         cachedPowerData = new ChartPowerData(startDate, endDate, powerData);

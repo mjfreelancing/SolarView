@@ -47,7 +47,7 @@ namespace SolarViewFunctions.Functions
       );
 
       // need to get the site API key
-      var siteInfo = await context.CallActivityWithRetryAsync<SecretSiteInfo>(nameof(GetSiteInfo), GetDefaultRetryOptions(), powerQuery.SiteId);
+      var siteInfo = await context.CallActivityWithRetryAsync<SecretSiteDetails>(nameof(GetSiteInfo), GetDefaultRetryOptions(), powerQuery.SiteId);
 
       // Note: if the two API calls below need to be run in parallel the calls will need to be moved to another function.
       // Not worth it in this case.

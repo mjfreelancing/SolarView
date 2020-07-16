@@ -1,5 +1,6 @@
 ﻿@page "/settings"
-
+@using Components.Settings
+@using SiteDetails = SolarViewBlazor.Components.Settings.SiteDetails
 @attribute [Authorize]
 @implements IDisposable
 
@@ -45,10 +46,8 @@
   {
     {"Site Details", typeof(SiteDetails)},
     {"User Details", typeof(UserDetails)},
-    {"Energy Costs", typeof(EnergyCosts)}
+    {"Energy Costs", typeof(SiteEnergyCosts)}
   };
-
-  private ISiteInfo CurrentSite => SiteViewModel.CurrentSite;
 
   public void Dispose()
   {
