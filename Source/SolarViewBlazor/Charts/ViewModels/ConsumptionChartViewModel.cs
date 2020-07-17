@@ -16,7 +16,7 @@ namespace SolarViewBlazor.Charts.ViewModels
         : CalculateNonCumulativeData(powerData, powerUnit);
     }
 
-    private IReadOnlyList<TimeWatts> CalculateCumulativeData(IEnumerable<PowerData> powerData, PowerUnit powerUnit)
+    private static IReadOnlyList<TimeWatts> CalculateCumulativeData(IEnumerable<PowerData> powerData, PowerUnit powerUnit)
     {
       var lastWattsItem = new WattsData();
 
@@ -35,7 +35,7 @@ namespace SolarViewBlazor.Charts.ViewModels
         .AsReadOnlyList();
     }
 
-    private IReadOnlyList<TimeWatts> CalculateNonCumulativeData(IEnumerable<PowerData> powerData, PowerUnit powerUnit)
+    private static IReadOnlyList<TimeWatts> CalculateNonCumulativeData(IEnumerable<PowerData> powerData, PowerUnit powerUnit)
     {
       return powerData
         .Select(item =>

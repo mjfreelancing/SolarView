@@ -1,0 +1,53 @@
+﻿@using SolarViewBlazor.Charts.Models
+@using SolarViewBlazor.Charts.ViewModels
+
+<div class="p-2 d-flex">
+  <SfCheckBox Label="Cumulative" @bind-Checked="@_isCumulative" TChecked="bool" ValueChange="CalculateChartData" />
+</div>
+<div>
+  <SfChart>
+    <ChartArea>
+      <ChartAreaBorder Width="1" />
+    </ChartArea>
+
+    <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
+                       IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
+
+    @*<ChartPrimaryYAxis LabelFormat="c" />*@
+
+    <ChartTooltipSettings Enable="true" />
+
+    <ChartSeriesCollection>
+      <ChartSeries DataSource=@_relativeData Name="Production vs Consumption" Type="ChartSeriesType.Line" Width="2" Fill="#640000"
+                   XName=@nameof(RelativeEnergy.Time) YName=@nameof(RelativeEnergy.ProductionVsConsumption) />
+
+      <ChartSeries DataSource=@_relativeData Name="Self Consumption vs Production" Type="ChartSeriesType.Line" Width="2" Fill="#006400"
+                   XName=@nameof(RelativeEnergy.Time) YName=@nameof(RelativeEnergy.SelfConsumptionVsProduction) />
+
+      <ChartSeries DataSource=@_relativeData Name="Self Consumption vs Consumption" Type="ChartSeriesType.Line" Width="2" Fill="#ff6400"
+                   XName=@nameof(RelativeEnergy.Time) YName=@nameof(RelativeEnergy.SelfConsumptionVsConsumption) />
+    </ChartSeriesCollection>
+    <ChartLegendSettings Visible="true" />
+  </SfChart>
+</div>
+
+@code {
+  [Inject] private IRelativeEnergyChartViewModel RelativeEnergyViewModel { get; set; }
+
+  [Parameter] public ChartData ChartData { get; set; }
+
+  private bool _isCumulative = false;
+  private IReadOnlyList<RelativeEnergy> _relativeData;
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+
+    CalculateChartData();
+  }
+
+  private void CalculateChartData()
+  {
+    _relativeData = RelativeEnergyViewModel.CalculateData(ChartData.Power, _isCumulative);
+  }
+}

@@ -79,6 +79,7 @@ namespace SolarViewBlazor
         registry.RegisterDescriptor(new ConsumptionChartDescriptor());
         registry.RegisterDescriptor(new CostBenefitChartDescriptor());
         registry.RegisterDescriptor(new FeedInChartDescriptor());
+        registry.RegisterDescriptor(new RelativeEnergyChartDescriptor());
 
         return registry;
       });
@@ -87,6 +88,7 @@ namespace SolarViewBlazor
       services.AddSingleton<IConsumptionChartViewModel, ConsumptionChartViewModel>();
       services.AddSingleton<ICostBenefitChartViewModel, CostBenefitChartViewModel>();
       services.AddSingleton<IFeedInChartViewModel, FeedInChartViewModel>();
+      services.AddSingleton<IRelativeEnergyChartViewModel, RelativeEnergyChartViewModel>();
 
       services.AddScoped<IChartDataCache, ChartDataCache>();
       services.AddScoped<IEventAggregator, EventAggregator>();

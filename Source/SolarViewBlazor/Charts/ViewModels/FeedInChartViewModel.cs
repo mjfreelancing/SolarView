@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using AllOverIt.Extensions;
+﻿using AllOverIt.Extensions;
 using SolarView.Client.Common.Helpers;
 using SolarView.Client.Common.Models;
 using SolarViewBlazor.Charts.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SolarViewBlazor.Charts.ViewModels
 {
@@ -16,7 +16,7 @@ namespace SolarViewBlazor.Charts.ViewModels
         : CalculateNonCumulativeData(powerData, powerUnit);
     }
 
-    private IReadOnlyList<TimeFeedIn> CalculateCumulativeData(IEnumerable<PowerData> powerData, PowerUnit powerUnit)
+    private static IReadOnlyList<TimeFeedIn> CalculateCumulativeData(IEnumerable<PowerData> powerData, PowerUnit powerUnit)
     {
       var lastPowerItem = new PowerData { Watts = new WattsData() };
 
@@ -34,7 +34,7 @@ namespace SolarViewBlazor.Charts.ViewModels
         .AsReadOnlyList();
     }
 
-    private IReadOnlyList<TimeFeedIn> CalculateNonCumulativeData(IEnumerable<PowerData> powerData, PowerUnit powerUnit)
+    private static IReadOnlyList<TimeFeedIn> CalculateNonCumulativeData(IEnumerable<PowerData> powerData, PowerUnit powerUnit)
     {
       return powerData
         .Select(item =>
