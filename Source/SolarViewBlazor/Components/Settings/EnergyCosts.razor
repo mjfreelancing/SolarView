@@ -1,4 +1,5 @@
 ﻿@using AutoMapper
+@using SolarView.Client.Common.Services.Site
 <table class="table table-settings">
   <tbody>
     <tr class="row">
@@ -41,7 +42,7 @@
 </style>
 
 @code {
-  [Inject] ISiteViewModel SiteViewModel { get; set; }
+  [Inject] ISiteService SiteService { get; set; }
   [Inject] ISiteEnergyCostsViewModel EnergyCostsViewModel { get; set; }
   [Inject] IMapper Mapper { get; set; }
 
@@ -56,10 +57,12 @@
 
     if (firstRender)
     {
-      _originalCosts = await EnergyCostsViewModel.GetEnergyCosts(SiteViewModel.CurrentSite.SiteId);
+      var currentSite = await SiteService.GetCurrentSite();
+
+      _originalCosts = await EnergyCostsViewModel.GetEnergyCosts(currentSite.SiteId);
 
       // will be null if the data has never been created
-      _originalCosts ??= new SiteEnergyCosts(SiteViewModel.CurrentSite.SiteId);
+      _originalCosts ??= new SiteEnergyCosts(currentSite.SiteId);
 
       RestoreEnergyCosts();
       StateHasChanged();

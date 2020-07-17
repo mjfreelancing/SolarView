@@ -1,6 +1,7 @@
 ﻿using AllOverIt.Extensions;
 using AllOverIt.Helpers;
 using SolarView.Client.Common.Models;
+using SolarView.Client.Common.Services.Site;
 using SolarView.Client.Common.Services.SolarView;
 using SolarView.Common.Models;
 using SolarViewBlazor.Cache;
@@ -15,7 +16,8 @@ namespace SolarViewBlazor.ViewModels
   public class CompareViewModel : ICompareViewModel
   {
     private bool _cacheIsLoaded;
-    private readonly ISiteViewModel _siteViewModel;
+    private ISiteDetails _currentSite;
+    private readonly ISiteService _siteService;
     private readonly ISolarViewService _solarViewService;
     private readonly IChartRegistry _chartRegistry;
     private readonly IChartDataCache _chartDataCache;
@@ -29,11 +31,10 @@ namespace SolarViewBlazor.ViewModels
     // a collection of all charts (key is the chart Id) and their associated descriptor / data
     private IDictionary<string, DescriptorData> _chartDescriptorData = new Dictionary<string, DescriptorData>();
 
-    public ISiteDetails CurrentSite => _siteViewModel.CurrentSite;
-
-    public CompareViewModel(ISiteViewModel siteViewModel, ISolarViewService solarViewService, IChartRegistry chartRegistry, IChartDataCache chartDataCache)
+    public CompareViewModel(ISiteService siteService, ISolarViewService solarViewService, IChartRegistry chartRegistry,
+      IChartDataCache chartDataCache)
     {
-      _siteViewModel = siteViewModel.WhenNotNull(nameof(siteViewModel));
+      _siteService = siteService.WhenNotNull(nameof(siteService));
       _solarViewService = solarViewService.WhenNotNull(nameof(solarViewService));
       _chartRegistry = chartRegistry.WhenNotNull(nameof(chartRegistry));
       _chartDataCache = chartDataCache.WhenNotNull(nameof(chartDataCache));
@@ -43,8 +44,10 @@ namespace SolarViewBlazor.ViewModels
     {
       if (!_cacheIsLoaded)
       {
-        _chartPowerData = await _chartDataCache.GetPowerDataAsync(_siteViewModel.CurrentSite.SiteId);
-        _chartDescriptorData = await _chartDataCache.GetChartDescriptorDataAsync(_siteViewModel.CurrentSite.SiteId);
+        var currentSiteId = await GetCurrentSiteId();
+
+        _chartPowerData = await _chartDataCache.GetPowerDataAsync(currentSiteId);
+        _chartDescriptorData = await _chartDataCache.GetChartDescriptorDataAsync(currentSiteId);
 
         foreach (var (chartId, descriptorData) in _chartDescriptorData)
         {
@@ -103,7 +106,8 @@ namespace SolarViewBlazor.ViewModels
         UpdateChartsToRender(chartDescriptor, chartData);
 
         // Add the data to the cache
-        await _chartDataCache.AddChartDescriptorData(_siteViewModel.CurrentSite.SiteId, chartId, descriptorData);
+        var currentSiteId = await GetCurrentSiteId();
+        await _chartDataCache.AddChartDescriptorData(currentSiteId, chartId, descriptorData);
       }
 
       return true;
@@ -134,9 +138,11 @@ namespace SolarViewBlazor.ViewModels
 
       // remove the chart reference
       _chartDescriptorData.Remove(chartId);
-      
+
+      var currentSiteId = await GetCurrentSiteId();
+
       // remove from the cache
-      await _chartDataCache.RemoveChartDescriptorData(_siteViewModel.CurrentSite.SiteId, chartId);
+      await _chartDataCache.RemoveChartDescriptorData(currentSiteId, chartId);
 
       // if there are no charts referring to the same power data then it can be removed
       if (_chartDescriptorData.Values.All(item => item.ChartDataId != descriptorData.ChartDataId))
@@ -144,7 +150,7 @@ namespace SolarViewBlazor.ViewModels
         _chartPowerData.Remove(descriptorData.ChartDataId);
 
         // remove from the cache
-        await _chartDataCache.RemovePowerData(_siteViewModel.CurrentSite.SiteId, descriptorData.ChartDataId);
+        await _chartDataCache.RemovePowerData(currentSiteId, descriptorData.ChartDataId);
       }
     }
 
@@ -159,6 +165,12 @@ namespace SolarViewBlazor.ViewModels
     public IReadOnlyList<ChartData> GetDescriptorData(IChartDescriptor descriptor)
     {
       return _chartsToRender[descriptor].AsReadOnlyList();
+    }
+    private async Task<string> GetCurrentSiteId()
+    {
+      _currentSite ??= await _siteService.GetCurrentSite();
+
+      return _currentSite?.SiteId;
     }
 
     private bool ChartDataExists(string chartDataId, string chartDescriptorId)
@@ -199,14 +211,16 @@ namespace SolarViewBlazor.ViewModels
       }
       else
       {
-        var powerData = (await _solarViewService.GetPowerData(_siteViewModel.CurrentSite.SiteId, startDate, endDate)).AsReadOnlyList();
+        var currentSiteId = await GetCurrentSiteId();
+
+        var powerData = (await _solarViewService.GetPowerData(currentSiteId, startDate, endDate)).AsReadOnlyList();
 
         chartDataId = $"{Guid.NewGuid()}";
         cachedPowerData = new ChartPowerData(startDate, endDate, powerData);
 
         _chartPowerData.Add(chartDataId, cachedPowerData);
 
-        await _chartDataCache.AddPowerData(_siteViewModel.CurrentSite.SiteId, chartDataId, cachedPowerData);
+        await _chartDataCache.AddPowerData(currentSiteId, chartDataId, cachedPowerData);
       }
 
       return (chartDataId, cachedPowerData);

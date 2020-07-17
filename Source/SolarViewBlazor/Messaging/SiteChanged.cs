@@ -2,8 +2,6 @@
 
 namespace SolarViewBlazor.Messaging
 {
-
-
   public class SiteChanged 
   {
     public ISiteDetails SiteDetails { get; }
@@ -13,6 +11,4 @@ namespace SolarViewBlazor.Messaging
       SiteDetails = siteDetails;
     }
   }
-
- 
 }

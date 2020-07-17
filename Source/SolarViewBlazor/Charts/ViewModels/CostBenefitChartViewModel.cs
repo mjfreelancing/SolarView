@@ -2,10 +2,10 @@
 using AllOverIt.Helpers;
 using AllOverIt.Tasks;
 using SolarView.Client.Common.Models;
+using SolarView.Client.Common.Services.Site;
 using SolarView.Client.Common.Services.SolarView;
 using SolarView.Common.Models;
 using SolarViewBlazor.Charts.Models;
-using SolarViewBlazor.ViewModels;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,13 +16,16 @@ namespace SolarViewBlazor.Charts.ViewModels
   {
     private readonly AsyncLazy<ISiteEnergyCosts> _siteEnergyCosts;
 
-    public CostBenefitChartViewModel(ISiteViewModel siteViewModel, ISolarViewService solarViewService)
+    public CostBenefitChartViewModel(ISiteService siteService, ISolarViewService solarViewService)
     {
-      _ = siteViewModel.WhenNotNull(nameof(siteViewModel));
+      _ = siteService.WhenNotNull(nameof(siteService));
       _ = solarViewService.WhenNotNull(nameof(solarViewService));
 
       _siteEnergyCosts = new AsyncLazy<ISiteEnergyCosts>(async () =>
-        await solarViewService.GetEnergyCosts(siteViewModel.CurrentSite.SiteId));
+      {
+        var currentSite = await siteService.GetCurrentSite();
+        return await solarViewService.GetEnergyCosts(currentSite.SiteId);
+      });
     }
 
     public async Task<IReadOnlyList<PowerCost>> CalculateData(IEnumerable<PowerData> powerData, bool isCumulative)

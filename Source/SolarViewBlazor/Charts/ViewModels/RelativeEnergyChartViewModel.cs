@@ -11,9 +11,11 @@ namespace SolarViewBlazor.Charts.ViewModels
   {
     public IReadOnlyList<RelativeEnergy> CalculateData(IEnumerable<PowerData> powerData, bool isCumulative)
     {
-      return isCumulative
+      var relativeEnergy = isCumulative
         ? CalculateCumulativeData(powerData)
         : CalculateNonCumulativeData(powerData);
+
+      return ChartHelpers.TrimDataEnds(relativeEnergy, ExcludeData, false, false);
     }
 
     private static IReadOnlyList<RelativeEnergy> CalculateCumulativeData(IEnumerable<PowerData> powerData)
@@ -28,7 +30,6 @@ namespace SolarViewBlazor.Charts.ViewModels
 
           return new RelativeEnergy(lastPowerItem);
         })
-        .Where(IncludeData)
         .AsReadOnlyList();
     }
 
@@ -36,16 +37,15 @@ namespace SolarViewBlazor.Charts.ViewModels
     {
       return powerData
         .Select(item => new RelativeEnergy(item))
-        .Where(IncludeData)
         .AsReadOnlyList();
     }
 
-    private static bool IncludeData(RelativeEnergy item)
+    private static bool ExcludeData(RelativeEnergy item)
     {
       // excluding the point if everything is zero
-      return !item.SelfConsumptionVsProduction.IsZero() ||
-             !item.ProductionVsConsumption.IsZero() ||
-             !item.SelfConsumptionVsConsumption.IsZero();
+      return item.SelfConsumptionVsProduction.IsZero() &&
+             item.ProductionVsConsumption.IsZero() &&
+             item.SelfConsumptionVsConsumption.IsZero();
     }
   }
 }

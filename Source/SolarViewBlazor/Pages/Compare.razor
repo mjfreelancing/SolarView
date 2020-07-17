@@ -3,6 +3,7 @@
 @implements IDisposable
 
 @using DateRange = SolarView.Common.Models.DateRange
+@using SolarView.Client.Common.Services.Site
 
 <h1>Power Comparisons</h1>
 
@@ -24,8 +25,8 @@
                 }
               </div>
               <hr />
-              <ChartDateSelector MinDate="@CompareViewModel.CurrentSite.StartDate.ParseSolarDate()"
-                                 MaxDate="@CompareViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
+              <ChartDateSelector MinDate="@_currentSite.StartDate.ParseSolarDate()"
+                                 MaxDate="@_currentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
                                  OnApplyDateRange="@(async dateRange => await ApplyDateRange(dateRange))" />
             </ContentTemplate>
           </AccordionItem>
@@ -62,28 +63,32 @@
 @code {
   [Inject] IEventAggregator EventAggregator { get; set; }
   [Inject] private IChartRegistry ChartRegistry { get; set; }
+  [Inject] private ISiteService SiteService { get; set; }
   [Inject] private ICompareViewModel CompareViewModel { get; set; }
 
   // a list of possible charts the user can select
   private IReadOnlyList<ChartSelection> _chartSelection;
+  private ISiteDetails _currentSite;
 
   public void Dispose()
   {
     EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
   }
 
-  protected override void OnInitialized()
+  protected override async Task OnInitializedAsync()
   {
-    base.OnInitialized();
+    await base.OnInitializedAsync();
 
-    _chartSelection = ChartRegistry.ChartDescriptors
-      .Select(descriptor => new ChartSelection
-      {
-        Selected = true,
-        ChartDescriptor = descriptor
-      })
-      .OrderBy(item => item.ChartDescriptor.Description)
-      .ToList();
+    //_currentSite = await SiteService.GetCurrentSite();
+
+    //_chartSelection = ChartRegistry.ChartDescriptors
+    //.Select(descriptor => new ChartSelection
+    //{
+    //  Selected = true,
+    //  ChartDescriptor = descriptor
+    //})
+    //.OrderBy(item => item.ChartDescriptor.Description)
+    //.ToList();
 
     EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
   }
@@ -94,10 +99,9 @@
 
     if (firstRender)
     {
-      if (CompareViewModel.CurrentSite != null)
-      {
-        await LoadCharts();
-      }
+      _currentSite = await SiteService.GetCurrentSite();
+
+      await InitializeCurrentSite();
 
       StateHasChanged();
     }
@@ -105,12 +109,30 @@
 
   private async Task HandleSiteChanged(SiteChanged message)
   {
-    if (CompareViewModel.CurrentSite != null)
-    {
-      await LoadCharts();
-    }
+    await InitializeCurrentSite();
 
     StateHasChanged();
+  }
+
+  private async Task InitializeCurrentSite()
+  {
+    if (_currentSite != null)
+    {
+      _chartSelection = ChartRegistry.ChartDescriptors
+        .Select(descriptor => new ChartSelection
+        {
+          Selected = true,
+          ChartDescriptor = descriptor
+        })
+        .OrderBy(item => item.ChartDescriptor.Description)
+        .ToList();
+
+      await LoadCharts();
+    }
+    else
+    {
+      _chartSelection = new List<ChartSelection>();
+    }
   }
 
   private async Task LoadCharts()
@@ -137,4 +159,4 @@
   {
     await CompareViewModel.DeleteChartAsync(chartId);
   }
-}
+  }

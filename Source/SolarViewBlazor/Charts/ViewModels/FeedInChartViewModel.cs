@@ -11,9 +11,11 @@ namespace SolarViewBlazor.Charts.ViewModels
   {
     public IReadOnlyList<TimeFeedIn> CalculateData(IEnumerable<PowerData> powerData, PowerUnit powerUnit, bool isCumulative)
     {
-      return isCumulative
+      var feedInData = isCumulative
         ? CalculateCumulativeData(powerData, powerUnit)
         : CalculateNonCumulativeData(powerData, powerUnit);
+
+      return ChartHelpers.TrimDataEnds(feedInData, item => item.FeedIn.IsZero(), true, true);
     }
 
     private static IReadOnlyList<TimeFeedIn> CalculateCumulativeData(IEnumerable<PowerData> powerData, PowerUnit powerUnit)

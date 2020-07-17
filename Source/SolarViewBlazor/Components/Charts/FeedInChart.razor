@@ -40,7 +40,7 @@
   private readonly IReadOnlyList<DisplayPowerUnit> _displayPowerUnits = ChartHelpers.GetDisplayPowerUnits();
 
   private bool _isCumulative = false;
-  private PowerUnit _powerUnit = PowerUnit.WattHour;
+  private PowerUnit _powerUnit = PowerUnit.Watts;
   private string YAxisLabel => ChartHelpers.GetYAxisLabel(_powerUnit, _isCumulative);
   private IReadOnlyList<TimeFeedIn> _timeFeedIn;
 
