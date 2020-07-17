@@ -7,7 +7,10 @@ namespace SolarViewFunctions.Providers
 {
   public interface ISitesUpdateProvider
   {
+    // update via a timed function
     Task UpdateSiteAttributeAsync(CloudTable sitesTable, string siteId, IDictionary<string, object> properties);
-    Task UpdateSiteEnergyCostsAsync(CloudTable sitesTable, string siteId, IEnergyCosts energyCosts);
+
+    // update via a POST request
+    Task UpdateSiteEnergyCostsAsync(CloudTable sitesTable, ISiteEnergyCosts energyCosts);
   }
 }

@@ -1,4 +1,3 @@
-using AllOverIt.Extensions;
 using AllOverIt.Helpers;
 using AutoMapper;
 using Microsoft.Azure.Cosmos.Table;
@@ -52,7 +51,6 @@ namespace SolarViewFunctions.Functions
         aggregateRequest.SiteId = siteId;
 
         Tracker.AppendDefaultProperties(aggregateRequest);
-
         Tracker.TrackEvent(nameof(TriggerManualAggregatePower));
 
         var siteRepository = _repositoryFactory.Create<ISiteDetailsRepository>(sitesTable);
@@ -92,17 +90,14 @@ namespace SolarViewFunctions.Functions
       {
         var notification = new
         {
-          aggregateRequest?.SiteId,
+          SiteId = siteId,
           Request = $"{request}",
           RequestContent = aggregateRequest
         };
 
         Tracker.TrackException(exception, notification);
 
-        if (!aggregateRequest?.SiteId.IsNullOrEmpty() ?? false)
-        {
-          await exceptionDocuments.AddNotificationAsync<TriggerManualHydratePower>(aggregateRequest.SiteId, exception, notification).ConfigureAwait(false);
-        }
+        await exceptionDocuments.AddNotificationAsync<TriggerManualHydratePower>(siteId, exception, notification).ConfigureAwait(false);
 
         return new InternalServerErrorResponse(exception);
       }

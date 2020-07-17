@@ -20,7 +20,6 @@ using SolarViewFunctions.Validators;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using NotFoundResult = SolarViewFunctions.HttpResults.NotFoundResult;
 
 namespace SolarViewFunctions.Functions
 {
@@ -71,7 +70,7 @@ namespace SolarViewFunctions.Functions
 
         if (siteInfo == null)
         {
-          return new NotFoundResult(null);
+          return new NotFoundResult();
         }
 
         _powerAggregationProvider.PowerTable = powerTable;

@@ -48,7 +48,18 @@ namespace SolarViewFunctions.Mapping
           dest.PartitionKey = $"{src.SiteId}_{src.TriggerDateTime.Substring(0, 10)}";
           dest.RowKey = $"{Guid.NewGuid()}";
         });
-      
+
+      CreateMap<SiteEnergyCostsPostRequest, SiteEnergyCostsEntity>()
+        .ForMember(dest => dest.PartitionKey, opt => opt.Ignore())
+        .ForMember(dest => dest.RowKey, opt => opt.Ignore())
+        .ForMember(dest => dest.Timestamp, opt => opt.Ignore())
+        .ForMember(dest => dest.ETag, opt => opt.Ignore())
+        .AfterMap((src, dest) =>
+        {
+          dest.PartitionKey = $"{Constants.Table.SiteEnergyCostsPartitionKey}";
+          dest.RowKey = $"{src.SiteId}";
+        });
+
       CreateMap<AggregatePowerRequest, SiteRefreshAggregationRequest>()
         .ForMember(dest => dest.SiteStartDate, opt => opt.Ignore())
         .ForMember(dest => dest.TriggerType, opt => opt.Ignore());

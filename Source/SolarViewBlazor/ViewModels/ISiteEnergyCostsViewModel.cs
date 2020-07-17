@@ -5,6 +5,7 @@ namespace SolarViewBlazor.ViewModels
 {
   public interface ISiteEnergyCostsViewModel
   {
-    Task<IEnergyCosts> GetEnergyCosts(string siteId);
+    Task<ISiteEnergyCosts> GetEnergyCosts(string siteId);
+    Task UpdateEnergyCosts(ISiteEnergyCosts energyCosts);
   }
 }

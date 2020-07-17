@@ -1,8 +1,8 @@
-using SolarView.Common.Models;
+﻿using SolarView.Common.Models;
 
-namespace SolarViewFunctions.Dto.Response
+namespace SolarViewFunctions.Dto.Request
 {
-  public class SiteEnergyCostsResponse : ISiteEnergyCosts
+  public class SiteEnergyCostsPostRequest : ISiteEnergyCosts
   {
     public string SiteId { get; set; }
     public double CostPerKWhPeak { get; set; }

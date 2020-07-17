@@ -54,7 +54,6 @@ namespace SolarViewFunctions.Functions
         hydrateRequest.SiteId = siteId;
 
         Tracker.AppendDefaultProperties(hydrateRequest);
-
         Tracker.TrackEvent(nameof(TriggerManualHydratePower));
 
         var siteRepository = _repositoryFactory.Create<ISiteDetailsRepository>(sitesTable);

@@ -7,6 +7,6 @@ namespace SolarViewFunctions.Repository.Site
   public interface ISiteEnergyCostsRepository : ISolarViewRepository
   {
     Task<SiteEnergyCostsEntity> GetEnergyCosts(string siteId);
-    Task<TableResult> MergeAsync(ITableEntity entity);
+    Task<TableResult> UpsertAsync(SiteEnergyCostsEntity entity);
   }
 }

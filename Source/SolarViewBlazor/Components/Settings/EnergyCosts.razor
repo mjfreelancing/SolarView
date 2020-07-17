@@ -39,8 +39,8 @@
   [Inject] ISiteEnergyCostsViewModel EnergyCostsViewModel { get; set; }
   [Inject] IMapper Mapper { get; set; }
 
-  private IEnergyCosts _originalCosts = new EnergyCosts();
-  private EnergyCosts _energyCosts = new EnergyCosts();
+  private ISiteEnergyCosts _originalCosts = new SiteEnergyCosts();  // avoid null reference at creation when comparing hashes
+  private SiteEnergyCosts _energyCosts = new SiteEnergyCosts();     // avoid null reference when rendering at creation
   private bool CanUpdate => _originalCosts.CalculateHashCode() != _energyCosts.CalculateHashCode();
   private string CancelButtonDisplay => CanUpdate ? "inline-block" : "none";
 
@@ -53,21 +53,23 @@
       _originalCosts = await EnergyCostsViewModel.GetEnergyCosts(SiteViewModel.CurrentSite.SiteId);
 
       // will be null if the data has never been created
-      if (_originalCosts != null)
-      {
-        RestoreEnergyCosts();
-        StateHasChanged();
-      }
+      _originalCosts ??= new SiteEnergyCosts(SiteViewModel.CurrentSite.SiteId);
+
+      RestoreEnergyCosts();
+      StateHasChanged();
     }
   }
 
-  private void Update()
+  private async Task Update()
   {
-    // merge the data back to the Sites table
+    await EnergyCostsViewModel.UpdateEnergyCosts(_energyCosts);
+
+    // if no error, reset the original state
+    _originalCosts = Mapper.Map<SiteEnergyCosts>(_energyCosts);
   }
 
   private void RestoreEnergyCosts()
   {
-    _energyCosts = Mapper.Map<EnergyCosts>(_originalCosts);
+    _energyCosts = Mapper.Map<SiteEnergyCosts>(_originalCosts);
   }
 }

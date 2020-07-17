@@ -8,7 +8,7 @@ namespace SolarViewBlazor.Mapping
   {
     public SolarViewProfile()
     {
-      CreateMap<IEnergyCosts, EnergyCosts>();
+      CreateMap<ISiteEnergyCosts, SiteEnergyCosts>();
     }
   }
 }

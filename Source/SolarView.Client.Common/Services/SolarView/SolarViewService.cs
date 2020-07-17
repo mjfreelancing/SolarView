@@ -40,9 +40,10 @@ namespace SolarView.Client.Common.Services.SolarView
       }
       catch (FlurlHttpException exception)
       {
+        // unknown site Id will cause a Forbidden status code - not handling that at this time
+
         if (exception.Call.HttpStatus.HasValue && exception.Call.HttpStatus == HttpStatusCode.NotFound)
         {
-          // unknown site Id
           return null;
         }
 
@@ -50,7 +51,7 @@ namespace SolarView.Client.Common.Services.SolarView
       }
     }
 
-    public async Task<IEnergyCosts> GetEnergyCosts(string siteId)
+    public async Task<ISiteEnergyCosts> GetEnergyCosts(string siteId)
     {
       var url = new Url(_functionsUrl)
         .AppendPathSegments("site", siteId, "energyCosts")
@@ -62,13 +63,12 @@ namespace SolarView.Client.Common.Services.SolarView
 
       try
       {
-        return await url.GetJsonAsync<EnergyCosts>();
+        return await url.GetJsonAsync<SiteEnergyCosts>();
       }
       catch (FlurlHttpException exception)
       {
         if (exception.Call.HttpStatus.HasValue && exception.Call.HttpStatus == HttpStatusCode.NotFound)
         {
-          // unknown site Id
           return null;
         }
 
@@ -157,6 +157,36 @@ namespace SolarView.Client.Common.Services.SolarView
           };
         })
         .AsReadOnlyList();
+    }
+
+    public async Task UpsertEnergyCosts(ISiteEnergyCosts energyCosts)
+    {
+      var url = new Url(_functionsUrl)
+        .AppendPathSegments("site", energyCosts.SiteId, "energyCosts")
+        .WithHeaders(new
+        {
+          content_type = "application/json",
+          x_functions_key = _functionsKey
+        });
+
+      // todo: if concurrency is an issue should really pass in an ETag to detect conflict
+      await url.PostJsonAsync(energyCosts);
+
+      //try
+      //{
+      //  var response = await url.PostJsonAsync(energyCosts);
+
+      //  if (response.StatusCode != HttpStatusCode.OK)
+      //  {
+
+      //  }
+      //}
+      //catch (FlurlHttpException exception)
+      //{
+      //  // exception.Call.HttpStatus
+
+      //  throw;
+      //}
     }
   }
 }

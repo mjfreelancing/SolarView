@@ -16,7 +16,7 @@ namespace SolarViewFunctions.Repository.Site
       return GetAsync(Constants.Table.SiteEnergyCostsPartitionKey, siteId);
     }
 
-    public Task<TableResult> MergeAsync(ITableEntity entity)
+    public Task<TableResult> UpsertAsync(SiteEnergyCostsEntity entity)
     {
       return ExecuteAsync(TableOperation.InsertOrMerge, entity);
     }

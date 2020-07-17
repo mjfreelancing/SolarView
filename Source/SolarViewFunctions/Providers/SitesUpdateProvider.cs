@@ -1,7 +1,8 @@
-using AllOverIt.Extensions;
 using AllOverIt.Helpers;
+using AutoMapper;
 using Microsoft.Azure.Cosmos.Table;
 using SolarView.Common.Models;
+using SolarViewFunctions.Entities;
 using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Site;
 using System;
@@ -13,10 +14,12 @@ namespace SolarViewFunctions.Providers
   public class SitesUpdateProvider : ISitesUpdateProvider
   {
     private readonly ISolarViewRepositoryFactory _repositoryFactory;
+    private readonly IMapper _mapper;
 
-    public SitesUpdateProvider(ISolarViewRepositoryFactory repositoryFactory)
+    public SitesUpdateProvider(ISolarViewRepositoryFactory repositoryFactory, IMapper mapper)
     {
       _repositoryFactory = repositoryFactory.WhenNotNull(nameof(repositoryFactory));
+      _mapper = mapper.WhenNotNull(nameof(mapper));
     }
 
     public Task UpdateSiteAttributeAsync(CloudTable sitesTable, string siteId, IDictionary<string, object> properties)
@@ -29,15 +32,12 @@ namespace SolarViewFunctions.Providers
       return sitesRepository.MergeAsync(entity);
     }
 
-    public Task UpdateSiteEnergyCostsAsync(CloudTable sitesTable, string siteId, IEnergyCosts energyCosts)
+    public Task UpdateSiteEnergyCostsAsync(CloudTable sitesTable, ISiteEnergyCosts energyCosts)
     {
-      var entity = new DynamicTableEntity(Constants.Table.SiteEnergyCostsPartitionKey, siteId);
-
-      var properties = energyCosts.ToPropertyDictionary();
-      AddPropertiesToEntity(entity, properties);
+      var entity = _mapper.Map<SiteEnergyCostsEntity>(energyCosts);
 
       var sitesRepository = _repositoryFactory.Create<ISiteEnergyCostsRepository>(sitesTable);
-      return sitesRepository.MergeAsync(entity);
+      return sitesRepository.UpsertAsync(entity);
     }
 
     private static void AddPropertiesToEntity(DynamicTableEntity entity, IDictionary<string, object> properties)

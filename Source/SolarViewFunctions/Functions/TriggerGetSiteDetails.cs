@@ -12,7 +12,6 @@ using SolarViewFunctions.Repository.Site;
 using SolarViewFunctions.Tracking;
 using System;
 using System.Threading.Tasks;
-using NotFoundResult = SolarViewFunctions.HttpResults.NotFoundResult;
 
 namespace SolarViewFunctions.Functions
 {
@@ -44,7 +43,7 @@ namespace SolarViewFunctions.Functions
 
         if (siteEntity == null)
         {
-          return new NotFoundResult(null);
+          return new NotFoundResult();
         }
 
         var siteInfo = _mapper.Map<SiteDetailsResponse>(siteEntity);

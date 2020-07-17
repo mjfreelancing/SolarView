@@ -14,9 +14,14 @@ namespace SolarViewBlazor.ViewModels
       _solarViewService = solarViewService.WhenNotNull(nameof(solarViewService));
     }
 
-    public Task<IEnergyCosts> GetEnergyCosts(string siteId)
+    public Task<ISiteEnergyCosts> GetEnergyCosts(string siteId)
     {
       return _solarViewService.GetEnergyCosts(siteId);
+    }
+
+    public Task UpdateEnergyCosts(ISiteEnergyCosts energyCosts)
+    {
+      return _solarViewService.UpsertEnergyCosts(energyCosts);
     }
   }
 }
