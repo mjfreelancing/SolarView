@@ -1,48 +1,63 @@
 ﻿using AllOverIt.Extensions;
 using AllOverIt.Helpers;
-using SolarView.Client.Common.Helpers;
+using AllOverIt.Tasks;
 using SolarView.Client.Common.Models;
+using SolarView.Client.Common.Services.SolarView;
+using SolarView.Common.Models;
 using SolarViewBlazor.Charts.Models;
+using SolarViewBlazor.ViewModels;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SolarViewBlazor.Charts.ViewModels
 {
   public class CostBenefitChartViewModel : ICostBenefitChartViewModel
   {
-    private PowerCostConfiguration _costConfiguration;
+    private readonly AsyncLazy<ISiteEnergyCosts> _siteEnergyCosts;
 
-    public void SetCostConfiguration(PowerCostConfiguration costConfiguration)
+    public CostBenefitChartViewModel(ISiteViewModel siteViewModel, ISolarViewService solarViewService)
     {
-      _costConfiguration = costConfiguration.WhenNotNull(nameof(costConfiguration));
+      _ = siteViewModel.WhenNotNull(nameof(siteViewModel));
+      _ = solarViewService.WhenNotNull(nameof(solarViewService));
+
+      _siteEnergyCosts = new AsyncLazy<ISiteEnergyCosts>(async () =>
+        await solarViewService.GetEnergyCosts(siteViewModel.CurrentSite.SiteId));
     }
 
-    public IReadOnlyList<PowerCost> CalculateData(IEnumerable<PowerData> powerData, bool isCumulative)
+    public async Task<IReadOnlyList<PowerCost>> CalculateData(IEnumerable<PowerData> powerData, bool isCumulative)
     {
+      var energyCosts = await _siteEnergyCosts;
+
       return isCumulative
-        ? CalculateCumulativeData(powerData)
-        : CalculateNonCumulativeData(powerData);
+        ? CalculateCumulativeData(powerData, energyCosts)
+        : CalculateNonCumulativeData(powerData, energyCosts);
     }
 
-    private IReadOnlyList<PowerCost> CalculateCumulativeData(IEnumerable<PowerData> powerData)
+    private static IReadOnlyList<PowerCost> CalculateCumulativeData(IEnumerable<PowerData> powerData, ISiteEnergyCosts siteEnergyCosts)
     {
-      var lastPowerItem = new PowerData { WattHour = new WattsData() };
+      var lastPowerCost = new PowerCost();
 
       return powerData
         .Select(item =>
         {
-          lastPowerItem.Time = item.Time;
-          lastPowerItem.WattHour = WattsDataHelpers.Aggregate(lastPowerItem.WattHour, item.WattHour);
+          // cost for the current data point
+          var powerCost = new PowerCost(item, siteEnergyCosts);
 
-          return new PowerCost(lastPowerItem, _costConfiguration);
+          // add previous aggregation
+          powerCost.AddCost(lastPowerCost);
+
+          lastPowerCost = powerCost;
+
+          return powerCost;
         })
         .AsReadOnlyList();
     }
 
-    private IReadOnlyList<PowerCost> CalculateNonCumulativeData(IEnumerable<PowerData> powerData)
+    private static IReadOnlyList<PowerCost> CalculateNonCumulativeData(IEnumerable<PowerData> powerData, ISiteEnergyCosts siteEnergyCosts)
     {
      return powerData
-       .Select(item => new PowerCost(item, _costConfiguration))
+       .Select(item => new PowerCost(item, siteEnergyCosts))
        .AsReadOnlyList();
     }
   }

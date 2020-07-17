@@ -5,9 +5,10 @@ namespace SolarView.Client.Common.Models
   public class SiteEnergyCosts : ISiteEnergyCosts
   {
     public string SiteId { get; set; }
-    public double CostPerKWhPeak { get; set; }
-    public double CostPerKWhOffPeak { get; set; }
-    public double SolarBuyBack { get; set; }
+    public double OffPeakRate { get; set; }
+    public double PeakRate { get; set; }
+    public double SupplyCharge { get; set; }
+    public double SolarBuyBackRate { get; set; }
 
     public SiteEnergyCosts()
     {

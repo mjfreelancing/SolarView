@@ -7,6 +7,8 @@ namespace SolarViewBlazor.ViewModels
 {
   public interface ICompareViewModel
   {
+    ISiteDetails CurrentSite { get; }
+
     Task LoadFromCacheAsync();
     Task<bool> AddChartsAsync(DateRange dateRange, IEnumerable<IChartDescriptor> chartDescriptors);
     Task DeleteChartAsync(string chartId);

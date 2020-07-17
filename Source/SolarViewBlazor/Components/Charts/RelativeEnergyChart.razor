@@ -13,7 +13,7 @@
     <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelFormat="{value}"
                        IntervalType="IntervalType.Auto" EdgeLabelPlacement="EdgeLabelPlacement.Shift" />
 
-    @*<ChartPrimaryYAxis LabelFormat="c" />*@
+    <ChartPrimaryYAxis LabelFormat="{value}%" />
 
     <ChartTooltipSettings Enable="true" />
 
@@ -36,7 +36,7 @@
 
   [Parameter] public ChartData ChartData { get; set; }
 
-  private bool _isCumulative = false;
+  private bool _isCumulative = true;
   private IReadOnlyList<RelativeEnergy> _relativeData;
 
   protected override void OnInitialized()

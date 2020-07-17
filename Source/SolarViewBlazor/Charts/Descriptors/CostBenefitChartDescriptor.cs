@@ -7,19 +7,9 @@ namespace SolarViewBlazor.Charts.Descriptors
 {
   public class CostBenefitChartDescriptor : IChartDescriptor
   {
-    // todo: to be injected
-    private const double PurchaseCostPerW = 0.3283379d / 1000.0d;
-    private const double FeedInCostPerW = 0.105d / 1000.0d;
-    private const double FixedCostPerQuarterHour = 1.107513d / 24.0d / 4.0d;
-
     public string Id => nameof(CostBenefitChartDescriptor);
     public string Description => "Cost Benefit";
     public Type ChartType => typeof(CostBenefitChart);
-    public IDictionary<string, object> Parameters { get; } = new Dictionary<string, object>
-    {
-      {nameof(PurchaseCostPerW), PurchaseCostPerW},
-      {nameof(FeedInCostPerW), FeedInCostPerW},
-      {nameof(FixedCostPerQuarterHour), FixedCostPerQuarterHour}
-    };
+    public IDictionary<string, object> Parameters { get; } = new Dictionary<string, object>();
   }
 }

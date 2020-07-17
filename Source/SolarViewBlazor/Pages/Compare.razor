@@ -24,8 +24,8 @@
                 }
               </div>
               <hr />
-              <ChartDateSelector MinDate="@SiteViewModel.CurrentSite.StartDate.ParseSolarDate()"
-                                 MaxDate="@SiteViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
+              <ChartDateSelector MinDate="@CompareViewModel.CurrentSite.StartDate.ParseSolarDate()"
+                                 MaxDate="@CompareViewModel.CurrentSite.LastRefreshDateTime.ParseSolarDateTime().AddDays(-1).Date"
                                  OnApplyDateRange="@(async dateRange => await ApplyDateRange(dateRange))" />
             </ContentTemplate>
           </AccordionItem>
@@ -60,7 +60,6 @@
 </SiteView>
 
 @code {
-  [Inject] private ISiteViewModel SiteViewModel { get; set; }
   [Inject] IEventAggregator EventAggregator { get; set; }
   [Inject] private IChartRegistry ChartRegistry { get; set; }
   [Inject] private ICompareViewModel CompareViewModel { get; set; }
@@ -95,7 +94,7 @@
 
     if (firstRender)
     {
-      if (SiteViewModel.CurrentSite != null)
+      if (CompareViewModel.CurrentSite != null)
       {
         await LoadCharts();
       }
@@ -106,7 +105,7 @@
 
   private async Task HandleSiteChanged(SiteChanged message)
   {
-    if (SiteViewModel.CurrentSite != null)
+    if (CompareViewModel.CurrentSite != null)
     {
       await LoadCharts();
     }

@@ -35,32 +35,19 @@
   [Inject] private ICostBenefitChartViewModel CostBenefitViewModel { get; set; }
 
   [Parameter] public ChartData ChartData { get; set; }
-  [Parameter] public double PurchaseCostPerW { get; set; }
-  [Parameter] public double FeedInCostPerW { get; set; }
-  [Parameter] public double FixedCostPerQuarterHour { get; set; }
 
-  private bool _isCumulative = false;
+  private bool _isCumulative = true;
   private IReadOnlyList<PowerCost> _costData;
 
-  protected override void OnInitialized()
+  protected override async Task OnInitializedAsync()
   {
-    base.OnInitialized();
+    await base.OnInitializedAsync();
 
-    // todo: this could be injected as a singleton
-    var costConfiguration = new PowerCostConfiguration
-    {
-      PurchaseCostPerW = PurchaseCostPerW,
-      FeedInCostPerW = FeedInCostPerW,
-      FixedCostPerQuarterHour = FixedCostPerQuarterHour
-    };
-
-    CostBenefitViewModel.SetCostConfiguration(costConfiguration);
-
-    CalculateChartData();
+    await CalculateChartData();
   }
 
-  private void CalculateChartData()
+  private async Task CalculateChartData()
   {
-    _costData = CostBenefitViewModel.CalculateData(ChartData.Power, _isCumulative);
+    _costData = await CostBenefitViewModel.CalculateData(ChartData.Power, _isCumulative);
   }
 }

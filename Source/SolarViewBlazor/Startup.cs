@@ -84,11 +84,10 @@ namespace SolarViewBlazor
         return registry;
       });
 
-      // there's no state - these only transform / aggregate data for charts
-      services.AddSingleton<IConsumptionChartViewModel, ConsumptionChartViewModel>();
-      services.AddSingleton<ICostBenefitChartViewModel, CostBenefitChartViewModel>();
-      services.AddSingleton<IFeedInChartViewModel, FeedInChartViewModel>();
-      services.AddSingleton<IRelativeEnergyChartViewModel, RelativeEnergyChartViewModel>();
+      services.AddScoped<IConsumptionChartViewModel, ConsumptionChartViewModel>();
+      services.AddScoped<ICostBenefitChartViewModel, CostBenefitChartViewModel>();
+      services.AddScoped<IFeedInChartViewModel, FeedInChartViewModel>();
+      services.AddScoped<IRelativeEnergyChartViewModel, RelativeEnergyChartViewModel>();
 
       services.AddScoped<IChartDataCache, ChartDataCache>();
       services.AddScoped<IEventAggregator, EventAggregator>();

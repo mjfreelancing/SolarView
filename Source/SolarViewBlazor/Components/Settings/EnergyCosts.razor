@@ -1,30 +1,36 @@
 ﻿@using AutoMapper
 <table class="table table-settings">
   <tbody>
-  <tr class="row">
-    <th scope="row" class="col-sm-6 col-md-4">Cost per kWh (Peak)</th>
-    <td class="col-sm-6 col-md-8 numeric-entry">
-      <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.CostPerKWhPeak" Min="0.1" Step="0.01" Format="c8" />
-    </td>
-  </tr>
-  <tr class="row">
-    <th scope="row" class="col-sm-6 col-md-4">Cost per kWh (Off Peak)</th>
-    <td class="col-sm-6 col-md-8 numeric-entry">
-      <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.CostPerKWhOffPeak" Min="0.1" Step="0.01" Format="c8"/>
-    </td>
-  </tr>
-  <tr class="row">
-    <th scope="row" class="col-sm-6 col-md-4">Solar Buy Back</th>
-    <td class="col-sm-6 col-md-8 numeric-entry">
-      <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.SolarBuyBack" Min="0.1" Step="0.01" Format="c8" />
-    </td>
-  </tr>
-  <tr class="row">
-    <td colspan="2" class="col-12">
-      <button class="btn btn-outline-primary btn-width-medium mt-2" disabled="@(!CanUpdate)" @onclick="Update">Update</button>
-      <button class="btn btn-outline-primary btn-width-medium mt-2 ml-2" style="display: @CancelButtonDisplay" @onclick="RestoreEnergyCosts">Cancel</button>
-    </td>
-  </tr>
+    <tr class="row">
+      <th scope="row" class="col-sm-6 col-md-4">Off-Peak Rate (per kWh)</th>
+      <td class="col-sm-6 col-md-8 numeric-entry">
+        <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.OffPeakRate" Min="0.1" Step="0.01" Format="c8" />
+      </td>
+    </tr>
+    <tr class="row">
+      <th scope="row" class="col-sm-6 col-md-4">Peak Rate (per kWh)</th>
+      <td class="col-sm-6 col-md-8 numeric-entry">
+        <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.PeakRate" Min="0.1" Step="0.01" Format="c8" />
+      </td>
+    </tr>
+    <tr class="row">
+      <th scope="row" class="col-sm-6 col-md-4">Supply Charge (per day)</th>
+      <td class="col-sm-6 col-md-8 numeric-entry">
+        <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.SupplyCharge" Min="0.1" Step="0.01" Format="c8" />
+      </td>
+    </tr>
+    <tr class="row">
+      <th scope="row" class="col-sm-6 col-md-4">Buy Back Rate (per kWh)</th>
+      <td class="col-sm-6 col-md-8 numeric-entry">
+        <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.SolarBuyBackRate" Min="0.1" Step="0.01" Format="c8" />
+      </td>
+    </tr>
+    <tr class="row">
+      <td colspan="2" class="col-12">
+        <button class="btn btn-outline-primary btn-width-medium mt-2" disabled="@(!CanUpdate)" @onclick="Update">Update</button>
+        <button class="btn btn-outline-primary btn-width-medium mt-2 ml-2" style="display: @CancelButtonDisplay" @onclick="RestoreEnergyCosts">Cancel</button>
+      </td>
+    </tr>
   </tbody>
 </table>
 

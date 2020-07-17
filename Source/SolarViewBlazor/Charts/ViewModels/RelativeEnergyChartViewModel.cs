@@ -42,6 +42,7 @@ namespace SolarViewBlazor.Charts.ViewModels
 
     private static bool IncludeData(RelativeEnergy item)
     {
+      // excluding the point if everything is zero
       return !item.SelfConsumptionVsProduction.IsZero() ||
              !item.ProductionVsConsumption.IsZero() ||
              !item.SelfConsumptionVsConsumption.IsZero();

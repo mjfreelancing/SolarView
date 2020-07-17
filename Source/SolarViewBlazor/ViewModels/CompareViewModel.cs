@@ -29,6 +29,8 @@ namespace SolarViewBlazor.ViewModels
     // a collection of all charts (key is the chart Id) and their associated descriptor / data
     private IDictionary<string, DescriptorData> _chartDescriptorData = new Dictionary<string, DescriptorData>();
 
+    public ISiteDetails CurrentSite => _siteViewModel.CurrentSite;
+
     public CompareViewModel(ISiteViewModel siteViewModel, ISolarViewService solarViewService, IChartRegistry chartRegistry, IChartDataCache chartDataCache)
     {
       _siteViewModel = siteViewModel.WhenNotNull(nameof(siteViewModel));
