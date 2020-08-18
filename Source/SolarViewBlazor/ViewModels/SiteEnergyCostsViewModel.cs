@@ -1,6 +1,7 @@
 ﻿using AllOverIt.Helpers;
 using SolarView.Client.Common.Services.SolarView;
 using SolarView.Common.Models;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SolarViewBlazor.ViewModels
@@ -14,7 +15,8 @@ namespace SolarViewBlazor.ViewModels
       _solarViewService = solarViewService.WhenNotNull(nameof(solarViewService));
     }
 
-    public Task<ISiteEnergyCosts> GetEnergyCosts(string siteId)
+    // todo: these costs need to be date based
+    public Task<IReadOnlyList<ISiteEnergyCosts>> GetEnergyCosts(string siteId)
     {
       return _solarViewService.GetEnergyCosts(siteId);
     }

@@ -54,7 +54,7 @@ namespace SolarViewFunctions.Repository
       = new Dictionary<RepositoryKey, Func<CloudTable, ISolarViewRepository>>(RepositoryKey.Comparer)
       {
         {new RepositoryKey(Constants.Table.Sites, typeof(ISiteDetailsRepository)), table => new SiteDetailsRepository(table)},
-        {new RepositoryKey(Constants.Table.Sites, typeof(ISiteEnergyCostsRepository)), table => new SiteEnergyCostsRepository(table)},
+        {new RepositoryKey(Constants.Table.EnergyCosts, typeof(ISiteEnergyCostsRepository)), table => new SiteEnergyCostsRepository(table)},
         {new RepositoryKey(Constants.Table.Power, typeof(IPowerRepository)), table => new PowerRepository(table)},
         {new RepositoryKey(Constants.Table.PowerMonthly, typeof(IPowerMonthlyRepository)), table => new PowerMonthlyRepository(table)},
         {new RepositoryKey(Constants.Table.PowerYearly, typeof(IPowerYearlyRepository)), table => new PowerYearlyRepository(table)},

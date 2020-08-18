@@ -1,84 +1,245 @@
-﻿@using AutoMapper
+﻿@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Data
+@*@using AutoMapper*@
 @using SolarView.Client.Common.Services.Site
-<table class="table table-settings">
-  <tbody>
-    <tr class="row">
-      <th scope="row" class="col-sm-6 col-md-4">Off-Peak Rate (per kWh)</th>
-      <td class="col-sm-6 col-md-8 numeric-entry">
-        <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.OffPeakRate" Min="0.1" Step="0.01" Format="c8" />
-      </td>
-    </tr>
-    <tr class="row">
-      <th scope="row" class="col-sm-6 col-md-4">Peak Rate (per kWh)</th>
-      <td class="col-sm-6 col-md-8 numeric-entry">
-        <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.PeakRate" Min="0.1" Step="0.01" Format="c8" />
-      </td>
-    </tr>
-    <tr class="row">
-      <th scope="row" class="col-sm-6 col-md-4">Supply Charge (per day)</th>
-      <td class="col-sm-6 col-md-8 numeric-entry">
-        <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.SupplyCharge" Min="0.1" Step="0.01" Format="c8" />
-      </td>
-    </tr>
-    <tr class="row">
-      <th scope="row" class="col-sm-6 col-md-4">Buy Back Rate (per kWh)</th>
-      <td class="col-sm-6 col-md-8 numeric-entry">
-        <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.SolarBuyBackRate" Min="0.1" Step="0.01" Format="c8" />
-      </td>
-    </tr>
-    <tr class="row">
-      <td colspan="2" class="col-12">
-        <button class="btn btn-outline-primary btn-width-medium mt-2" disabled="@(!CanUpdate)" @onclick="Update">Update</button>
-        <button class="btn btn-outline-primary btn-width-medium mt-2 ml-2" style="display: @CancelButtonDisplay" @onclick="RestoreEnergyCosts">Cancel</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+@using System.ComponentModel.DataAnnotations
 
-<style>
-  .numeric-entry {
-    max-width: 200px
-  }
-</style>
+@*DataSource="@_editedEnergyCosts"*@
+
+<SfGrid TValue="EnergyCostsModel" Toolbar="@_toolbarItems">
+  <SfDataManager AdaptorInstance="@typeof(EnergyCosts.EnergyCostsAdaptor)" Adaptor="Adaptors.CustomAdaptor"></SfDataManager>
+  <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog" />
+  <GridColumns>
+    <GridColumn Field=@nameof(EnergyCostsModel.StartDate) Format="yyyy-MM-dd" IsPrimaryKey="true" EditorSettings="@_dateEditParams" ValidationRules="@_startDateValidation" Width="120" />
+    <GridColumn Field=@nameof(EnergyCostsModel.OffPeakRate) Format="C8" EditorSettings="@_numericEditParams" Width="120" />
+    <GridColumn Field=@nameof(EnergyCostsModel.PeakRate) Format="C8" EditorSettings="@_numericEditParams" Width="120" />
+    <GridColumn Field=@nameof(EnergyCostsModel.SupplyCharge) Format="C8" EditorSettings="@_numericEditParams" Width="120" />
+    <GridColumn Field=@nameof(EnergyCostsModel.SolarBuyBackRate) Format="C8" EditorSettings="@_numericEditParams" Width="120" />
+  </GridColumns>
+</SfGrid>
+
+<div>
+  <button class="btn btn-outline-secondary btn-width-medium mt-4 mr-2" @onclick="RevertEnergyCosts">Revert</button>
+  <button class="btn btn-outline-primary btn-width-medium mt-4" @onclick="UpdateEnergyCosts">Update</button>
+</div>
+
+@*<table class="table table-settings">
+    <tbody>
+      <tr class="row">
+        <th scope="row" class="col-sm-6 col-md-4">Off-Peak Rate (per kWh)</th>
+        <td class="col-sm-6 col-md-8 numeric-entry">
+          <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.OffPeakRate" Min="0.1" Step="0.01" Format="c8" />
+        </td>
+      </tr>
+      <tr class="row">
+        <th scope="row" class="col-sm-6 col-md-4">Peak Rate (per kWh)</th>
+        <td class="col-sm-6 col-md-8 numeric-entry">
+          <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.PeakRate" Min="0.1" Step="0.01" Format="c8" />
+        </td>
+      </tr>
+      <tr class="row">
+        <th scope="row" class="col-sm-6 col-md-4">Supply Charge (per day)</th>
+        <td class="col-sm-6 col-md-8 numeric-entry">
+          <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.SupplyCharge" Min="0.1" Step="0.01" Format="c8" />
+        </td>
+      </tr>
+      <tr class="row">
+        <th scope="row" class="col-sm-6 col-md-4">Buy Back Rate (per kWh)</th>
+        <td class="col-sm-6 col-md-8 numeric-entry">
+          <SfNumericTextBox TValue="double" @bind-Value="@_energyCosts.SolarBuyBackRate" Min="0.1" Step="0.01" Format="c8" />
+        </td>
+      </tr>
+      <tr class="row">
+        <td colspan="2" class="col-12">
+          <button class="btn btn-outline-primary btn-width-medium mt-2" disabled="@(!CanUpdate)" @onclick="Update">Update</button>
+          <button class="btn btn-outline-primary btn-width-medium mt-2 ml-2" style="display: @CancelButtonDisplay" @onclick="RestoreEnergyCosts">Cancel</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <style>
+    .numeric-entry {
+      max-width: 200px
+    }
+  </style>*@
 
 @code {
-  [Inject] ISiteService SiteService { get; set; }
-  [Inject] ISiteEnergyCostsViewModel EnergyCostsViewModel { get; set; }
-  [Inject] IMapper Mapper { get; set; }
+    [Inject] private ISiteService SiteService { get; set; }
+    [Inject] private ISiteEnergyCostsViewModel EnergyCostsViewModel { get; set; }
+    //[Inject] IMapper Mapper { get; set; }
 
-  private ISiteEnergyCosts _originalCosts = new SiteEnergyCosts();  // avoid null reference at creation when comparing hashes
-  private SiteEnergyCosts _energyCosts = new SiteEnergyCosts();     // avoid null reference when rendering at creation
-  private bool CanUpdate => _originalCosts.CalculateHashCode() != _energyCosts.CalculateHashCode();
-  private string CancelButtonDisplay => CanUpdate ? "inline-block" : "none";
+    private readonly string[] _toolbarItems = { "Add", "Edit", "Delete" };    // , "Update", "Cancel"
+                                                                              //private IReadOnlyList<ISiteEnergyCosts> _originalEnergyCosts;
+    private IList<EnergyCostsModel> _editedEnergyCosts = new List<EnergyCostsModel>();
 
-  protected override async Task OnAfterRenderAsync(bool firstRender)
-  {
-    await base.OnAfterRenderAsync(firstRender);
-
-    if (firstRender)
+    private readonly IEditorSettings _dateEditParams = new DateEditCellParams
     {
-      var currentSite = await SiteService.GetCurrentSite();
+      Params = new DatePickerModel
+      {
+        ShowClearButton = false,
+        Format = "yyyy-MM-dd"
+      }
+    };
 
-      _originalCosts = await EnergyCostsViewModel.GetEnergyCosts(currentSite.SiteId);
+    private readonly IEditorSettings _numericEditParams = new NumericEditCellParams
+    {
+      Params = new NumericTextBoxModel<object>
+      {
+        Min = 0,
+        Decimals = 8,
+        ValidateDecimalOnType = true,
+        ShowClearButton = false,
+        ShowSpinButton = false
+      }
+    };
 
-      // will be null if the data has never been created
-      _originalCosts ??= new SiteEnergyCosts(currentSite.SiteId);
+    private readonly ValidationRules _startDateValidation = new ValidationRules { Required = true };
 
-      RestoreEnergyCosts();
-      StateHasChanged();
+    // todo: to be moved
+    public class EnergyCostsModel
+    {
+      [DataType(DataType.Date)]
+      [Required(ErrorMessage = "The start date is required")]
+      [Display(Name = "Start Date")]
+      public DateTime StartDate { get; set; }
+
+      [Display(Name = "Off Peak Rate (per kWh)")]
+      public double? OffPeakRate { get; set; }
+
+      [Display(Name = "Peak Rate (per kWh)")]
+      public double PeakRate { get; set; }
+
+      [Display(Name = "Supply Charge (per day)")]
+      public double SupplyCharge { get; set; }
+
+      [Display(Name = "Solar Buy Back Rate (per kWh)")]
+      public double SolarBuyBackRate { get; set; }
     }
-  }
 
-  private async Task Update()
-  {
-    await EnergyCostsViewModel.UpdateEnergyCosts(_energyCosts);
+    // todo: this can be injected
+    public class EnergyCostsAdaptor : DataAdaptor
+    {
+      private ISiteService SiteService { get; }
+      private ISiteEnergyCostsViewModel EnergyCostsViewModel { get; }
 
-    // if no error, reset the original state
-    _originalCosts = Mapper.Map<SiteEnergyCosts>(_energyCosts);
-  }
+      private ISiteDetails _currentSite;
+      private IList<EnergyCostsModel> _energyCosts;
 
-  private void RestoreEnergyCosts()
-  {
-    _energyCosts = Mapper.Map<SiteEnergyCosts>(_originalCosts);
-  }
+      public EnergyCostsAdaptor(ISiteService siteService, ISiteEnergyCostsViewModel energyCostsViewModel)
+      {
+        SiteService = siteService;
+        EnergyCostsViewModel = energyCostsViewModel;
+      }
+
+      public override async Task<object> ReadAsync(DataManagerRequest dataManagerRequest, string key = null)
+      {
+        await Task.Yield();   // temporary fix
+
+        await CheckIsInitialized();
+
+        return dataManagerRequest.RequiresCounts
+          ? new DataResult { Result = _energyCosts, Count = _energyCosts.Count }
+          : (object)_energyCosts;
+      }
+
+      public override Task<object> InsertAsync(DataManager dataManager, object data, string key)
+      {
+        return Task.FromResult(data);
+      }
+
+      public override Task<object> RemoveAsync(DataManager dataManager, object data, string keyField, string key)
+      {
+        return Task.FromResult(data);
+      }
+
+      public override Task<object> UpdateAsync(DataManager dataManager, object data, string keyField, string key)
+      {
+        return Task.FromResult(data);
+      }
+
+      private async Task CheckIsInitialized()
+      {
+        if (_energyCosts == null)
+        {
+          _currentSite ??= await SiteService.GetCurrentSite();
+
+          var energyCosts = await EnergyCostsViewModel.GetEnergyCosts(_currentSite.SiteId);
+
+          _energyCosts = energyCosts.Select(cost =>
+            new EnergyCostsModel
+            {
+              StartDate = DateTime.ParseExact(cost.StartDate, "yyyyMMdd", null),
+              OffPeakRate = cost.OffPeakRate,
+              PeakRate = cost.PeakRate,
+              SupplyCharge = cost.SupplyCharge,
+              SolarBuyBackRate = cost.SolarBuyBackRate
+            }).ToList();
+        }
+      }
+    }
+
+    //private ISiteEnergyCosts _originalCosts = new SiteEnergyCosts();  // avoid null reference at creation when comparing hashes
+    //private SiteEnergyCosts _energyCosts = new SiteEnergyCosts();     // avoid null reference when rendering at creation
+    //private bool CanUpdate => _originalCosts.CalculateHashCode() != _energyCosts.CalculateHashCode();
+    //private string CancelButtonDisplay => CanUpdate ? "inline-block" : "none";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+      await base.OnAfterRenderAsync(firstRender);
+
+      if (firstRender)
+      {
+        //await RevertEnergyCosts();
+
+
+
+
+        //_originalCosts = _editedEnergyCosts.Last();
+
+        //// will be null if the data has never been created
+        //_originalCosts ??= new SiteEnergyCosts(currentSite.SiteId);
+
+        //RestoreEnergyCosts();
+        StateHasChanged();
+      }
+    }
+
+    //private async Task Update()
+    //{
+    //  await EnergyCostsViewModel.UpdateEnergyCosts(_energyCosts);
+
+    //  // if no error, reset the original state
+    //  _originalCosts = Mapper.Map<SiteEnergyCosts>(_energyCosts);
+    //}
+
+    //private void RestoreEnergyCosts()
+    //{
+    //  _energyCosts = Mapper.Map<SiteEnergyCosts>(_originalCosts);
+    //}
+
+    private async Task RevertEnergyCosts()
+    {
+      // todo: use a custom model for the grid (so mapping will still be required)
+      // This will allow a date time column to be used in the grid, with conversion to-from the SiteEnergyCosts
+      //
+      var currentSite = await SiteService.GetCurrentSite();
+      var originalEnergyCosts = await EnergyCostsViewModel.GetEnergyCosts(currentSite.SiteId);
+
+      // todo: mapping to be added
+      _editedEnergyCosts = originalEnergyCosts.Select(cost =>
+        new EnergyCostsModel
+        {
+          StartDate = DateTime.ParseExact(cost.StartDate, "yyyy-MM-dd", null),
+          OffPeakRate = cost.OffPeakRate,
+          PeakRate = cost.PeakRate,
+          SupplyCharge = cost.SupplyCharge,
+          SolarBuyBackRate = cost.SolarBuyBackRate
+        }).ToList();
+    }
+
+    private Task UpdateEnergyCosts()
+    {
+      return Task.CompletedTask;
+    }
 }

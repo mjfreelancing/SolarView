@@ -198,8 +198,7 @@ namespace SolarViewBlazor.ViewModels
 
       // check if we already have the required data
       var cachedPowerDataItems = _chartPowerData
-        .Where(kvp => kvp.Value.StartDate == startDate &&
-                      kvp.Value.EndDate == endDate)
+        .Where(kvp => kvp.Value.StartDate == startDate && kvp.Value.EndDate == endDate)
         .ToList();
 
       string chartDataId;

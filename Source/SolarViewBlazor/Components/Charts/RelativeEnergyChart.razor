@@ -18,6 +18,7 @@
     <ChartTooltipSettings Enable="true" />
 
     <ChartSeriesCollection>
+
       <ChartSeries DataSource=@_relativeData Name="Production vs Consumption" Type="ChartSeriesType.Line" Width="2" Fill="#640000"
                    XName=@nameof(RelativeEnergy.Time) YName=@nameof(RelativeEnergy.ProductionVsConsumption) />
 
@@ -26,6 +27,7 @@
 
       <ChartSeries DataSource=@_relativeData Name="Self Consumption vs Consumption" Type="ChartSeriesType.Line" Width="2" Fill="#ff6400"
                    XName=@nameof(RelativeEnergy.Time) YName=@nameof(RelativeEnergy.SelfConsumptionVsConsumption) />
+
     </ChartSeriesCollection>
     <ChartLegendSettings Visible="true" />
   </SfChart>

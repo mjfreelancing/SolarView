@@ -56,8 +56,9 @@ namespace SolarViewFunctions.Mapping
         .ForMember(dest => dest.ETag, opt => opt.Ignore())
         .AfterMap((src, dest) =>
         {
-          dest.PartitionKey = $"{Constants.Table.SiteEnergyCostsPartitionKey}";
-          dest.RowKey = $"{src.SiteId}";
+          // better to do this in the repository - doesn't belong in a mapper !
+          dest.PartitionKey = $"{src.SiteId}";
+          dest.RowKey = src.StartDate;    // $"{DateTime.ParseExact(src.StartDate, "yyyy-MM-dd", null)}";
         });
 
       CreateMap<AggregatePowerRequest, SiteRefreshAggregationRequest>()

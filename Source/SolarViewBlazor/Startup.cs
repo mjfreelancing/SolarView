@@ -16,6 +16,7 @@ using SolarViewBlazor.Cache;
 using SolarViewBlazor.Charts;
 using SolarViewBlazor.Charts.Descriptors;
 using SolarViewBlazor.Charts.ViewModels;
+using SolarViewBlazor.Components.Settings;
 using SolarViewBlazor.Configuration;
 using SolarViewBlazor.Events;
 using SolarViewBlazor.Services;
@@ -95,6 +96,8 @@ namespace SolarViewBlazor
       services.AddScoped<ISiteViewModel, SiteViewModel>();
       services.AddScoped<ISiteEnergyCostsViewModel, SiteEnergyCostsViewModel>();
       services.AddScoped<ICompareViewModel, CompareViewModel>();
+
+      services.AddScoped<EnergyCosts.EnergyCostsAdaptor>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

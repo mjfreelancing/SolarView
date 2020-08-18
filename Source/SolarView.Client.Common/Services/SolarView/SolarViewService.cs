@@ -51,7 +51,7 @@ namespace SolarView.Client.Common.Services.SolarView
       }
     }
 
-    public async Task<ISiteEnergyCosts> GetEnergyCosts(string siteId)
+    public async Task<IReadOnlyList<ISiteEnergyCosts>> GetEnergyCosts(string siteId)
     {
       var url = new Url(_functionsUrl)
         .AppendPathSegments("site", siteId, "energyCosts")
@@ -63,7 +63,7 @@ namespace SolarView.Client.Common.Services.SolarView
 
       try
       {
-        return await url.GetJsonAsync<SiteEnergyCosts>();
+        return await url.GetJsonAsync<IReadOnlyList<SiteEnergyCosts>>();
       }
       catch (FlurlHttpException exception)
       {
@@ -76,7 +76,7 @@ namespace SolarView.Client.Common.Services.SolarView
       }
     }
 
-    public async Task<IEnumerable<PowerData>> GetPowerData(string siteId, DateTime startDate, DateTime endDate)
+    public async Task<IReadOnlyList<PowerData>> GetPowerData(string siteId, DateTime startDate, DateTime endDate)
     {
       var requests =
         from meterType in EnumHelper.GetEnumValues<MeterType>()

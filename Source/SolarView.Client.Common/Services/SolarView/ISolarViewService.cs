@@ -10,8 +10,8 @@ namespace SolarView.Client.Common.Services.SolarView
   public interface ISolarViewService
   {
     Task<ISiteDetails> GetSiteDetails(string siteId);
-    Task<ISiteEnergyCosts> GetEnergyCosts(string siteId);
-    Task<IEnumerable<PowerData>> GetPowerData(string siteId, DateTime startDate, DateTime endDate);
+    Task<IReadOnlyList<ISiteEnergyCosts>> GetEnergyCosts(string siteId);
+    Task<IReadOnlyList<PowerData>> GetPowerData(string siteId, DateTime startDate, DateTime endDate);
     Task UpsertEnergyCosts(ISiteEnergyCosts energyCosts);
   }
 }

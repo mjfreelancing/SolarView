@@ -11,6 +11,7 @@ using SolarViewFunctions.Repository;
 using SolarViewFunctions.Repository.Site;
 using SolarViewFunctions.Tracking;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Functions
@@ -30,14 +31,14 @@ namespace SolarViewFunctions.Functions
     [FunctionName(nameof(TriggerGetSiteEnergyCosts))]
     public async Task<IActionResult> Run(
       [HttpTrigger(AuthorizationLevel.Function, "get", Route = "site/{siteId}/energyCosts")] HttpRequest request, string siteId,
-      [Table(Constants.Table.Sites, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable sitesTable)
+      [Table(Constants.Table.EnergyCosts, Connection = Constants.ConnectionStringNames.SolarViewStorage)] CloudTable energyCostsTable)
     {
       Tracker.AppendDefaultProperties(new { SiteId = siteId });
       Tracker.TrackEvent(nameof(TriggerGetSiteEnergyCosts));
 
       try
       {
-        var sitesRepository = _repositoryFactory.Create<ISiteEnergyCostsRepository>(sitesTable);
+        var sitesRepository = _repositoryFactory.Create<ISiteEnergyCostsRepository>(energyCostsTable);
 
         var energyCostsEntity = await sitesRepository.GetEnergyCosts(siteId).ConfigureAwait(false);
 
@@ -46,7 +47,7 @@ namespace SolarViewFunctions.Functions
           return new NotFoundResult();
         }
 
-        var siteInfo = _mapper.Map<SiteEnergyCostsResponse>(energyCostsEntity);
+        var siteInfo = _mapper.Map<IEnumerable<SiteEnergyCostsResponse>>(energyCostsEntity);
 
         return new OkObjectResult(siteInfo);
       }

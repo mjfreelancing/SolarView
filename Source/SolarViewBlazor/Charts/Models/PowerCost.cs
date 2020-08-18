@@ -10,6 +10,7 @@ namespace SolarViewBlazor.Charts.Models
     // hard-coded for now
     private const string PeakStartTime = "07:00";
     private const string PeakEndTime = "22:00";
+    private bool UseOffPeakRate = false;
 
     public string Time { get; }
     public double WithSolarCost { get; private set; }
@@ -26,15 +27,18 @@ namespace SolarViewBlazor.Charts.Models
 
       var supplyChargePerQuarterHour = siteEnergyCosts.SupplyCharge / 24.0d / 4.0d;
 
-      var isPeakRate = string.Compare(Time, PeakStartTime, StringComparison.Ordinal) >= 0 &&
-                       string.Compare(Time, PeakEndTime, StringComparison.Ordinal) <= 0;
+      // off-peak is such a small component and difficult to quantify - hence it is optional
+      // (could always fudge the rate by applying, for example, 90% peak rate + 10% off-peak rate)
+      var usePeakRate = !UseOffPeakRate ||
+                        string.Compare(Time, PeakStartTime, StringComparison.Ordinal) >= 0 &&
+                        string.Compare(Time, PeakEndTime, StringComparison.Ordinal) <= 0;
 
-      var peakRatePerWh = (isPeakRate ? siteEnergyCosts.PeakRate : siteEnergyCosts.OffPeakRate) / 1000.0d;
+      var ratePerWh = (usePeakRate ? siteEnergyCosts.PeakRate : siteEnergyCosts.OffPeakRate) / 1000.0d;
 
       var buyBackPerWh = siteEnergyCosts.SolarBuyBackRate / 1000.0d;
 
-      WithSolarCost = supplyChargePerQuarterHour + (powerData.WattHour.Purchased * peakRatePerWh - powerData.WattHour.FeedIn * buyBackPerWh);
-      WithoutSolarCost = supplyChargePerQuarterHour + (powerData.WattHour.Purchased + powerData.WattHour.SelfConsumption) * peakRatePerWh;
+      WithSolarCost = supplyChargePerQuarterHour + (powerData.WattHour.Purchased * ratePerWh - powerData.WattHour.FeedIn * buyBackPerWh);
+      WithoutSolarCost = supplyChargePerQuarterHour + (powerData.WattHour.Purchased + powerData.WattHour.SelfConsumption) * ratePerWh;
       Saving = WithoutSolarCost - WithSolarCost;
     }
 

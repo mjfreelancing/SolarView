@@ -7,7 +7,7 @@
   <ItemGroup>
     <PackageReference Include="AllOverIt" Version="1.0.0" />
     <PackageReference Include="AutoMapper" Version="10.0.0" />
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.0.1" />
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.0.0" />
     <PackageReference Include="FluentValidation" Version="9.0.1" />
     <PackageReference Include="HtmlBuilders" Version="6.0.0" />

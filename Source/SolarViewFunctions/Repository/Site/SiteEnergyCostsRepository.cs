@@ -1,6 +1,8 @@
-using System.Threading.Tasks;
+using AllOverIt.Extensions;
 using Microsoft.Azure.Cosmos.Table;
 using SolarViewFunctions.Entities;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SolarViewFunctions.Repository.Site
 {
@@ -11,9 +13,11 @@ namespace SolarViewFunctions.Repository.Site
     {
     }
 
-    public Task<SiteEnergyCostsEntity> GetEnergyCosts(string siteId)
+    public async Task<IReadOnlyList<SiteEnergyCostsEntity>> GetEnergyCosts(string siteId)
     {
-      return GetAsync(Constants.Table.SiteEnergyCostsPartitionKey, siteId);
+      var energyCosts = await GetAllAsync(siteId);
+
+      return energyCosts.AsReadOnlyList();
     }
 
     public Task<TableResult> UpsertAsync(SiteEnergyCostsEntity entity)

@@ -48,6 +48,6 @@
 
   private async Task CalculateChartData()
   {
-    _costData = await CostBenefitViewModel.CalculateData(ChartData.Power, _isCumulative);
+    _costData = await CostBenefitViewModel.CalculateData(ChartData.Power, ChartData.StartDate, ChartData.EndDate, _isCumulative);
   }
 }
