@@ -1,8 +1,8 @@
-﻿using AllOverIt.Helpers;
+﻿using AllOverIt.Events;
+using AllOverIt.Helpers;
 using SolarView.Client.Common.Services.Site;
 using SolarView.Client.Common.Services.SolarView;
 using SolarView.Common.Models;
-using SolarViewBlazor.Events;
 using SolarViewBlazor.Messaging;
 using System;
 using System.Threading.Tasks;

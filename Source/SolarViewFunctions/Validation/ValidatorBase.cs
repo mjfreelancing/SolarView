@@ -137,7 +137,7 @@ namespace SolarViewFunctions.Validation
           var value1 = expression1.Compile().Invoke(model);
           var value2 = expression2.Compile().Invoke(model);
 
-          return ValidationHelpers.TryGetDateValue(value1, format, out var _) && 
+          return ValidationHelpers.TryGetDateValue(value1, format, out var _) &&
                  ValidationHelpers.TryGetDateValue(value2, format, out var _);
         })
         .WithName(ValidationHelpers.GetPropertyName(expression1))

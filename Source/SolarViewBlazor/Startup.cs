@@ -1,3 +1,4 @@
+using AllOverIt.Events;
 using AutoMapper;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Authentication;
@@ -18,7 +19,6 @@ using SolarViewBlazor.Charts.Descriptors;
 using SolarViewBlazor.Charts.ViewModels;
 using SolarViewBlazor.Components.Settings;
 using SolarViewBlazor.Configuration;
-using SolarViewBlazor.Events;
 using SolarViewBlazor.Services;
 using SolarViewBlazor.ViewModels;
 using Syncfusion.Blazor;

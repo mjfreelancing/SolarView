@@ -5,7 +5,7 @@
     <UserSecretsId>4bb7bcf4-73b5-4b20-8178-b767553593aa</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AllOverIt" Version="1.0.0" />
+    <PackageReference Include="AllOverIt" Version="1.1.0" />
     <PackageReference Include="AutoMapper" Version="10.0.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.0.1" />
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.0.0" />
