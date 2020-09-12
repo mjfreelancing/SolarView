@@ -109,6 +109,7 @@ namespace SolarViewFunctions.Functions
         if (!hydrateRequest?.SiteId.IsNullOrEmpty() ?? false)
         {
           await exceptionDocuments.AddNotificationAsync<TriggerManualHydratePower>(hydrateRequest.SiteId, exception, notification).ConfigureAwait(false);
+          await exceptionDocuments.FlushAsync().ConfigureAwait(false);
         }
 
         return new InternalServerErrorResponse(exception);

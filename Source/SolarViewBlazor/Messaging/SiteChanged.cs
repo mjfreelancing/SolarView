@@ -2,7 +2,7 @@
 
 namespace SolarViewBlazor.Messaging
 {
-  public class SiteChanged 
+  public sealed class SiteChanged 
   {
     public ISiteDetails SiteDetails { get; }
 

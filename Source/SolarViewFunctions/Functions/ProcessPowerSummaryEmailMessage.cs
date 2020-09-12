@@ -74,7 +74,7 @@ namespace SolarViewFunctions.Functions
         await sendGridCollector.FlushAsync().ConfigureAwait(false);
 
         // update the sites table to indicate when the last summary email was sent
-        var updateProperties = new Dictionary<string, object> {{nameof(ISiteDetails.LastSummaryDate), request.EndDate}};
+        var updateProperties = new Dictionary<string, object> { { nameof(ISiteDetails.LastSummaryDate), request.EndDate } };
         await _sitesUpdateProvider.UpdateSiteAttributeAsync(sitesTable, siteInfo.SiteId, updateProperties);
       }
       catch (Exception exception)
@@ -91,7 +91,7 @@ namespace SolarViewFunctions.Functions
         if (!request?.SiteId.IsNullOrEmpty() ?? false)
         {
           await exceptionDocuments.AddNotificationAsync<ProcessPowerSummaryEmailMessage>(request.SiteId, exception, notification).ConfigureAwait(false);
-          await sendGridCollector.FlushAsync().ConfigureAwait(false);
+          await exceptionDocuments.FlushAsync().ConfigureAwait(false);
         }
       }
     }

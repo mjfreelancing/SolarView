@@ -98,6 +98,7 @@ namespace SolarViewFunctions.Functions
         Tracker.TrackException(exception, notification);
 
         await exceptionDocuments.AddNotificationAsync<TriggerManualHydratePower>(siteId, exception, notification).ConfigureAwait(false);
+        await exceptionDocuments.FlushAsync().ConfigureAwait(false);
 
         return new InternalServerErrorResponse(exception);
       }
