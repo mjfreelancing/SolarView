@@ -1,9 +1,6 @@
-﻿<h5><em>Loading...</em></h5>
+﻿@using Syncfusion.Blazor.Spinner
 
-@*@using Syncfusion.Blazor.Spinner
-
-<div id="container"></div>
-<SfSpinner CssClass="e-customClass" @ref="SpinnerObj" Target="#container" Label="Loading...." />
+<SfSpinner CssClass="e-customClass" @ref="SpinnerObj" Label="Loading...." />
 
 @code {
   private SfSpinner SpinnerObj;
@@ -14,7 +11,7 @@
 
     if (firstRender)
     {
-      SpinnerObj.ShowSpinner("#container");
+      await SpinnerObj.Show();   //.ShowSpinner("#container");
     }
   }
-}*@
+}

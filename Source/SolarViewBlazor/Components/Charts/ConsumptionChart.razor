@@ -7,7 +7,7 @@
     <SfDropDownList TValue="PowerUnit" TItem="DisplayPowerUnit" Placeholder="Units" PopupHeight="100" Value="@_powerUnit"
                     DataSource="@_displayPowerUnits">
       <DropDownListFieldSettings Value="@nameof(DisplayPowerUnit.Id)" Text="@nameof(DisplayPowerUnit.Text)" />
-      <DropDownListEvents TValue="PowerUnit" ValueChange="OnUnitChange" />
+      <DropDownListEvents TValue="PowerUnit" TItem="DisplayPowerUnit" ValueChange="@OnUnitChange" />
     </SfDropDownList>
   </div>
 </div>
@@ -67,9 +67,10 @@
     _timeWatts = ConsumptionViewModel.CalculateData(ChartData.Power, _powerUnit, _isCumulative);
   }
 
-  private void OnUnitChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<PowerUnit> args)
+  private void OnUnitChange(ChangeEventArgs<PowerUnit, DisplayPowerUnit> args)
   {
     _powerUnit = args.Value;
     CalculateChartData();
   }
+
 }
