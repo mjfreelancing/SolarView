@@ -22,7 +22,7 @@
             <AccordionItem Expanded="@expanded">
               <HeaderTemplate>@title</HeaderTemplate>
               <ContentTemplate>
-                <DynamicComponent CssClass="content border border-primary settings-card" ComponentType="@fragmentType"/>
+                <DynamicComponent CssClass="content border border-primary settings-card" ComponentType="@fragmentType" />
               </ContentTemplate>
             </AccordionItem>
           }
@@ -50,9 +50,15 @@
     {"Energy Costs", typeof(EnergyCosts)}
   };
 
+  private bool _disposed;
+
   public void Dispose()
   {
-    EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+    if (!_disposed)
+    {
+      EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+      _disposed = true;
+    }
   }
 
   protected override void OnInitialized()

@@ -70,26 +70,20 @@
   // a list of possible charts the user can select
   private IReadOnlyList<ChartSelection> _chartSelection;
   private ISiteDetails _currentSite;
+  private bool _disposed;
 
   public void Dispose()
   {
-    EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+    if (!_disposed)
+    {
+      EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+      _disposed = true;
+    }
   }
 
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
-
-    //_currentSite = await SiteService.GetCurrentSite();
-
-    //_chartSelection = ChartRegistry.ChartDescriptors
-    //.Select(descriptor => new ChartSelection
-    //{
-    //  Selected = true,
-    //  ChartDescriptor = descriptor
-    //})
-    //.OrderBy(item => item.ChartDescriptor.Description)
-    //.ToList();
 
     EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
   }

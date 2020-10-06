@@ -1,12 +1,12 @@
 ﻿@using AllOverIt.Events
 @implements IDisposable
 
-  <div class="top-row pl-4 navbar navbar-dark">
-    <button class="navbar-toggler" @onclick="ToggleNavMenu">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <a class="navbar-brand" href="">SolarView</a>
-  </div>
+<div class="top-row pl-4 navbar navbar-dark">
+  <button class="navbar-toggler" @onclick="ToggleNavMenu">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <a class="navbar-brand" href="">SolarView</a>
+</div>
 
 <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
   <ul class="nav flex-column">
@@ -41,12 +41,17 @@
   [Inject] IEventAggregator EventAggregator { get; set; }
 
   private ISiteDetails _currentSite;
+  private bool _disposed;
   private bool _collapseNavMenu = true;
   private string NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
 
   public void Dispose()
   {
-    EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+    if (!_disposed)
+    {
+      EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+      _disposed = true;
+    }
   }
 
   protected override void OnInitialized()

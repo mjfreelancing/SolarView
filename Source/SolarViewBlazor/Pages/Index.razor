@@ -10,7 +10,7 @@
     <!--  prevent flickering if coming back to this page after the data has been loaded for the session -->
     @if (SiteViewModel.CurrentSite == null)
     {
-      <LoadingView/>
+      <LoadingView />
     }
   </Loading>
   <SiteNotAvailable>
@@ -51,7 +51,7 @@
     <Content>Details for the requested Site could not be found</Content>
   </DialogTemplates>
   <DialogButtons>
-    <DialogButton Content="OK" IsPrimary="true" OnClick="() => _showUnknownSiteDialog = false"/>
+    <DialogButton Content="OK" IsPrimary="true" OnClick="() => _showUnknownSiteDialog = false" />
   </DialogButtons>
 </SfDialog>
 
@@ -61,11 +61,16 @@
 
   private bool _showUnknownSiteDialog;
   private string _siteId;
+  private bool _disposed;
   private ISiteDetails CurrentSite => SiteViewModel.CurrentSite;
 
   public void Dispose()
   {
-    EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+    if (!_disposed)
+    {
+      EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+      _disposed = true;
+    }
   }
 
   protected override void OnInitialized()
