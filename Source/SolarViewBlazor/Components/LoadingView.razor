@@ -1,17 +1,14 @@
 ﻿@using Syncfusion.Blazor.Spinner
 
-<SfSpinner CssClass="e-customClass" @ref="SpinnerObj" Label="Loading...." />
+<SfSpinner CssClass="e-customClass" Label="Loading..." @bind-Visible="@SpinnerVisible">
+  <SpinnerEvents Created="OnSpinnerCreated"></SpinnerEvents> 
+</SfSpinner>
 
 @code {
-  private SfSpinner SpinnerObj;
+  private bool SpinnerVisible { get; set; }
 
-  protected override async Task OnAfterRenderAsync(bool firstRender)
+  private void OnSpinnerCreated()
   {
-    await base.OnAfterRenderAsync(firstRender);
-
-    if (firstRender)
-    {
-      await SpinnerObj.Show();   //.ShowSpinner("#container");
-    }
+    SpinnerVisible = true;
   }
 }
