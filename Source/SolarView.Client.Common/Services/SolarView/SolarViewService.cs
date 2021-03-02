@@ -42,7 +42,7 @@ namespace SolarView.Client.Common.Services.SolarView
       {
         // unknown site Id will cause a Forbidden status code - not handling that at this time
 
-        if (exception.Call.HttpStatus.HasValue && exception.Call.HttpStatus == HttpStatusCode.NotFound)
+        if (exception.Call.Response.StatusCode == (int)HttpStatusCode.NotFound)
         {
           return null;
         }
@@ -67,7 +67,7 @@ namespace SolarView.Client.Common.Services.SolarView
       }
       catch (FlurlHttpException exception)
       {
-        if (exception.Call.HttpStatus.HasValue && exception.Call.HttpStatus == HttpStatusCode.NotFound)
+        if (exception.Call.Response.StatusCode == (int)HttpStatusCode.NotFound)
         {
           return null;
         }

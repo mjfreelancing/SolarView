@@ -23,10 +23,11 @@
     </Loading>
     <Loaded>
       <div class="p-0 mt-2 chart-date-range-picker" style="display: @_dateRangePickerDisplay">
-        <SfDateRangePicker Min="@MinDate" Max="@MaxDate" Format="yyyy-MM-dd"
+        <SfDateRangePicker TValue="DateTime?" Min="@MinDate" Max="@MaxDate" Format="yyyy-MM-dd"
                            @bind-StartDate="@_startDate" @bind-EndDate="@_endDate"
-                           StrictMode="true" Placeholder="Add a new range"
-                           ValueChanged="ApplyCustomDateRange" />
+                           StrictMode="true" Placeholder="Add a new range">
+          <DateRangePickerEvents TValue="DateTime?" ValueChange="ApplyCustomDateRange"></DateRangePickerEvents>
+        </SfDateRangePicker>
 
 
       </div>
@@ -130,7 +131,7 @@
     };
   }
 
-  private async Task ApplyCustomDateRange()
+  private async Task ApplyCustomDateRange(RangePickerEventArgs<DateTime?> args)
   {
     if (!_startDate.HasValue || !_endDate.HasValue)
     {

@@ -2,23 +2,23 @@
 {
   var chartId = chartParameters.ChartData.Id;
 
-  <div @key="chartId">
-    <SfAccordion>
-      <AccordionItems>
-        <AccordionItem CssClass="chart-accordion-item" Expanded="true">
-          <HeaderTemplate>
-            <div class="col col-12 d-flex">
-              <span>@($"{chartParameters.ChartData.StartDate:yyyy-MM-dd}") - @($"{chartParameters.ChartData.EndDate:yyyy-MM-dd}")</span>
-              <span class="oi oi-delete m-0 mt-1 ml-auto mr-4" @onclick="@(async () => await DeleteChart(chartId))" />
-            </div>
-          </HeaderTemplate>
-          <ContentTemplate>
+<div @key="chartId">
+  <SfAccordion>
+    <AccordionItems>
+      <AccordionItem CssClass="chart-accordion-item" Expanded="true">
+        <HeaderTemplate>
+          <div class="col col-12 d-flex">
+            <span>@($"{chartParameters.ChartData.StartDate:yyyy-MM-dd}") - @($"{chartParameters.ChartData.EndDate:yyyy-MM-dd}")</span>
+            <span class="oi oi-delete m-0 mt-1 ml-auto mr-4" @onclick="@(async () => await DeleteChart(chartId))"></span>
+          </div>
+        </HeaderTemplate>
+        @*<ContentTemplate>
             <DynamicComponent ComponentType="@ChartDescriptor.ChartType" Parameters="@(chartParameters.Parameters)" />
-          </ContentTemplate>
-        </AccordionItem>
-      </AccordionItems>
-    </SfAccordion>
-  </div>
+          </ContentTemplate>*@
+      </AccordionItem>
+    </AccordionItems>
+  </SfAccordion>
+</div>
 }
 
 <style>
