@@ -22,21 +22,21 @@ namespace SolarViewBlazor.Cache
 
     public async Task ClearAsync(string siteId)
     {
-      await RemoveAllPowerData(siteId).ConfigureAwait(false);
-      await RemoveAllDescriptorData(siteId).ConfigureAwait(false);
-      await _localStorage.ClearAsync().ConfigureAwait(false);
+      await RemoveAllPowerData(siteId);
+      await RemoveAllDescriptorData(siteId);
+      await _localStorage.ClearAsync();
     }
 
     public async Task<IDictionary<string, ChartPowerData>> GetPowerDataAsync(string siteId)
     {
-      var dataIds = await GetDataIds(siteId).ConfigureAwait(false);
+      var dataIds = await GetDataIds(siteId);
 
       var powerData = new Dictionary<string, ChartPowerData>();
 
       foreach (var dataId in dataIds)
       {
         var dataIndexKey = GetDataIndexKey(siteId, dataId);
-        var chartPowerData = await _localStorage.GetItemAsync<ChartPowerData>(dataIndexKey).ConfigureAwait(false);
+        var chartPowerData = await _localStorage.GetItemAsync<ChartPowerData>(dataIndexKey);
 
         powerData.Add(dataId, chartPowerData);
       }
@@ -44,42 +44,42 @@ namespace SolarViewBlazor.Cache
       return powerData;
     }
 
-    public async Task AddPowerData(string siteId, string dataId, ChartPowerData powerData)
+    public async Task AddPowerDataAsync(string siteId, string dataId, ChartPowerData powerData)
     {
       // update the individual power data
       var dataIndexKey = GetDataIndexKey(siteId, dataId);
-      await _localStorage.SetItemAsync(dataIndexKey, powerData).ConfigureAwait(false);
+      await _localStorage.SetItemAsync(dataIndexKey, powerData);
 
       // update the list of data Ids
-      var dataIds = await GetDataIds(siteId).ConfigureAwait(false);
+      var dataIds = await GetDataIds(siteId);
       dataIds.Add(dataId);
 
       dataIndexKey = GetDataIndexKey(siteId);
-      await _localStorage.SetItemAsync(dataIndexKey, dataIds).ConfigureAwait(false);
+      await _localStorage.SetItemAsync(dataIndexKey, dataIds);
     }
 
-    public async Task RemovePowerData(string siteId, string dataId)
+    public async Task RemovePowerDataAsync(string siteId, string dataId)
     {
       var dataIndexKey = GetDataIndexKey(siteId, dataId);
-      await _localStorage.RemoveItemAsync(dataIndexKey).ConfigureAwait(false);
+      await _localStorage.RemoveItemAsync(dataIndexKey);
 
-      var dataIds = await GetDataIds(siteId).ConfigureAwait(false);
+      var dataIds = await GetDataIds(siteId);
       dataIds.Remove(dataId);
 
       dataIndexKey = GetDataIndexKey(siteId);
-      await _localStorage.SetItemAsync(dataIndexKey, dataIds).ConfigureAwait(false);
+      await _localStorage.SetItemAsync(dataIndexKey, dataIds);
     }
 
     public async Task<IDictionary<string, DescriptorData>> GetChartDescriptorDataAsync(string siteId)
     {
-      var chartIds = await GetChartIds(siteId).ConfigureAwait(false);
+      var chartIds = await GetChartIds(siteId);
 
       var descriptorData = new Dictionary<string, DescriptorData>();
 
       foreach (var chartId in chartIds)
       {
         var chartIndexKey = GetChartIndexKey(siteId, chartId);
-        var chartDescriptor = await _localStorage.GetItemAsync<DescriptorData>(chartIndexKey).ConfigureAwait(false);
+        var chartDescriptor = await _localStorage.GetItemAsync<DescriptorData>(chartIndexKey);
 
         descriptorData.Add(chartId, chartDescriptor);
       }
@@ -87,30 +87,30 @@ namespace SolarViewBlazor.Cache
       return descriptorData;
     }
 
-    public async Task AddChartDescriptorData(string siteId, string chartId, DescriptorData descriptorData)
+    public async Task AddChartDescriptorDataAsync(string siteId, string chartId, DescriptorData descriptorData)
     {
       // update the individual descriptor data
       var chartIndexKey = GetChartIndexKey(siteId, chartId);
-      await _localStorage.SetItemAsync(chartIndexKey, descriptorData).ConfigureAwait(false);
+      await _localStorage.SetItemAsync(chartIndexKey, descriptorData);
 
       // update the list of chart Ids
-      var chartIds = await GetChartIds(siteId).ConfigureAwait(false);
+      var chartIds = await GetChartIds(siteId);
       chartIds.Add(chartId);
 
       chartIndexKey = GetChartIndexKey(siteId);
-      await _localStorage.SetItemAsync(chartIndexKey, chartIds).ConfigureAwait(false);
+      await _localStorage.SetItemAsync(chartIndexKey, chartIds);
     }
 
-    public async Task RemoveChartDescriptorData(string siteId, string chartId)
+    public async Task RemoveChartDescriptorDataAsync(string siteId, string chartId)
     {
       var chartIndexKey = GetChartIndexKey(siteId, chartId);
-      await _localStorage.RemoveItemAsync(chartIndexKey).ConfigureAwait(false);
+      await _localStorage.RemoveItemAsync(chartIndexKey);
 
-      var chartIds = await GetChartIds(siteId).ConfigureAwait(false);
+      var chartIds = await GetChartIds(siteId);
       chartIds.Remove(chartId);
 
       chartIndexKey = GetChartIndexKey(siteId);
-      await _localStorage.SetItemAsync(chartIndexKey, chartIds).ConfigureAwait(false);
+      await _localStorage.SetItemAsync(chartIndexKey, chartIds);
     }
 
     private static string GetDataIndexKey(string siteId)
@@ -129,14 +129,14 @@ namespace SolarViewBlazor.Cache
     {
       var dataIndexKey = GetDataIndexKey(siteId);
 
-      if (!await _localStorage.ContainKeyAsync(dataIndexKey).ConfigureAwait(false))
+      if (!await _localStorage.ContainKeyAsync(dataIndexKey))
       {
         // can't send back a static list because the caller might add to it, resulting in it no
         // longer being empty for the next time it is required
         return new List<string>();
       }
 
-      _dataIds ??= await _localStorage.GetItemAsync<IList<string>>(dataIndexKey).ConfigureAwait(false);
+      _dataIds ??= await _localStorage.GetItemAsync<IList<string>>(dataIndexKey);
 
       return _dataIds;
     }
@@ -157,32 +157,32 @@ namespace SolarViewBlazor.Cache
     {
       var chartIndexKey = GetChartIndexKey(siteId);
 
-      if (!await _localStorage.ContainKeyAsync(chartIndexKey).ConfigureAwait(false))
+      if (!await _localStorage.ContainKeyAsync(chartIndexKey))
       {
         // can't send back a static list because the caller might add to it, resulting in it no
         // longer being empty for the next time it is required
         return new List<string>();
       }
 
-      _chartIds ??= await _localStorage.GetItemAsync<IList<string>>(chartIndexKey).ConfigureAwait(false);
+      _chartIds ??= await _localStorage.GetItemAsync<IList<string>>(chartIndexKey);
 
       return _chartIds;
     }
 
     private async Task RemoveAllPowerData(string siteId)
     {
-      var dataIds = await GetDataIds(siteId).ConfigureAwait(false);
+      var dataIds = await GetDataIds(siteId);
 
-      var tasks = dataIds.Select(dataId => RemovePowerData(siteId, dataId));
-      await Task.WhenAll(tasks).ConfigureAwait(false);
+      var tasks = dataIds.Select(dataId => RemovePowerDataAsync(siteId, dataId));
+      await Task.WhenAll(tasks);
     }
 
     private async Task RemoveAllDescriptorData(string siteId)
     {
-      var chartIds = await GetChartIds(siteId).ConfigureAwait(false);
+      var chartIds = await GetChartIds(siteId);
 
-      var tasks = chartIds.Select(chartId => RemoveChartDescriptorData(siteId, chartId));
-      await Task.WhenAll(tasks).ConfigureAwait(false);
+      var tasks = chartIds.Select(chartId => RemoveChartDescriptorDataAsync(siteId, chartId));
+      await Task.WhenAll(tasks);
     }
   }
 }

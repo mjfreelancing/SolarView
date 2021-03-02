@@ -18,21 +18,25 @@
   <link rel="stylesheet" href="_content/Syncfusion.Blazor/styles/bootstrap4.css" />
 </head>
 <body>
-    <app>
-        <component type="typeof(App)" render-mode="ServerPrerendered" />
-    </app>
+  <app>
+    <component type="typeof(App)" render-mode="ServerPrerendered" />
+  </app>
 
-    <div id="blazor-error-ui">
-        <environment include="Staging,Production">
-            An error has occurred. This application may no longer respond until reloaded.
-        </environment>
-        <environment include="Development">
-            An unhandled exception has occurred. See browser dev tools for details.
-        </environment>
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
-    </div>
+  <div id="blazor-error-ui">
+    <environment include="Staging,Production">
+      An error has occurred. This application may no longer respond until reloaded.
+    </environment>
+    <environment include="Development">
+      An unhandled exception has occurred. See browser dev tools for details.
+    </environment>
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+  </div>
 
-    <script src="_framework/blazor.server.js"></script>
+  <script src="_framework/blazor.server.js"></script>
+
+  @* Syncfusion: Adding the lodash script is mandatory since we have used it in our chart’s interactive features. The absence of the script will result in console errors. *@
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js" integrity="sha512-90vH1Z83AJY9DmlWa8WkjkV79yfS2n2Oxhsi2dZbIv0nC4E6m5AbH8Nh156kkM7JePmqD6tcZsfad1ueoaovww==" crossorigin="anonymous"></script>
+
 </body>
 </html>

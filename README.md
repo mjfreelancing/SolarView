@@ -6,7 +6,7 @@ An Azure SaaS Product that collects solar data from a SolarEdge account for futu
 
 [mySolarEdge](https://www.solaredge.com/mysolaredge) includes a number of graphs that provide insight into historical weekly, monthly, and yearly data. There's one view, however, that it doesn't provide; an average 24-hour view across all data.
 
-**SolarView** was primarily implemented as an exercise to become familar with Azure Functions and their interaction with CosmosDB, Azure Table, ServiceBus, and SendGrid. The end result is a product that provides the following functionality:
+**SolarView** was primarily implemented as an exercise to become familar with Blazor, Azure Functions, CosmosDB, Azure Table, ServiceBus, and SendGrid. The end result is a product that provides the following functionality:
 
 * Upon initial setup, collects all available data since the installation date
 * Continues to collect data on the hour, every hour

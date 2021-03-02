@@ -62,96 +62,96 @@
 </SiteView>
 
 @code {
-  [Inject] IEventAggregator EventAggregator { get; set; }
-  [Inject] private IChartRegistry ChartRegistry { get; set; }
-  [Inject] private ISiteService SiteService { get; set; }
-  [Inject] private ICompareViewModel CompareViewModel { get; set; }
+    [Inject] IEventAggregator EventAggregator { get; set; }
+    [Inject] private IChartRegistry ChartRegistry { get; set; }
+    [Inject] private ISiteService SiteService { get; set; }
+    [Inject] private ICompareViewModel CompareViewModel { get; set; }
 
-  // a list of possible charts the user can select
-  private IReadOnlyList<ChartSelection> _chartSelection;
-  private ISiteDetails _currentSite;
-  private bool _disposed;
+    // a list of possible charts the user can select
+    private IReadOnlyList<ChartSelection> _chartSelection;
+    private ISiteDetails _currentSite;
+    private bool _disposed;
 
-  public void Dispose()
-  {
-    if (!_disposed)
+    public void Dispose()
     {
-      EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
-      _disposed = true;
+      if (!_disposed)
+      {
+        EventAggregator.Unsubscribe<SiteChanged>(HandleSiteChanged);
+        _disposed = true;
+      }
     }
-  }
 
-  protected override async Task OnInitializedAsync()
-  {
-    await base.OnInitializedAsync();
-
-    EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
-  }
-
-  protected override async Task OnAfterRenderAsync(bool firstRender)
-  {
-    await base.OnAfterRenderAsync(firstRender);
-
-    if (firstRender)
+    protected override async Task OnInitializedAsync()
     {
-      _currentSite = await SiteService.GetCurrentSite();
+      await base.OnInitializedAsync();
 
+      EventAggregator.Subscribe<SiteChanged>(HandleSiteChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+      await base.OnAfterRenderAsync(firstRender);
+
+      if (firstRender)
+      {
+        _currentSite = await SiteService.GetCurrentSite();
+
+        await InitializeCurrentSite();
+
+        StateHasChanged();
+      }
+    }
+
+    private async Task HandleSiteChanged(SiteChanged message)
+    {
       await InitializeCurrentSite();
 
       StateHasChanged();
     }
-  }
 
-  private async Task HandleSiteChanged(SiteChanged message)
-  {
-    await InitializeCurrentSite();
-
-    StateHasChanged();
-  }
-
-  private async Task InitializeCurrentSite()
-  {
-    if (_currentSite != null)
+    private async Task InitializeCurrentSite()
     {
-      _chartSelection = ChartRegistry.ChartDescriptors
-        .Select(descriptor => new ChartSelection
-        {
-          Selected = true,
-          ChartDescriptor = descriptor
-        })
-        .OrderBy(item => item.ChartDescriptor.Description)
-        .ToList();
+      if (_currentSite != null)
+      {
+        _chartSelection = ChartRegistry.ChartDescriptors
+          .Select(descriptor => new ChartSelection
+          {
+            Selected = true,
+            ChartDescriptor = descriptor
+          })
+          .OrderBy(item => item.ChartDescriptor.Description)
+          .ToList();
 
-      await LoadCharts();
+        await LoadCharts();
+      }
+      else
+      {
+        _chartSelection = new List<ChartSelection>();
+      }
     }
-    else
+
+    private async Task LoadCharts()
     {
-      _chartSelection = new List<ChartSelection>();
-    }
-  }
-
-  private async Task LoadCharts()
-  {
-    await CompareViewModel.LoadFromCacheAsync();
-    StateHasChanged();
-  }
-
-  private async Task ApplyDateRange(DateRange dateRange)
-  {
-    var selectedCharts = _chartSelection
-      .Where(item => item.Selected)
-      .Select(item => item.ChartDescriptor);
-
-    var added = await CompareViewModel.AddChartsAsync(dateRange, selectedCharts);
-
-    if (added)
-    {
+      await CompareViewModel.LoadFromCacheAsync();
       StateHasChanged();
     }
-  }
 
-  private async Task OnChartDeleted(string chartId)
-  {
-    await CompareViewModel.DeleteChartAsync(chartId);
-  }
+    private async Task ApplyDateRange(DateRange dateRange)
+    {
+      var selectedCharts = _chartSelection
+        .Where(item => item.Selected)
+        .Select(item => item.ChartDescriptor);
+
+      var added = await CompareViewModel.AddChartsAsync(dateRange, selectedCharts);
+
+      if (added)
+      {
+        StateHasChanged();
+      }
+    }
+
+    private Task OnChartDeleted(string chartId)
+    {
+      return CompareViewModel.DeleteChartAsync(chartId);
+    }
 }

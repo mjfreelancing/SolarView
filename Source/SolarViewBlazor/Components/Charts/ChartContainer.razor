@@ -1,24 +1,35 @@
-﻿@foreach (var chartParameters in OrderedCharts)
+﻿@foreach (var chartParameters in GetOrderedCharts())
 {
   var chartId = chartParameters.ChartData.Id;
 
-<div @key="chartId">
-  <SfAccordion>
-    <AccordionItems>
-      <AccordionItem CssClass="chart-accordion-item" Expanded="true">
-        <HeaderTemplate>
-          <div class="col col-12 d-flex">
-            <span>@($"{chartParameters.ChartData.StartDate:yyyy-MM-dd}") - @($"{chartParameters.ChartData.EndDate:yyyy-MM-dd}")</span>
-            <span class="oi oi-delete m-0 mt-1 ml-auto mr-4" @onclick="@(async () => await DeleteChart(chartId))"></span>
-          </div>
-        </HeaderTemplate>
-        @*<ContentTemplate>
-            <DynamicComponent ComponentType="@ChartDescriptor.ChartType" Parameters="@(chartParameters.Parameters)" />
-          </ContentTemplate>*@
-      </AccordionItem>
-    </AccordionItems>
-  </SfAccordion>
-</div>
+  <div @key="chartId">
+
+    <div class="col col-12 d-flex">
+      <span>@($"{chartParameters.ChartData.StartDate:yyyy-MM-dd}") - @($"{chartParameters.ChartData.EndDate:yyyy-MM-dd}")</span>
+      <span class="oi oi-delete m-0 mt-1 ml-auto mr-4" @onclick="@(async () => await DeleteChart(chartId))"></span>
+    </div>
+    <DynamicComponent ComponentType="@ChartDescriptor.ChartType" Parameters="@(chartParameters.Parameters)" />
+
+    @if (false)
+    {
+      <SfAccordion>
+        <AccordionItems>
+          <AccordionItem CssClass="chart-accordion-item" Expanded="true">
+            <HeaderTemplate>
+              <div class="col col-12 d-flex">
+                <span>@($"{chartParameters.ChartData.StartDate:yyyy-MM-dd}") - @($"{chartParameters.ChartData.EndDate:yyyy-MM-dd}")</span>
+                <span class="oi oi-delete m-0 mt-1 ml-auto mr-4" @onclick="@(async () => await DeleteChart(chartId))"></span>
+              </div>
+            </HeaderTemplate>
+            <ContentTemplate>
+              <DynamicComponent ComponentType="@ChartDescriptor.ChartType" Parameters="@(chartParameters.Parameters)" />
+            </ContentTemplate>
+          </AccordionItem>
+        </AccordionItems>
+      </SfAccordion>
+    }
+
+  </div>
 }
 
 <style>
@@ -43,7 +54,7 @@
       ChartData = chartData;
 
       Parameters = new Dictionary<string, object>(parameters)
-      {
+    {
         {nameof(ChartData), chartData}
       };
     }
@@ -52,9 +63,14 @@
   private IReadOnlyList<ChartData> _chartData;
   private readonly IDictionary<string, ChartParameters> _renderedCharts = new Dictionary<string, ChartParameters>();
 
-  private IEnumerable<ChartParameters> OrderedCharts => _renderedCharts.Values
-    .OrderBy(item => item.ChartData.StartDate)
-    .ThenBy(item => item.ChartData.EndDate);
+  private IReadOnlyCollection<ChartParameters> GetOrderedCharts()
+  {
+    return _renderedCharts.Values
+      .OrderBy(item => item.ChartData.StartDate)
+      .ThenBy(item => item.ChartData.EndDate)
+      .AsReadOnlyCollection();
+  }
+
 
   protected override void OnParametersSet()
   {
@@ -84,7 +100,7 @@
     _renderedCharts.Add(chartData.Id, chartParameters);
   }
 
-  public async Task DeleteChart(string chartId)
+  private async Task DeleteChart(string chartId)
   {
     // remove the fragment associated with the chart Id
     _renderedCharts.Remove(chartId);

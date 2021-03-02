@@ -59,6 +59,13 @@ namespace SolarViewBlazor
       services.AddServerSideBlazor();
       services.AddSyncfusionBlazor();
 
+      // Syncfusion: On Chart initial loading, we gather text measure information for rendering purposes. Since its size exceeds
+      // the default SignalR buffer size 32 KB, the server will be disconnected. So you need to add the following service to increase
+      // the buffer size to 64 KB over the SignalR connection.
+      services.AddSignalR(e => {
+        e.MaximumReceiveMessageSize = 65536;
+      });
+
       // Keep an eye on this - when out of beta will be worth considering as it uses ASP.NET Data Protection
       // https://www.nuget.org/packages/Microsoft.AspNetCore.ProtectedBrowserStorage
       // https://docs.microsoft.com/en-us/aspnet/core/blazor/state-management
@@ -91,6 +98,7 @@ namespace SolarViewBlazor
       services.AddScoped<IRelativeEnergyChartViewModel, RelativeEnergyChartViewModel>();
 
       services.AddScoped<IChartDataCache, ChartDataCache>();
+
       services.AddScoped<IEventAggregator, EventAggregator>();
       services.AddScoped<ISiteService, SiteService>();
       services.AddScoped<ISiteViewModel, SiteViewModel>();

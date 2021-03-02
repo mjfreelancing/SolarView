@@ -107,7 +107,7 @@ namespace SolarViewBlazor.ViewModels
 
         // Add the data to the cache
         var currentSiteId = await GetCurrentSiteId();
-        await _chartDataCache.AddChartDescriptorData(currentSiteId, chartId, descriptorData);
+        await _chartDataCache.AddChartDescriptorDataAsync(currentSiteId, chartId, descriptorData);
       }
 
       return true;
@@ -142,7 +142,7 @@ namespace SolarViewBlazor.ViewModels
       var currentSiteId = await GetCurrentSiteId();
 
       // remove from the cache
-      await _chartDataCache.RemoveChartDescriptorData(currentSiteId, chartId);
+      await _chartDataCache.RemoveChartDescriptorDataAsync(currentSiteId, chartId);
 
       // if there are no charts referring to the same power data then it can be removed
       if (_chartDescriptorData.Values.All(item => item.ChartDataId != descriptorData.ChartDataId))
@@ -150,7 +150,7 @@ namespace SolarViewBlazor.ViewModels
         _chartPowerData.Remove(descriptorData.ChartDataId);
 
         // remove from the cache
-        await _chartDataCache.RemovePowerData(currentSiteId, descriptorData.ChartDataId);
+        await _chartDataCache.RemovePowerDataAsync(currentSiteId, descriptorData.ChartDataId);
       }
     }
 
@@ -219,7 +219,7 @@ namespace SolarViewBlazor.ViewModels
 
         _chartPowerData.Add(chartDataId, cachedPowerData);
 
-        await _chartDataCache.AddPowerData(currentSiteId, chartDataId, cachedPowerData);
+        await _chartDataCache.AddPowerDataAsync(currentSiteId, chartDataId, cachedPowerData);
       }
 
       return (chartDataId, cachedPowerData);
