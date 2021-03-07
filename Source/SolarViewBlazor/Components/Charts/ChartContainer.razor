@@ -18,7 +18,7 @@
             <HeaderTemplate>
               <div class="col col-12 d-flex">
                 <span>@($"{chartParameters.ChartData.StartDate:yyyy-MM-dd}") - @($"{chartParameters.ChartData.EndDate:yyyy-MM-dd}")</span>
-                <span class="oi oi-delete m-0 mt-1 ml-auto mr-4" @onclick="@(async () => await DeleteChart(chartId))"></span>
+                <span class="oi oi-delete m-0 mt-1 ml-auto mr-4" @onclick="@(async () => await DeleteChart(chartId))" @onclick:stopPropagation="StopPropagation"></span>
               </div>
             </HeaderTemplate>
             <ContentTemplate>
@@ -60,6 +60,7 @@
     }
   }
 
+  private const bool StopPropagation = true;
   private IReadOnlyList<ChartData> _chartData;
   private readonly IDictionary<string, ChartParameters> _renderedCharts = new Dictionary<string, ChartParameters>();
 
